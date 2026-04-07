@@ -116,7 +116,16 @@ export function TradingChart() {
   const volumeSeriesRef = useRef<ISeriesApi<typeof HistogramSeries> | null>(null);
   const chartDisposedRef = useRef(false);
   const { isPremium, setShowActivation } = usePremium();
-  const { isSubscribed, toggleSubscription, loadingSymbol: notifLoadingSymbol, isSupported: notifSupported, setShowManager: setShowNotifManager } = useNotifications();
+  const { isSubscribed, toggleSubscription, loadingSymbol: notifLoadingSymbol, isSupported: notifSupported, isInIframe: notifInIframe, errorMessage: notifError, setShowManager: setShowNotifManager } = useNotifications();
+  const [notifErrorVisible, setNotifErrorVisible] = useState(false);
+  const notifErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!notifError) return;
+    setNotifErrorVisible(true);
+    if (notifErrorTimerRef.current) clearTimeout(notifErrorTimerRef.current);
+    notifErrorTimerRef.current = setTimeout(() => setNotifErrorVisible(false), 5000);
+  }, [notifError]);
 
   const [symbol, setSymbol] = useState("XAUUSD");
   const [symbolLabel, setSymbolLabel] = useState("Gold (XAU/USD)");
@@ -512,25 +521,41 @@ export function TradingChart() {
               </div>
             )}
 
-            {isPremium && notifSupported && (
-              <button
-                onClick={() => toggleSubscription(symbol, symbolLabel)}
-                disabled={notifLoadingSymbol === symbol}
-                title={isSubscribed(symbol) ? "Unsubscribe from signal notifications" : "Subscribe to signal notifications"}
-                className={`flex items-center gap-1 rounded-lg px-2 py-1.5 transition-all border ${
-                  isSubscribed(symbol)
-                    ? "bg-[#E3F2FD] border-[#2962FF]/30 text-[#2962FF] hover:bg-[#BBDEFB]/50"
-                    : "bg-[#F0F3FA] border-[#E0E3EB] text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6]"
-                }`}
-              >
-                {notifLoadingSymbol === symbol ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : isSubscribed(symbol) ? (
-                  <Bell className="w-3 h-3" />
-                ) : (
-                  <BellOff className="w-3 h-3" />
+            {isPremium && (notifSupported || notifInIframe) && (
+              <div className="relative">
+                <button
+                  onClick={() => toggleSubscription(symbol, symbolLabel)}
+                  disabled={notifLoadingSymbol === symbol}
+                  title={
+                    notifInIframe
+                      ? "Open in a new tab to enable push notifications"
+                      : isSubscribed(symbol)
+                        ? "Unsubscribe from signal notifications"
+                        : "Subscribe to signal notifications"
+                  }
+                  className={`flex items-center gap-1 rounded-lg px-2 py-1.5 transition-all border ${
+                    notifInIframe
+                      ? "bg-[#F0F3FA] border-[#E0E3EB] text-[#C9CBD4] cursor-not-allowed"
+                      : isSubscribed(symbol)
+                        ? "bg-[#E3F2FD] border-[#2962FF]/30 text-[#2962FF] hover:bg-[#BBDEFB]/50"
+                        : "bg-[#F0F3FA] border-[#E0E3EB] text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6]"
+                  }`}
+                >
+                  {notifLoadingSymbol === symbol ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : isSubscribed(symbol) ? (
+                    <Bell className="w-3 h-3" />
+                  ) : (
+                    <BellOff className="w-3 h-3" />
+                  )}
+                </button>
+
+                {notifErrorVisible && notifError && (
+                  <div className="absolute right-0 top-full mt-1 z-50 w-64 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 shadow-lg">
+                    {notifError}
+                  </div>
                 )}
-              </button>
+              </div>
             )}
           </div>
         </div>

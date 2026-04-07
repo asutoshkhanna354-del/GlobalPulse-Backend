@@ -3,7 +3,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { usePremium } from "@/contexts/PremiumContext";
 
 export function NotificationModal() {
-  const { showManager, setShowManager, subscribedSymbols, toggleSubscription, loadingSymbol, isSupported, permission } =
+  const { showManager, setShowManager, subscribedSymbols, toggleSubscription, loadingSymbol, isSupported, isInIframe, permission } =
     useNotifications();
   const { isPremium } = usePremium();
 
@@ -37,7 +37,16 @@ export function NotificationModal() {
             </div>
           )}
 
-          {isPremium && !isSupported && (
+          {isPremium && !isSupported && isInIframe && (
+            <div className="flex items-start gap-2.5 bg-[#E3F2FD] border border-[#2962FF]/20 rounded-xl p-3 mb-4">
+              <AlertCircle className="w-4 h-4 text-[#2962FF] shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#2962FF]">
+                Open GlobalPulse in a new browser tab to enable push notifications. They cannot be activated inside an embedded frame.
+              </p>
+            </div>
+          )}
+
+          {isPremium && !isSupported && !isInIframe && (
             <div className="flex items-start gap-2.5 bg-[#FDECEA] border border-[#EF5350]/20 rounded-xl p-3 mb-4">
               <AlertCircle className="w-4 h-4 text-[#EF5350] shrink-0 mt-0.5" />
               <p className="text-[11px] text-[#EF5350]">Push notifications are not supported in your browser.</p>
