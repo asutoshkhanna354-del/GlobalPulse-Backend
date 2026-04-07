@@ -1,0 +1,41 @@
+#1 - Signal Push Notifications
+What & Why
+Add browser push notifications for chart signals so users can subscribe to any stock/index and receive alerts (buy/sell signals with confidence %) even when the browser tab is closed or they're offline. Uses the Web Push API with VAPID keys and a service worker.
+
+Done looks like
+A "Notify" toggle button appears on the chart page header (next to the PRO badge) — clicking it requests browser notification permission and subscribes that symbol
+When enabled, the button shows a bell icon filled/active state for that symbol
+The backend periodically checks for new signals on all subscribed symbols and sends push notifications via Web Push
+Push notification shows: signal type (BUY/SELL), symbol name, confidence %, and price — e.g. "BUY Signal: Nifty 50 — 72% confidence at ₹24,350"
+Clicking the notification opens the app's chart page for that symbol
+Subscriptions persist in the database; the user's browser push subscription is stored server-side
+Works for PRO users only (signal notifications are a premium feature)
+A small "Notifications" management section in the sidebar or a modal shows all currently subscribed symbols with toggles to unsubscribe
+Out of scope
+Mobile native push (this is browser Web Push only)
+Email or SMS notifications
+Notification history/log page
+Custom threshold configuration (e.g. "only notify above 80% confidence") — all signals trigger notifications
+Tasks
+Generate VAPID keys and set up web-push — Install web-push package on the API server, generate VAPID key pair, store them as environment secrets, and create a utility module for sending push notifications.
+
+Create push subscription DB table and API endpoints — Add a push_subscriptions table (endpoint, keys, symbol, userId/browserFingerprint) and create REST endpoints: POST /api/push/subscribe (save subscription + symbol), DELETE /api/push/unsubscribe (remove subscription for a symbol), GET /api/push/subscriptions (list active subscriptions for a browser).
+
+Register a service worker — Create a service worker file that handles push events (displays the notification) and notification click events (opens the chart page for that symbol). Register it from the frontend entry point.
+
+Build signal monitoring loop on the backend — Add a periodic check (every 2 minutes) that fetches the latest signals for each subscribed symbol, compares against last-notified signal timestamps, and sends Web Push notifications for new signals.
+
+Add notification toggle UI to the chart page — Add a bell icon button in the TradingChart header that requests notification permission, subscribes/unsubscribes the current symbol, and shows active/inactive state. Gate behind PRO status.
+
+Add notification management UI — Add a small section (modal or panel accessible from sidebar) showing all subscribed symbols with toggles to manage them.
+
+Relevant files
+artifacts/api-server/src/lib/indicator.ts
+artifacts/api-server/src/routes/indicator.ts
+artifacts/api-server/src/index.ts
+artifacts/api-server/src/routes/index.ts
+artifacts/market-screener/src/components/TradingChart.tsx
+artifacts/market-screener/src/main.tsx
+artifacts/market-screener/public/site.webmanifest
+artifacts/market-screener/src/contexts/PremiumContext.tsx
+lib/db/src/schema/market.ts

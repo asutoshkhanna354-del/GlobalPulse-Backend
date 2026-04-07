@@ -1,0 +1,103 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0a0018"/>
+      <stop offset="60%" stop-color="#100030"/>
+      <stop offset="100%" stop-color="#060020"/>
+    </linearGradient>
+    <linearGradient id="pulseGrad" x1="70" y1="256" x2="440" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6d28d9" stop-opacity="0.3"/>
+      <stop offset="35%" stop-color="#8b5cf6"/>
+      <stop offset="55%" stop-color="#06b6d4"/>
+      <stop offset="75%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6d28d9" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="globeRing" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="50%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <radialGradient id="innerGlow" cx="50%" cy="50%" r="45%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glowFilter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="dotGlowFilter" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="roundedClip">
+      <rect width="512" height="512" rx="108"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <!-- Inner radial glow -->
+  <circle cx="256" cy="256" r="220" fill="url(#innerGlow)" clip-path="url(#roundedClip)"/>
+
+  <!-- Globe outer ring -->
+  <circle cx="256" cy="256" r="158" stroke="url(#globeRing)" stroke-width="3.5" fill="none" opacity="0.85" filter="url(#softGlow)"/>
+
+  <!-- Latitude lines (horizontal arcs) -->
+  <!-- Equator -->
+  <line x1="98" y1="256" x2="414" y2="256" stroke="#7c3aed" stroke-width="1.8" stroke-opacity="0.4"/>
+  <!-- Upper latitude ~35deg -->
+  <path d="M 128 196 Q 256 182 384 196" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3" fill="none"/>
+  <!-- Lower latitude ~35deg -->
+  <path d="M 128 316 Q 256 330 384 316" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3" fill="none"/>
+  <!-- Upper latitude ~65deg -->
+  <path d="M 178 148 Q 256 138 334 148" stroke="#7c3aed" stroke-width="1.2" stroke-opacity="0.2" fill="none"/>
+  <!-- Lower latitude ~65deg -->
+  <path d="M 178 364 Q 256 374 334 364" stroke="#7c3aed" stroke-width="1.2" stroke-opacity="0.2" fill="none"/>
+
+  <!-- Meridian arcs (vertical) -->
+  <!-- Center vertical -->
+  <line x1="256" y1="98" x2="256" y2="414" stroke="#7c3aed" stroke-width="1.8" stroke-opacity="0.4"/>
+  <!-- Left meridian arc -->
+  <path d="M 256 98 Q 196 256 256 414" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3" fill="none"/>
+  <!-- Right meridian arc -->
+  <path d="M 256 98 Q 316 256 256 414" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3" fill="none"/>
+  <!-- Far left arc -->
+  <path d="M 256 98 Q 148 256 256 414" stroke="#7c3aed" stroke-width="1.2" stroke-opacity="0.18" fill="none"/>
+  <!-- Far right arc -->
+  <path d="M 256 98 Q 364 256 256 414" stroke="#7c3aed" stroke-width="1.2" stroke-opacity="0.18" fill="none"/>
+
+  <!-- Pulse / EKG line — glow layer first -->
+  <path d="M 70 256 L 168 256 L 188 256 L 200 274 L 218 150 L 238 330 L 255 218 L 270 256 L 440 256"
+        stroke="#06b6d4" stroke-width="12" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"
+        opacity="0.25"/>
+
+  <!-- Pulse / EKG line — main -->
+  <path d="M 70 256 L 168 256 L 188 256 L 200 274 L 218 150 L 238 330 L 255 218 L 270 256 L 440 256"
+        stroke="url(#pulseGrad)" stroke-width="5.5" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"
+        filter="url(#softGlow)"/>
+
+  <!-- Live dot at end of pulse -->
+  <circle cx="270" cy="256" r="18" fill="#06b6d4" opacity="0.18" filter="url(#dotGlowFilter)"/>
+  <circle cx="270" cy="256" r="7.5" fill="#22d3ee" filter="url(#softGlow)"/>
+  <circle cx="270" cy="256" r="4" fill="white"/>
+</svg>

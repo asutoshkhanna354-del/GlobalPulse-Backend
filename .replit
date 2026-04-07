@@ -1,0 +1,13 @@
+modules = ["nodejs-20"]
+[nix]
+channel = "stable-25_05"
+
+[agent]
+expertMode = true
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BEXcMUrDBYwPYVMCimD9fiy_b_6a6RY_VVAc3d0o9t51uo7-_koesWmzYlFIFogFz4YpLoHJbGjwTYYigqds2V8"
+VAPID_PRIVATE_KEY = "ffb-F8BQBvGINWJhrrrqy88kTPJzZZgCRaWYxOZj4qE"
+VAPID_CONTACT_EMAIL = "admin@globalpulse.app"

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Global Market Intelligence Screener"
+version = "1.0.0"
+id = "artifacts/market-screener"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22459
+
+[services.development]
+run = "pnpm --filter @workspace/market-screener run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/market-screener", "run", "build" ]
+publicDir = "artifacts/market-screener/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22459"
+BASE_PATH = "/"

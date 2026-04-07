@@ -1,0 +1,32 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "fyBz8ysnn0FpNARhomebH"
+uri = "file://globalpulse-export.zip"
+type = "unspecified"
+title = "GlobalPulse - Complete Project Export"
+
+[[outputs]]
+id = "hOEJEZKASmYDxKTsOXnQw"
+uri = "file://GlobalPulse.tar.gz"
+type = "unspecified"
+title = "GlobalPulse.tar.gz (283KB)"
+
+[[outputs]]
+id = "XhGQWUgXXFu8z7Ty5Tkmd"
+uri = "file://globalpulse.tar.gz"
+type = "unspecified"
+title = "GlobalPulse - Self-Hosting Archive"
+
+[[outputs]]
+id = "bweUE0pUehNxt4_f2Pivg"
+uri = "file://DEPLOY.md"
+type = "text"
+title = "Self-Hosting Deployment Guide"
+
+[[outputs]]
+id = "dnj69sWPOf5_3Cl8A-SgR"
+uri = "file://globalpulse-export.tar.gz"
+type = "unspecified"
+title = "GlobalPulse - Full Project Export"

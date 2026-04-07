@@ -1,0 +1,949 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Global Market Intelligence Screener API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: market-data
+    description: Global market data
+  - name: economic-indicators
+    description: Economic indicators by country/region
+  - name: geopolitical
+    description: Geopolitical events, wars, and conflicts
+  - name: news
+    description: Financial and global news
+  - name: dashboard
+    description: Dashboard summary and aggregations
+  - name: watchlist
+    description: User watchlist management
+  - name: stocks
+    description: Individual stock data for Indian and US markets
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /market-data:
+    get:
+      operationId: getMarketData
+      tags: [market-data]
+      summary: Get global market data
+      description: Returns current market data for major indices, currencies, commodities and crypto
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [indices, currencies, commodities, crypto, bonds]
+      responses:
+        "200":
+          description: Market data list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketAsset"
+
+  /market-data/summary:
+    get:
+      operationId: getMarketSummary
+      tags: [market-data]
+      summary: Get market summary
+      description: Returns a high-level summary of global market conditions
+      responses:
+        "200":
+          description: Market summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketSummary"
+
+  /market-data/movers:
+    get:
+      operationId: getTopMovers
+      tags: [market-data]
+      summary: Get top movers
+      description: Returns top gainers and losers across all asset classes
+      responses:
+        "200":
+          description: Top movers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopMovers"
+
+  /market-data/chart/{symbol}:
+    get:
+      operationId: getAssetChart
+      tags: [market-data]
+      summary: Get historical chart data for an asset
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: ["1d", "5d", "1mo", "3mo"]
+            default: "1mo"
+      responses:
+        "200":
+          description: Chart data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartData"
+
+  /economic-indicators:
+    get:
+      operationId: getEconomicIndicators
+      tags: [economic-indicators]
+      summary: Get economic indicators
+      description: Returns economic indicators for countries/regions
+      parameters:
+        - name: country
+          in: query
+          schema:
+            type: string
+        - name: indicator
+          in: query
+          schema:
+            type: string
+            enum: [gdp, inflation, unemployment, interest-rate, trade-balance, debt-to-gdp]
+      responses:
+        "200":
+          description: Economic indicators list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EconomicIndicator"
+
+  /economic-indicators/calendar:
+    get:
+      operationId: getEconomicCalendar
+      tags: [economic-indicators]
+      summary: Get economic calendar
+      description: Returns upcoming economic events and data releases
+      responses:
+        "200":
+          description: Economic calendar events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EconomicEvent"
+
+  /geopolitical:
+    get:
+      operationId: getGeopoliticalEvents
+      tags: [geopolitical]
+      summary: Get geopolitical events
+      description: Returns active geopolitical events that impact markets, with conclusions and sources
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, high, medium, low]
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Geopolitical events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeopoliticalEvent"
+
+  /geopolitical/heatmap:
+    get:
+      operationId: getGeopoliticalHeatmap
+      tags: [geopolitical]
+      summary: Get geopolitical risk heatmap
+      description: Returns risk scores per country/region for heatmap rendering
+      responses:
+        "200":
+          description: Heatmap data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CountryRisk"
+
+  /news:
+    get:
+      operationId: getNews
+      tags: [news]
+      summary: Get global financial news
+      description: Returns global news items with market impact classification
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [all, macro, geopolitical, earnings, central-banks, commodities, crypto]
+        - name: impact
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: News items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /news/breaking:
+    get:
+      operationId: getBreakingNews
+      tags: [news]
+      summary: Get breaking news
+      description: Returns the most recent high-impact news
+      responses:
+        "200":
+          description: Breaking news
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /dashboard/overview:
+    get:
+      operationId: getDashboardOverview
+      tags: [dashboard]
+      summary: Get dashboard overview
+      description: Returns aggregated data for the main dashboard
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOverview"
+
+  /dashboard/sentiment:
+    get:
+      operationId: getMarketSentiment
+      tags: [dashboard]
+      summary: Get global market sentiment
+      description: Returns sentiment scores and trend data for major regions
+      responses:
+        "200":
+          description: Market sentiment data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegionSentiment"
+
+  /watchlist:
+    get:
+      operationId: getWatchlist
+      tags: [watchlist]
+      summary: Get user watchlist
+      responses:
+        "200":
+          description: Watchlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+    post:
+      operationId: addToWatchlist
+      tags: [watchlist]
+      summary: Add item to watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWatchlistItem"
+      responses:
+        "201":
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+
+  /watchlist/{id}:
+    delete:
+      operationId: removeFromWatchlist
+      tags: [watchlist]
+      summary: Remove item from watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed successfully
+
+  /stocks:
+    get:
+      operationId: getStocks
+      tags: [stocks]
+      summary: Get stocks for Indian and US markets
+      description: Returns live stock data from Yahoo Finance
+      parameters:
+        - name: market
+          in: query
+          schema:
+            type: string
+            enum: [india, us, all]
+            default: all
+        - name: sector
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stock"
+
+  /stocks/chart/{symbol}:
+    get:
+      operationId: getStockChart
+      tags: [stocks]
+      summary: Get stock chart data
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: ["1d", "5d", "1mo", "3mo", "6mo", "1y"]
+            default: "1mo"
+      responses:
+        "200":
+          description: Chart data points
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartData"
+
+  /stocks/movers:
+    get:
+      operationId: getStockMovers
+      tags: [stocks]
+      summary: Get top stock movers
+      parameters:
+        - name: market
+          in: query
+          schema:
+            type: string
+            enum: [india, us]
+            default: india
+      responses:
+        "200":
+          description: Top movers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockMovers"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    MarketAsset:
+      type: object
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum: [indices, currencies, commodities, crypto, bonds]
+        price:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+        volume:
+          type: ["string", "null"]
+        marketCap:
+          type: ["string", "null"]
+        currency:
+          type: string
+        country:
+          type: ["string", "null"]
+        flag:
+          type: ["string", "null"]
+        lastUpdated:
+          type: string
+      required:
+        - id
+        - symbol
+        - name
+        - category
+        - price
+        - change
+        - changePercent
+        - currency
+        - lastUpdated
+
+    MarketSummary:
+      type: object
+      properties:
+        globalSentiment:
+          type: string
+          enum: [bullish, bearish, neutral, volatile]
+        riskLevel:
+          type: string
+          enum: [low, moderate, elevated, high, extreme]
+        activeConflicts:
+          type: integer
+        majorEventCount:
+          type: integer
+        dominantTrend:
+          type: string
+        fearGreedIndex:
+          type: integer
+        vix:
+          type: number
+        dollarIndex:
+          type: number
+        goldPrice:
+          type: number
+        oilPrice:
+          type: number
+        updatedAt:
+          type: string
+      required:
+        - globalSentiment
+        - riskLevel
+        - activeConflicts
+        - majorEventCount
+        - dominantTrend
+        - fearGreedIndex
+        - vix
+        - dollarIndex
+        - goldPrice
+        - oilPrice
+        - updatedAt
+
+    TopMovers:
+      type: object
+      properties:
+        gainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketAsset"
+        losers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketAsset"
+      required:
+        - gainers
+        - losers
+
+    ChartData:
+      type: object
+      properties:
+        symbol:
+          type: string
+        range:
+          type: string
+        currency:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+        source:
+          type: string
+      required:
+        - symbol
+        - range
+        - currency
+        - points
+        - source
+
+    ChartPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        open:
+          type: ["number", "null"]
+        high:
+          type: ["number", "null"]
+        low:
+          type: ["number", "null"]
+        close:
+          type: number
+        volume:
+          type: ["number", "null"]
+      required:
+        - timestamp
+        - close
+
+    EconomicIndicator:
+      type: object
+      properties:
+        id:
+          type: integer
+        country:
+          type: string
+        countryCode:
+          type: string
+        flag:
+          type: string
+        indicator:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        previousValue:
+          type: ["number", "null"]
+        change:
+          type: ["number", "null"]
+        period:
+          type: string
+        trend:
+          type: string
+          enum: [improving, deteriorating, stable]
+        impact:
+          type: string
+          enum: [positive, negative, neutral]
+        lastUpdated:
+          type: string
+      required:
+        - id
+        - country
+        - countryCode
+        - flag
+        - indicator
+        - value
+        - unit
+        - period
+        - trend
+        - impact
+        - lastUpdated
+
+    EconomicEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        country:
+          type: string
+        flag:
+          type: string
+        indicator:
+          type: string
+        scheduledAt:
+          type: string
+        forecast:
+          type: ["number", "null"]
+        previous:
+          type: ["number", "null"]
+        actual:
+          type: ["number", "null"]
+        unit:
+          type: string
+        impact:
+          type: string
+          enum: [high, medium, low]
+        released:
+          type: boolean
+      required:
+        - id
+        - title
+        - country
+        - flag
+        - indicator
+        - scheduledAt
+        - unit
+        - impact
+        - released
+
+    GeopoliticalEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        region:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+          enum: [war, conflict, sanctions, trade-dispute, political-crisis, terrorism, protest]
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        marketImpact:
+          type: string
+        marketConclusion:
+          type: string
+        affectedMarkets:
+          type: array
+          items:
+            type: string
+        affectedAssets:
+          type: array
+          items:
+            type: string
+        startDate:
+          type: string
+        status:
+          type: string
+          enum: [active, escalating, de-escalating, resolved]
+        casualtiesReported:
+          type: boolean
+        economicLoss:
+          type: ["string", "null"]
+        sources:
+          type: array
+          items:
+            type: string
+        lastUpdated:
+          type: string
+      required:
+        - id
+        - title
+        - description
+        - region
+        - countries
+        - type
+        - severity
+        - marketImpact
+        - marketConclusion
+        - affectedMarkets
+        - affectedAssets
+        - startDate
+        - status
+        - casualtiesReported
+        - sources
+        - lastUpdated
+
+    CountryRisk:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        country:
+          type: string
+        riskScore:
+          type: integer
+        riskLevel:
+          type: string
+          enum: [low, moderate, elevated, high, extreme]
+        primaryRisk:
+          type: string
+        hasActiveConflict:
+          type: boolean
+      required:
+        - countryCode
+        - country
+        - riskScore
+        - riskLevel
+        - primaryRisk
+        - hasActiveConflict
+
+    NewsItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        headline:
+          type: string
+        summary:
+          type: string
+        source:
+          type: string
+        category:
+          type: string
+          enum: [macro, geopolitical, earnings, central-banks, commodities, crypto]
+        impact:
+          type: string
+          enum: [high, medium, low]
+        sentiment:
+          type: string
+          enum: [bullish, bearish, neutral]
+        region:
+          type: ["string", "null"]
+        affectedAssets:
+          type: array
+          items:
+            type: string
+        publishedAt:
+          type: string
+        marketConclusion:
+          type: string
+        isBreaking:
+          type: boolean
+      required:
+        - id
+        - headline
+        - summary
+        - source
+        - category
+        - impact
+        - sentiment
+        - affectedAssets
+        - publishedAt
+        - marketConclusion
+        - isBreaking
+
+    DashboardOverview:
+      type: object
+      properties:
+        globalRiskScore:
+          type: integer
+        marketSentiment:
+          type: string
+          enum: [bullish, bearish, neutral, volatile]
+        activeConflicts:
+          type: integer
+        highImpactEvents:
+          type: integer
+        breakingNewsCount:
+          type: integer
+        majorMarketsUp:
+          type: integer
+        majorMarketsDown:
+          type: integer
+        topRiskRegion:
+          type: string
+        topOpportunityRegion:
+          type: string
+        keyConclusion:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - globalRiskScore
+        - marketSentiment
+        - activeConflicts
+        - highImpactEvents
+        - breakingNewsCount
+        - majorMarketsUp
+        - majorMarketsDown
+        - topRiskRegion
+        - topOpportunityRegion
+        - keyConclusion
+        - updatedAt
+
+    RegionSentiment:
+      type: object
+      properties:
+        region:
+          type: string
+        sentimentScore:
+          type: integer
+        trend:
+          type: string
+          enum: [improving, deteriorating, stable]
+        riskLevel:
+          type: string
+          enum: [low, moderate, elevated, high, extreme]
+        keyDriver:
+          type: string
+      required:
+        - region
+        - sentimentScore
+        - trend
+        - riskLevel
+        - keyDriver
+
+    WatchlistItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [asset, indicator, event, country]
+        notes:
+          type: ["string", "null"]
+        addedAt:
+          type: string
+      required:
+        - id
+        - symbol
+        - name
+        - type
+        - addedAt
+
+    CreateWatchlistItem:
+      type: object
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [asset, indicator, event, country]
+        notes:
+          type: ["string", "null"]
+      required:
+        - symbol
+        - name
+        - type
+
+    Stock:
+      type: object
+      properties:
+        symbol:
+          type: string
+        yahooSymbol:
+          type: string
+        name:
+          type: string
+        market:
+          type: string
+          enum: [india, us]
+        exchange:
+          type: string
+        sector:
+          type: string
+        price:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+        open:
+          type: ["number", "null"]
+        high:
+          type: ["number", "null"]
+        low:
+          type: ["number", "null"]
+        previousClose:
+          type: ["number", "null"]
+        volume:
+          type: ["number", "null"]
+        avgVolume:
+          type: ["number", "null"]
+        marketCap:
+          type: ["number", "null"]
+        peRatio:
+          type: ["number", "null"]
+        weekHigh52:
+          type: ["number", "null"]
+        weekLow52:
+          type: ["number", "null"]
+        dividendYield:
+          type: ["number", "null"]
+        eps:
+          type: ["number", "null"]
+        currency:
+          type: string
+        flag:
+          type: string
+        source:
+          type: string
+        lastUpdated:
+          type: string
+      required:
+        - symbol
+        - yahooSymbol
+        - name
+        - market
+        - exchange
+        - sector
+        - price
+        - change
+        - changePercent
+        - currency
+        - flag
+        - source
+        - lastUpdated
+
+    StockMovers:
+      type: object
+      properties:
+        gainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        losers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        market:
+          type: string
+      required:
+        - gainers
+        - losers
+        - market
