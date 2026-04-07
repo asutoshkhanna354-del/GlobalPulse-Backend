@@ -36,44 +36,35 @@ function resolveSymbol(raw: string): string {
 
 const YAHOO_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" };
 
+// TradingView symbol for each futures-spot pair
+const TV_SPOT_SYMBOL: Record<string, string> = {
+  "XAUUSD=X": "OANDA:XAUUSD",
+  "XAGUSD=X": "OANDA:XAGUSD",
+};
+
 async function fetchSpotPrice(spotSymbol: string): Promise<number | null> {
-  // For gold spot: use goldprice.org free endpoint (widely used, no auth required)
-  if (spotSymbol === "XAUUSD=X") {
+  const tvSymbol = TV_SPOT_SYMBOL[spotSymbol];
+  if (tvSymbol) {
     try {
-      const resp = await fetch("https://data-asg.goldprice.org/dbXRates/USD", {
-        headers: { "User-Agent": "Mozilla/5.0", "Referer": "https://goldprice.org" },
-        signal: AbortSignal.timeout(4000),
+      // TradingView scanner API — returns real-time spot price, no auth needed
+      const resp = await fetch("https://scanner.tradingview.com/global/scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Origin": "https://www.tradingview.com",
+          "Referer": "https://www.tradingview.com/",
+        },
+        body: JSON.stringify({ columns: ["close"], symbols: { tickers: [tvSymbol] } }),
+        signal: AbortSignal.timeout(5000),
       });
       if (resp.ok) {
         const data = await resp.json();
-        const price = data.items?.[0]?.xauPrice;
-        if (price != null && price > 1000) return price;
+        const price = data.data?.[0]?.d?.[0];
+        if (price != null && price > 0) return price;
       }
     } catch {}
   }
-  if (spotSymbol === "XAGUSD=X") {
-    try {
-      const resp = await fetch("https://data-asg.goldprice.org/dbXRates/USD", {
-        headers: { "User-Agent": "Mozilla/5.0", "Referer": "https://goldprice.org" },
-        signal: AbortSignal.timeout(4000),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const price = data.items?.[0]?.xagPrice;
-        if (price != null && price > 5) return price;
-      }
-    } catch {}
-  }
-  // Yahoo Finance v7 quote (fallback)
-  try {
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(spotSymbol)}`;
-    const resp = await fetch(url, { headers: YAHOO_HEADERS, signal: AbortSignal.timeout(4000) });
-    if (resp.ok) {
-      const data = await resp.json();
-      const price = data.quoteResponse?.result?.[0]?.regularMarketPrice;
-      if (price != null) return price;
-    }
-  } catch {}
   return null;
 }
 
@@ -132,8 +123,57 @@ router.get("/search", async (req, res) => {
   }
 });
 
+// For these symbols, fetch live quote from TradingView scanner (spot price, not futures)
+const TV_SPOT_QUOTE: Record<string, { tvSym: string; name: string }> = {
+  XAUUSD: { tvSym: "OANDA:XAUUSD", name: "Gold Spot (XAU/USD)" },
+  XAGUSD: { tvSym: "OANDA:XAGUSD", name: "Silver Spot (XAG/USD)" },
+};
+
 router.get("/quote/:symbol", async (req, res) => {
   try {
+    const rawUpper = req.params.symbol.toUpperCase();
+    const tvSpot = TV_SPOT_QUOTE[rawUpper];
+
+    // Fetch spot price from TradingView for gold/silver
+    if (tvSpot) {
+      try {
+        const tvResp = await fetch("https://scanner.tradingview.com/global/scan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Origin": "https://www.tradingview.com",
+            "Referer": "https://www.tradingview.com/",
+          },
+          body: JSON.stringify({
+            columns: ["close", "change_abs", "open", "high", "low", "volume"],
+            symbols: { tickers: [tvSpot.tvSym] },
+          }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (tvResp.ok) {
+          const tvData = await tvResp.json();
+          const d = tvData.data?.[0]?.d;
+          if (d && d[0] != null) {
+            const [price, changeAbs, open, high, low, volume] = d;
+            const prevClose = price - (changeAbs ?? 0);
+            return res.json({
+              symbol: tvSpot.tvSym,
+              price,
+              prevClose,
+              change: changeAbs ?? null,
+              changePercent: prevClose > 0 ? ((changeAbs ?? 0) / prevClose) * 100 : null,
+              lastBar: { timestamp: Date.now(), open, high, low, close: price, volume: volume ?? 0 },
+              currency: "USD",
+              marketState: "REGULAR",
+              name: tvSpot.name,
+            });
+          }
+        }
+      } catch {}
+      // fall through to Yahoo Finance if TradingView fails
+    }
+
     const yahooSymbol = resolveSymbol(req.params.symbol);
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=1d&interval=1m&includePrePost=false`;
     const resp = await fetch(url, {
