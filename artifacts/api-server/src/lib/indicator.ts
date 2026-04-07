@@ -279,7 +279,7 @@ export function computeSignals(bars: OHLCBar[], params?: {
   for (let i = 3; i < bars.length; i++) {
     if (isNaN(drsi[i]) || isNaN(drsi[i - 1]) || isNaN(signalLine[i]) || isNaN(signalLine[i - 1])) continue;
 
-    if (i - lastSignalBar < 5) continue;
+    if (i - lastSignalBar < 3) continue;
 
     const crossSignalUp = drsi[i - 1] <= signalLine[i - 1] && drsi[i] > signalLine[i];
     const crossSignalDw = drsi[i - 1] >= signalLine[i - 1] && drsi[i] < signalLine[i];
@@ -291,73 +291,127 @@ export function computeSignals(bars: OHLCBar[], params?: {
 
     if (!goLong && !goShort) continue;
 
-    let confidence = 50;
+    let score = 0;
     let confirmations = 0;
 
-    if (!isNaN(ema20[i]) && !isNaN(ema50[i])) {
-      if (goLong && closes[i] > ema20[i]) { confidence += 5; confirmations++; }
-      if (goLong && ema20[i] > ema50[i]) { confidence += 5; confirmations++; }
-      if (goShort && closes[i] < ema20[i]) { confidence += 5; confirmations++; }
-      if (goShort && ema20[i] < ema50[i]) { confidence += 5; confirmations++; }
+    const ema9v = ema9[i];
+    const ema20v = ema20[i];
+    const ema50v = ema50[i];
+    const ema200v = ema200[i];
+    const rsiV = rsi14[i];
+    const price = closes[i];
+
+    if (!isNaN(ema9v) && !isNaN(ema20v)) {
+      if (goLong && price > ema9v && price > ema20v) { score += 8; confirmations++; }
+      if (goShort && price < ema9v && price < ema20v) { score += 8; confirmations++; }
+      if (goLong && ema9v > ema20v) { score += 6; confirmations++; }
+      if (goShort && ema9v < ema20v) { score += 6; confirmations++; }
     }
 
-    if (!isNaN(ema200[i])) {
-      if (goLong && closes[i] > ema200[i]) { confidence += 5; confirmations++; }
-      if (goShort && closes[i] < ema200[i]) { confidence += 5; confirmations++; }
+    if (!isNaN(ema20v) && !isNaN(ema50v)) {
+      if (goLong && ema20v > ema50v) { score += 7; confirmations++; }
+      if (goShort && ema20v < ema50v) { score += 7; confirmations++; }
     }
 
-    if (!isNaN(rsi14[i])) {
-      if (goLong && rsi14[i] < 30) { confidence += 10; confirmations++; }
-      else if (goLong && rsi14[i] < 40) { confidence += 5; confirmations++; }
-      if (goShort && rsi14[i] > 70) { confidence += 10; confirmations++; }
-      else if (goShort && rsi14[i] > 60) { confidence += 5; confirmations++; }
-      if (goLong && rsi14[i] > 70) { confidence -= 10; }
-      if (goShort && rsi14[i] < 30) { confidence -= 10; }
+    if (!isNaN(ema200v)) {
+      if (goLong && price > ema200v) { score += 9; confirmations++; }
+      else if (goLong && price < ema200v) { score -= 8; }
+      if (goShort && price < ema200v) { score += 9; confirmations++; }
+      else if (goShort && price > ema200v) { score -= 8; }
+    }
+
+    if (!isNaN(rsiV)) {
+      if (goLong && rsiV <= 25) { score += 18; confirmations += 2; }
+      else if (goLong && rsiV <= 35) { score += 12; confirmations++; }
+      else if (goLong && rsiV <= 45) { score += 6; confirmations++; }
+      else if (goLong && rsiV >= 65) { score -= 8; }
+      else if (goLong && rsiV >= 75) { score -= 15; }
+
+      if (goShort && rsiV >= 75) { score += 18; confirmations += 2; }
+      else if (goShort && rsiV >= 65) { score += 12; confirmations++; }
+      else if (goShort && rsiV >= 55) { score += 6; confirmations++; }
+      else if (goShort && rsiV <= 35) { score -= 8; }
+      else if (goShort && rsiV <= 25) { score -= 15; }
     }
 
     if (!isNaN(macdHist[i]) && !isNaN(macdHist[i - 1])) {
-      if (goLong && macdHist[i] > macdHist[i - 1] && macdHist[i] > 0) { confidence += 8; confirmations++; }
-      if (goShort && macdHist[i] < macdHist[i - 1] && macdHist[i] < 0) { confidence += 8; confirmations++; }
-      if (goLong && macdHist[i] < 0 && macdHist[i] > macdHist[i - 1]) { confidence += 4; confirmations++; }
-      if (goShort && macdHist[i] > 0 && macdHist[i] < macdHist[i - 1]) { confidence += 4; confirmations++; }
+      const histTurning = goLong ? (macdHist[i] > macdHist[i - 1]) : (macdHist[i] < macdHist[i - 1]);
+      const histAligned = goLong ? macdHist[i] > 0 : macdHist[i] < 0;
+      const histCrossing = goLong ? (macdHist[i - 1] < 0 && macdHist[i] > 0) : (macdHist[i - 1] > 0 && macdHist[i] < 0);
+
+      if (histCrossing) { score += 14; confirmations += 2; }
+      else if (histTurning && histAligned) { score += 9; confirmations++; }
+      else if (histTurning) { score += 5; confirmations++; }
+      else if (!histTurning && histAligned) { score -= 4; }
     }
 
     if (!isNaN(bbLower[i]) && !isNaN(bbUpper[i])) {
-      if (goLong && closes[i] <= bbLower[i] * 1.002) { confidence += 7; confirmations++; }
-      if (goShort && closes[i] >= bbUpper[i] * 0.998) { confidence += 7; confirmations++; }
+      const bbRange = bbUpper[i] - bbLower[i];
+      if (goLong && closes[i] <= bbLower[i] * 1.001) { score += 12; confirmations += 2; }
+      else if (goLong && closes[i] <= bbLower[i] + bbRange * 0.15) { score += 7; confirmations++; }
+      if (goShort && closes[i] >= bbUpper[i] * 0.999) { score += 12; confirmations += 2; }
+      else if (goShort && closes[i] >= bbUpper[i] - bbRange * 0.15) { score += 7; confirmations++; }
     }
 
-    if (!isNaN(vol20[i]) && bars[i].volume > vol20[i] * 1.3) {
-      confidence += 5;
-      confirmations++;
+    if (!isNaN(vol20[i]) && bars[i].volume > 0 && vol20[i] > 0) {
+      const volRatio = bars[i].volume / vol20[i];
+      if (volRatio >= 2.0) { score += 10; confirmations += 2; }
+      else if (volRatio >= 1.5) { score += 7; confirmations++; }
+      else if (volRatio >= 1.2) { score += 4; confirmations++; }
+      else if (volRatio < 0.5) { score -= 5; }
     }
 
-    if (Math.abs(drsi[i]) > 1.5) { confidence += 5; confirmations++; }
-    if (Math.abs(drsi[i] - signalLine[i]) > 0.8) { confidence += 3; }
+    const drsiMag = Math.abs(drsi[i]);
+    const separation = Math.abs(drsi[i] - signalLine[i]);
+    if (drsiMag > 3.0) { score += 10; confirmations++; }
+    else if (drsiMag > 2.0) { score += 7; confirmations++; }
+    else if (drsiMag > 1.0) { score += 4; }
+    if (separation > 1.5) { score += 6; confirmations++; }
+    else if (separation > 0.8) { score += 3; }
 
     if (i >= 3) {
-      const recentBars = bars.slice(Math.max(0, i - 3), i + 1);
+      const recentBars = bars.slice(Math.max(0, i - 4), i + 1);
       if (goLong) {
         const hasHammer = recentBars.some(b => {
           const body = Math.abs(b.close - b.open);
           const lowerWick = Math.min(b.open, b.close) - b.low;
-          return lowerWick > body * 2 && body > 0;
+          return lowerWick > body * 2.5 && body > 0;
         });
-        if (hasHammer) { confidence += 5; confirmations++; }
+        const hasBullEngulf = i >= 1 &&
+          bars[i - 1].close < bars[i - 1].open &&
+          bars[i].close > bars[i].open &&
+          bars[i].close > bars[i - 1].open &&
+          bars[i].open < bars[i - 1].close;
+        if (hasBullEngulf) { score += 12; confirmations += 2; }
+        else if (hasHammer) { score += 7; confirmations++; }
       }
       if (goShort) {
         const hasShootingStar = recentBars.some(b => {
           const body = Math.abs(b.close - b.open);
           const upperWick = b.high - Math.max(b.open, b.close);
-          return upperWick > body * 2 && body > 0;
+          return upperWick > body * 2.5 && body > 0;
         });
-        if (hasShootingStar) { confidence += 5; confirmations++; }
+        const hasBearEngulf = i >= 1 &&
+          bars[i - 1].close > bars[i - 1].open &&
+          bars[i].close < bars[i].open &&
+          bars[i].close < bars[i - 1].open &&
+          bars[i].open > bars[i - 1].close;
+        if (hasBearEngulf) { score += 12; confirmations += 2; }
+        else if (hasShootingStar) { score += 7; confirmations++; }
       }
     }
 
-    confidence = Math.min(98, Math.max(40, confidence));
+    if (i >= 10) {
+      const priorHigh = Math.max(...bars.slice(i - 10, i).map(b => b.high));
+      const priorLow = Math.min(...bars.slice(i - 10, i).map(b => b.low));
+      const range10 = priorHigh - priorLow;
+      if (goLong && bars[i].low <= priorLow * 1.001 && range10 > 0) { score += 8; confirmations++; }
+      if (goShort && bars[i].high >= priorHigh * 0.999 && range10 > 0) { score += 8; confirmations++; }
+    }
 
-    if (confidence < 65 || confirmations < 3) continue;
+    const confidence = Math.min(96, Math.max(45, Math.round(45 + score * 0.7)));
+
+    if (confidence < 58 || confirmations < 2) continue;
 
     const atrVal = !isNaN(atr[i]) ? atr[i] : (bars[i].high - bars[i].low);
 
