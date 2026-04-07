@@ -86,7 +86,7 @@ const TV_SYMBOL_MAP: Record<string, string> = {
   ETHUSD: "COINBASE:ETHUSD",
   SOLUSD: "COINBASE:SOLUSD",
   BNBUSD: "BINANCE:BNBUSDT",
-  NIFTY50: "NSE:NIFTY",
+  NIFTY50: "NSE:NIFTY50",
   SENSEX: "BSE:SENSEX",
   BANKNIFTY: "NSE:BANKNIFTY",
   SPX: "SP:SPX",
@@ -105,7 +105,7 @@ function toTVSymbol(symbol: string): string {
   const upper = symbol.toUpperCase();
   if (TV_SYMBOL_MAP[upper]) return TV_SYMBOL_MAP[upper];
   if (symbol === "^GSPC") return "SP:SPX";
-  if (symbol === "^NSEI") return "NSE:NIFTY";
+  if (symbol === "^NSEI") return "NSE:NIFTY50";
   if (symbol === "^BSESN") return "BSE:SENSEX";
   if (symbol.startsWith("^")) return symbol.slice(1);
   if (symbol.endsWith("=X")) return `FX:${symbol.replace("=X", "")}`;
@@ -208,14 +208,15 @@ export function TradingChart() {
         locale: "en",
         timezone: "Asia/Kolkata",
         autosize: true,
-        hide_top_toolbar: true,
+        hide_top_toolbar: false,
         hide_legend: false,
-        hide_side_toolbar: true,
+        hide_side_toolbar: false,
         allow_symbol_change: false,
         enable_publishing: false,
         save_image: false,
         toolbar_bg: "#F0F3FA",
         withdateranges: false,
+        studies: ["RSI@tv-basicstudies", "MAExp@tv-basicstudies", "Volume@tv-basicstudies"],
       });
     });
 
@@ -467,30 +468,58 @@ export function TradingChart() {
         <div ref={tvContainerRef} className="w-full h-full" />
 
         {isPremium && recentSignals.length > 0 && (
-          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 max-w-[170px]">
-            {recentSignals.map((s, idx) => (
-              <div
-                key={`${s.timestamp}-${idx}`}
-                className={`flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-semibold shadow-sm border backdrop-blur-md ${
-                  s.type === "buy"
-                    ? "bg-emerald-50/95 border-emerald-200/80 text-emerald-700"
-                    : "bg-red-50/95 border-red-200/80 text-red-700"
-                }`}
-              >
-                {s.type === "buy" ? (
-                  <TrendingUp className="w-3 h-3 shrink-0" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 shrink-0" />
-                )}
-                <span>{s.type.toUpperCase()}</span>
-                <span className={`font-bold ${
-                  s.confidence >= 85 ? "text-emerald-600" :
-                  s.confidence >= 75 ? "text-amber-600" :
-                  "opacity-80"
-                }`}>{s.confidence}%</span>
-                <span className="opacity-60 text-[9px] font-mono shrink-0">{formatSignalTime(s.timestamp)}</span>
-              </div>
-            ))}
+          <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5 w-[190px]">
+            <div className="text-[8px] font-bold uppercase tracking-widest text-[#9598A1] px-1 mb-0.5">
+              Recent Signals (IST)
+            </div>
+            {recentSignals.map((s, idx) => {
+              const confColor =
+                s.confidence >= 85 ? "text-emerald-600" :
+                s.confidence >= 72 ? "text-amber-600" :
+                "text-slate-500";
+              const isBuy = s.type === "buy";
+              return (
+                <div
+                  key={`${s.timestamp}-${idx}`}
+                  className={`rounded-xl border shadow-md backdrop-blur-md text-[10px] overflow-hidden ${
+                    isBuy
+                      ? "bg-emerald-50/97 border-emerald-300/70"
+                      : "bg-red-50/97 border-red-300/70"
+                  }`}
+                >
+                  <div className={`flex items-center justify-between px-2.5 py-1.5 border-b ${
+                    isBuy ? "bg-emerald-100/60 border-emerald-200/60" : "bg-red-100/60 border-red-200/60"
+                  }`}>
+                    <div className={`flex items-center gap-1 font-bold text-[11px] ${isBuy ? "text-emerald-700" : "text-red-700"}`}>
+                      {isBuy ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                      {isBuy ? "BUY Signal" : "SELL Signal"}
+                    </div>
+                    <span className={`font-bold text-[11px] ${confColor}`}>{s.confidence}%</span>
+                  </div>
+                  <div className="px-2.5 py-1.5 flex flex-col gap-0.5">
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-[#9598A1]">Entry</span>
+                      <span className="font-mono font-semibold text-[#131722]">{s.price.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-[#EF5350]">Stop Loss</span>
+                      <span className="font-mono font-semibold text-[#EF5350]">{s.stopLoss.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-[#26A69A]">Take Profit</span>
+                      <span className="font-mono font-semibold text-[#26A69A]">{s.takeProfit.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-[9px] pt-0.5 border-t border-[#E0E3EB]/50 mt-0.5">
+                      <span className="text-[#FF9800] font-semibold">RR 1:{s.riskReward.toFixed(1)}</span>
+                      <span className="text-[#9598A1] font-mono">{formatSignalTime(s.timestamp)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="text-[8px] text-[#9598A1] px-1 leading-tight">
+              Entry = suggested price · SL = stop loss · TP = take profit · RR = risk:reward ratio
+            </div>
           </div>
         )}
 
