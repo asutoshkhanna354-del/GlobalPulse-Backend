@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   createChart, type IChartApi, type ISeriesApi,
   ColorType, CrosshairMode, LineStyle,
@@ -186,8 +186,12 @@ export function TradingChart() {
   const [liveChange,  setLiveChange]  = useState<number|null>(null);
   const [livePct,     setLivePct]     = useState<number|null>(null);
   const [liveTicking, setLiveTicking] = useState(false);
-  const liveRef  = useRef<ReturnType<typeof setInterval>|null>(null);
-  const sigRef   = useRef<ReturnType<typeof setInterval>|null>(null);
+  const liveRef       = useRef<ReturnType<typeof setInterval>|null>(null);
+  const sigRef        = useRef<ReturnType<typeof setInterval>|null>(null);
+  // Animation refs — decoupled from API polling
+  const targetPriceRef  = useRef<number|null>(null);  // latest price from API
+  const displayPriceRef = useRef<number|null>(null);  // current interpolated price shown on chart
+  const animIntervalRef = useRef<ReturnType<typeof setInterval>|null>(null);
 
   // Indicators
   const [showEMA,    setShowEMA]    = useState(false);
@@ -246,7 +250,7 @@ export function TradingChart() {
     return()=>ctrl.abort();
   },[symbol,rangeIdx,refreshKey]);
 
-  // ── Live tick (500ms for real-time feel) ───────────────────────────────────
+  // ── Live tick: poll API every 500ms, update target price only ─────────────
   useEffect(()=>{
     if(!data?.bars?.length){setLiveTicking(false);return;}
     setLiveTicking(true);
@@ -258,22 +262,79 @@ export function TradingChart() {
         if(!r.ok||disposed)return;
         const q:QuoteData=await r.json();
         if(q.price==null||disposed)return;
+        // Update state for header display
         setLivePrice(q.price);setLiveChange(q.change);setLivePct(q.changePercent);
         if(q.currency)setCurrency(q.currency);
-        if(candleRef.current&&lastBarRef.current&&!chartDisposed.current){
-          try{
-            const lb=lastBarRef.current;
-            const u={time:lb.time as any,open:lb.open,high:Math.max(lb.high,q.price!),low:Math.min(lb.low,q.price!),close:q.price!};
-            lastBarRef.current={...u};
-            candleRef.current.update(u);
-          }catch{}
+        // Update the true OHLC high/low on lastBar (for accurate bar bounds)
+        if(lastBarRef.current){
+          lastBarRef.current={
+            ...lastBarRef.current,
+            high:Math.max(lastBarRef.current.high,q.price),
+            low:Math.min(lastBarRef.current.low,q.price),
+            close:q.price,
+          };
         }
+        // Set the target the animation loop will smoothly interpolate toward
+        targetPriceRef.current=q.price;
+        // Seed display price on first tick so animation starts from real price
+        if(displayPriceRef.current===null) displayPriceRef.current=q.price;
       }catch{}
     };
     tick();
     liveRef.current=setInterval(tick,500);
-    return()=>{disposed=true;if(liveRef.current)clearInterval(liveRef.current);};
+    return()=>{
+      disposed=true;
+      if(liveRef.current)clearInterval(liveRef.current);
+      targetPriceRef.current=null;
+      displayPriceRef.current=null;
+    };
   },[symbol,data]);
+
+  // ── 10ms animation loop — smooth 60-100fps candle interpolation ────────────
+  useEffect(()=>{
+    if(!data?.bars?.length)return;
+    let frameCount=0;
+    const loop=()=>{
+      const target=targetPriceRef.current;
+      const lb=lastBarRef.current;
+      const series=candleRef.current;
+      if(target===null||lb===null||series===null||chartDisposed.current)return;
+
+      let display=displayPriceRef.current??target;
+      const diff=target-display;
+
+      // Lerp factor: 8% per 10ms frame → reaches 99.5% of target in ~570ms
+      // This perfectly tracks a 500ms API poll with a smooth glide
+      const k=0.08;
+      if(Math.abs(diff)>0.00001){
+        display=display+diff*k;
+        displayPriceRef.current=display;
+      } else {
+        display=target;
+        displayPriceRef.current=target;
+      }
+
+      // Update the candle with interpolated close, preserving real high/low from lastBarRef
+      try{
+        series.update({
+          time:lb.time as any,
+          open:lb.open,
+          high:Math.max(lb.high,display),
+          low:Math.min(lb.low,display),
+          close:display,
+        });
+      }catch{}
+
+      // Every 6 frames (~60ms) nudge the header price display too for silky UI
+      frameCount++;
+      if(frameCount%6===0) setLivePrice(Math.round(display*10000)/10000);
+    };
+
+    animIntervalRef.current=setInterval(loop,10); // ~100fps
+    return()=>{
+      if(animIntervalRef.current)clearInterval(animIntervalRef.current);
+    };
+  },[data,symbol]);
 
   // ── Signal refresh (2min) ──────────────────────────────────────────────────
   useEffect(()=>{
