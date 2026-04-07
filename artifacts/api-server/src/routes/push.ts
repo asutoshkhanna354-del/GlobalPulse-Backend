@@ -6,7 +6,7 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-router.get("/push/vapid-public-key", (_req, res) => {
+router.get("/vapid-public-key", (_req, res) => {
   const key = getVapidPublicKey();
   if (!key) {
     res.status(503).json({ error: "Push notifications not configured" });
@@ -15,7 +15,7 @@ router.get("/push/vapid-public-key", (_req, res) => {
   res.json({ publicKey: key });
 });
 
-router.post("/push/subscribe", async (req, res) => {
+router.post("/subscribe", async (req, res) => {
   try {
     const { subscription, symbol, symbolLabel, browserFingerprint } = req.body;
 
@@ -73,7 +73,7 @@ router.post("/push/subscribe", async (req, res) => {
   }
 });
 
-router.delete("/push/unsubscribe", async (req, res) => {
+router.delete("/unsubscribe", async (req, res) => {
   try {
     const { symbol, browserFingerprint } = req.body;
 
@@ -98,7 +98,7 @@ router.delete("/push/unsubscribe", async (req, res) => {
   }
 });
 
-router.get("/push/subscriptions", async (req, res) => {
+router.get("/subscriptions", async (req, res) => {
   try {
     const { fingerprint } = req.query;
 

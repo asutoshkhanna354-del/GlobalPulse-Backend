@@ -25,6 +25,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Purpose**: Professional TradingView-style light-themed financial terminal for traders and investors tracking global markets, economic indicators, geopolitical events, news, social intelligence, USD signals, Indian IPOs, and premium pro indicator signals
 - **Theme**: Light theme with colored animated glow blobs, pastel badge colors (bg-*-50, text-*-600/700, border-*-200), semantic CSS variables (text-foreground, bg-card, bg-muted, etc.)
 - **Self-hosting**: See DEPLOY.md for self-hosting deployment guide (Node.js + PostgreSQL + Nginx)
+- **Push Notifications**: PRO-only browser push notifications for chart signals. Bell icon in TradingChart header; NotificationModal accessible from sidebar. Service worker at `public/sw.js`. Backend signal monitor runs every 2 minutes. `push_subscriptions` DB table. VAPID keys stored as env vars.
 
 ### API Server
 - **Path**: `artifacts/api-server/`
