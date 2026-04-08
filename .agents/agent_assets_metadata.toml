@@ -30,3 +30,9 @@ id = "dnj69sWPOf5_3Cl8A-SgR"
 uri = "file://globalpulse-export.tar.gz"
 type = "unspecified"
 title = "GlobalPulse Intelligence — Full Export (Netlify + Render ready)"
+
+[[outputs]]
+id = "Sgxl-eAsoWOjL47X9NA17"
+uri = "file://globalpulse-deploy.zip"
+type = "unspecified"
+title = "GlobalPulse Deploy Package"
