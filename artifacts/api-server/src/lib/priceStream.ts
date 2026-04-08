@@ -1,19 +1,29 @@
 /**
  * Real-time price streaming via WebSocket
  *
- * - Finnhub WS  → international stocks, crypto, forex
- * - Twelve Data WS → Indian NSE/BSE stocks
+ * Feed hierarchy (fastest → slowest):
+ * - Binance direct WS → crypto (BTC, ETH, SOL, BNB, XRP …) — raw exchange feed
+ * - NSE unofficial API → Indian equities + indices @ 300ms — direct
+ * - Finnhub WS  → US stocks, forex, US indices
+ * - Twelve Data WS → Indian NSE/BSE WS backup
+ * - TradingView scanner → commodities, gold, global indices @ 60s
  *
- * Both feeds are normalised to { symbol, price, timestamp }
- * and broadcast to all connected frontend clients via a local WS server
- * at ws://…/ws/prices
+ * All feeds normalise to { symbol, price, timestamp, source }
+ * and broadcast to frontend clients via ws://…/ws/prices
  */
 
 import { WebSocketServer, WebSocket } from "ws";
 import type { IncomingMessage } from "http";
 import type { Server } from "http";
 import { startNseStream, setNseCallbacks } from "./nseStream.js";
-import type { NseTick, OhlcCandle } from "./nseStream.js";
+import type { NseTick, OhlcCandle as NseCandle } from "./nseStream.js";
+import {
+  startBinanceStream,
+  setBinanceCallbacks,
+  subscribeBinanceSymbol,
+  normaliseBinanceSymbol,
+} from "./binanceStream.js";
+import type { BinanceTick, OhlcCandle as BinanceCandle } from "./binanceStream.js";
 
 // ─── Normalised tick ────────────────────────────────────────────────────────
 
@@ -21,7 +31,7 @@ export interface PriceTick {
   symbol:    string;
   price:     number;
   timestamp: number; // epoch ms
-  source:    "finnhub" | "twelvedata" | "tradingview" | "nse";
+  source:    "finnhub" | "twelvedata" | "tradingview" | "nse" | "binance";
 }
 
 // ─── In-memory last-price cache ────────────────────────────────────────────
@@ -63,13 +73,11 @@ const TWELVEDATA_SYMBOLS: Set<string> = new Set([
   "NSE:MARUTI", "NSE:SBIN",
 ]);
 
-// Everything else goes to Finnhub
-// These symbols match what we track in the market overview
+// Finnhub handles: US stocks, forex, US indices
+// Crypto is now handled by Binance direct WS (faster, no relay)
 const FINNHUB_SYMBOLS: string[] = [
   // US Indices
   "^GSPC", "^NDX", "^DJI", "^VIX",
-  // Crypto
-  "BINANCE:BTCUSDT", "BINANCE:ETHUSDT", "BINANCE:SOLUSDT", "BINANCE:BNBUSDT",
   // Forex
   "OANDA:EUR_USD", "OANDA:GBP_USD", "OANDA:USD_JPY",
   // US Stocks
@@ -77,12 +85,8 @@ const FINNHUB_SYMBOLS: string[] = [
   "JPM", "GS", "BAC",
 ];
 
-// Symbol normalisation: Finnhub crypto → our internal symbol names
+// Symbol normalisation: Finnhub → our internal symbol names
 const FINNHUB_SYMBOL_MAP: Record<string, string> = {
-  "BINANCE:BTCUSDT": "BTCUSD",
-  "BINANCE:ETHUSDT": "ETHUSD",
-  "BINANCE:SOLUSDT": "SOLUSD",
-  "BINANCE:BNBUSDT": "BNBUSD",
   "OANDA:EUR_USD":   "EURUSD",
   "OANDA:GBP_USD":   "GBPUSD",
   "OANDA:USD_JPY":   "USDJPY",
@@ -91,6 +95,13 @@ const FINNHUB_SYMBOL_MAP: Record<string, string> = {
   "^DJI":   "DJI",
   "^VIX":   "VIX",
 };
+
+// Internal symbols handled by Binance direct WS — skip if routed here
+const BINANCE_SYMBOLS = new Set([
+  "BTCUSD", "ETHUSD", "SOLUSD", "BNBUSD", "XRPUSD",
+  "ADAUSD", "DOGEUSD", "DOTUSD", "LINKUSD", "AVAXUSD",
+  "MATICUSD", "LTCUSD", "UNIUSD", "ATOMUSD",
+]);
 
 function normaliseFinnhubSymbol(raw: string): string {
   return FINNHUB_SYMBOL_MAP[raw] || raw;
@@ -221,14 +232,9 @@ export function subscribeSymbol(symbol: string) {
     }
     return;
   }
-  // Crypto → map to Binance pair
-  if (["BTCUSD","ETHUSD","SOLUSD","BNBUSD"].includes(upper)) {
-    const fhSym = upper.replace("USD", "USDT");
-    const mapped = `BINANCE:${fhSym}`;
-    if (!FINNHUB_SYMBOLS.includes(mapped)) FINNHUB_SYMBOLS.push(mapped);
-    if (finnhubWS?.readyState === WebSocket.OPEN) {
-      finnhubWS.send(JSON.stringify({ type: "subscribe", symbol: mapped }));
-    }
+  // Crypto (BTCUSD, ETHUSD, etc.) → Binance direct WS
+  if (BINANCE_SYMBOLS.has(upper) || upper.endsWith("USD") && !upper.startsWith("OANDA")) {
+    subscribeBinanceSymbol(upper);
     return;
   }
   // Everything else → Finnhub
@@ -291,7 +297,9 @@ async function pollTVFallback() {
 
 // ─── Candle broadcast ────────────────────────────────────────────────────────
 
-function broadcastCandle(candle: OhlcCandle) {
+type AnyCandle = NseCandle | BinanceCandle;
+
+function broadcastCandle(candle: AnyCandle) {
   if (!frontendWSS) return;
   const msg = JSON.stringify({ type: "candle", data: candle });
   for (const client of frontendWSS.clients) {
@@ -323,9 +331,24 @@ export function initPriceStream(httpServer: Server) {
     });
   });
 
+  // ── Binance direct WS — crypto at exchange speed (BTC, ETH, SOL …) ────────
+  setBinanceCallbacks(
+    (tick: BinanceTick) => {
+      broadcast({
+        symbol:    tick.symbol,
+        price:     tick.price,
+        timestamp: tick.timestamp,
+        source:    "binance",
+      });
+    },
+    (candle: BinanceCandle) => {
+      broadcastCandle(candle);
+    },
+  );
+  startBinanceStream();
+
   // ── NSE real-time stream (Indian markets, 300ms polling) ──────────────────
   setNseCallbacks(
-    // tick callback — normalise NseTick → PriceTick and broadcast
     (nseTick: NseTick) => {
       broadcast({
         symbol:    nseTick.symbol,
@@ -334,8 +357,7 @@ export function initPriceStream(httpServer: Server) {
         source:    "nse",
       });
     },
-    // candle callback — broadcast to all WS clients
-    (candle: OhlcCandle) => {
+    (candle: NseCandle) => {
       broadcastCandle(candle);
     },
   );
@@ -343,13 +365,13 @@ export function initPriceStream(httpServer: Server) {
     console.warn("[priceStream] NSE stream failed to start:", e.message);
   });
 
-  // Start both upstream feeds
+  // ── Finnhub — US stocks, forex, indices ──────────────────────────────────
   connectFinnhub();
   connectTwelveData();
 
-  // TradingView fallback — poll every 60s for commodities, indices, etc.
+  // ── TradingView fallback — commodities, gold, global indices @ 60s ────────
   pollTVFallback();
   setInterval(pollTVFallback, 60 * 1000);
 
-  console.info("[priceStream] Price streaming initialised");
+  console.info("[priceStream] All price streams initialised: Binance + NSE + Finnhub + TwelveData + TradingView");
 }

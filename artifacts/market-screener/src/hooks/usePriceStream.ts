@@ -17,7 +17,7 @@ export interface LivePrice {
   symbol:    string;
   price:     number;
   timestamp: number;
-  source:    "finnhub" | "twelvedata" | "tradingview" | "nse";
+  source:    "finnhub" | "twelvedata" | "tradingview" | "nse" | "binance";
 }
 
 export interface LiveCandle {
