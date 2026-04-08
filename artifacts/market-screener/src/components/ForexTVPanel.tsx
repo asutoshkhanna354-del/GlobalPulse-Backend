@@ -186,6 +186,44 @@ function SignalListItem({ signal, currency, onClick, isSelected }: {
   );
 }
 
+// ─── Next Signal Countdown ────────────────────────────────────────────────────
+function NextSignalCountdown({ lastSig, barMs }: { lastSig: Signal | null; barMs: number }) {
+  const [display, setDisplay] = useState("");
+
+  useEffect(() => {
+    if (!lastSig || !barMs) return;
+    const nextTs = lastSig.timestamp + barMs;
+
+    const tick = () => {
+      const diff = nextTs - Date.now();
+      if (diff <= 0) { setDisplay("Incoming…"); return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+      setDisplay(
+        (h > 0 ? String(h).padStart(2,"0") + ":" : "") +
+        String(m).padStart(2,"0") + ":" +
+        String(s).padStart(2,"0")
+      );
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lastSig, barMs]);
+
+  if (!lastSig || !display) return null;
+
+  return (
+    <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#EEF2FF] to-[#F8F9FC] border-b border-[#E0E3EB]">
+      <div className="flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-[#2962FF] animate-pulse"/>
+        <span className="text-[9px] text-[#9598A1] font-medium">Next signal in</span>
+      </div>
+      <span className="font-mono text-[11px] font-bold text-[#2962FF] tracking-wider">{display}</span>
+    </div>
+  );
+}
+
 // ─── ForexTVPanel ─────────────────────────────────────────────────────────────
 interface Props {
   symbol: string;
@@ -269,7 +307,7 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
       const d: IndicatorData = await res.json();
       const sigs = (d.signals ?? []).slice().reverse();
       setSignals(sigs);
-      setSelSig(sigs.length ? sigs[0] : null);
+      setSelSig(null);
     } catch { setSignals([]); } finally { setSigLoading(false); }
   }, [symbol, range.yRange, range.yInt, isPremium, baseUrl]);
 
@@ -388,6 +426,7 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
         </div>
       ) : sigView === "latest" ? (
         <div className="flex-1 overflow-y-auto">
+          <NextSignalCountdown lastSig={signals[0] ?? null} barMs={range.barMs}/>
           {latestSig && <SignalDetailCard signal={latestSig} currency={currency}/>}
           {aiAnalysis && (
             <div className="mx-3 mb-3 rounded-xl bg-[#EEF2FF] border border-[#2962FF]/20 px-3 py-2">
@@ -406,32 +445,38 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
           )}
         </div>
       ) : (
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          {selSig && (
-            <div className="border-b border-[#E0E3EB] overflow-y-auto max-h-[55%]">
-              <SignalDetailCard signal={selSig} currency={currency} onBack={() => setSelSig(null)}/>
-            </div>
-          )}
+        /* ── All signals — accordion (click row to expand inline) ── */
+        <div className="flex-1 flex flex-col min-h-0">
+          <NextSignalCountdown lastSig={signals[0] ?? null} barMs={range.barMs}/>
           <div className="flex-1 overflow-y-auto">
-            {signals.map((sig) => (
-              <SignalListItem
-                key={sig.timestamp}
-                signal={sig}
-                currency={currency}
-                isSelected={selSig?.timestamp === sig.timestamp}
-                onClick={() => setSelSig(s => s?.timestamp === sig.timestamp ? null : sig)}
-              />
-            ))}
+            {signals.map((sig) => {
+              const expanded = selSig?.timestamp === sig.timestamp;
+              return (
+                <div key={sig.timestamp} className="border-b border-[#F0F3FA]">
+                  <SignalListItem
+                    signal={sig}
+                    currency={currency}
+                    isSelected={expanded}
+                    onClick={() => setSelSig(s => s?.timestamp === sig.timestamp ? null : sig)}
+                  />
+                  {expanded && (
+                    <div className="bg-[#FAFBFF] border-t border-[#E0E3EB]">
+                      <SignalDetailCard signal={sig} currency={currency}/>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {aiAnalysis && (
+              <div className="mx-3 my-3 rounded-xl bg-[#EEF2FF] border border-[#2962FF]/20 px-3 py-2">
+                <div className="flex items-center gap-1 mb-1">
+                  <Zap className="w-3 h-3 text-[#2962FF]"/>
+                  <span className="text-[9px] font-bold text-[#2962FF]">AI Analysis</span>
+                </div>
+                <p className="text-[9px] text-[#9598A1] leading-relaxed">{aiAnalysis}</p>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-      {isPremium && !sigLoading && signals.length > 0 && sigView === "all" && aiAnalysis && (
-        <div className="border-t border-[#E0E3EB] px-3 py-2 bg-[#F8F9FC]">
-          <div className="flex items-center gap-1 mb-0.5">
-            <Zap className="w-3 h-3 text-[#2962FF]"/>
-            <span className="text-[9px] font-bold text-[#2962FF]">AI Analysis</span>
-          </div>
-          <p className="text-[9px] text-[#9598A1] leading-relaxed line-clamp-2">{aiAnalysis}</p>
         </div>
       )}
     </>
