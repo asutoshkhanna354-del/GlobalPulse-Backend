@@ -187,18 +187,24 @@ function SignalListItem({ signal, currency, onClick, isSelected }: {
 }
 
 // ─── Next Signal Countdown ────────────────────────────────────────────────────
-function NextSignalCountdown({ barMs }: { barMs: number }) {
-  const [display, setDisplay] = useState("");
+export function NextSignalCountdown({ barMs, onExpire }: { barMs: number; onExpire?: () => void }) {
+  const [display, setDisplay]     = useState("");
+  const [fetching, setFetching]   = useState(false);
+  const firedRef    = useRef(false);
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
 
   useEffect(() => {
     if (!barMs) return;
+    firedRef.current = false;
+    setFetching(false);
 
     const tick = () => {
-      const now = Date.now();
-      // next candle close = ceiling of (now / barMs) * barMs
-      const nextTs = Math.ceil(now / barMs) * barMs;
-      const diff = nextTs - now;
-      if (diff <= 0) { setDisplay("Incoming…"); return; }
+      const now    = Date.now();
+      // always count to the NEXT close, never the current moment
+      const nextTs = (Math.floor(now / barMs) + 1) * barMs;
+      const diff   = nextTs - now;
+
       const h = Math.floor(diff / 3_600_000);
       const m = Math.floor((diff % 3_600_000) / 60_000);
       const s = Math.floor((diff % 60_000) / 1_000);
@@ -207,6 +213,17 @@ function NextSignalCountdown({ barMs }: { barMs: number }) {
         String(m).padStart(2,"0") + ":" +
         String(s).padStart(2,"0")
       );
+
+      // fire once when the last second arrives
+      if (diff <= 1500 && !firedRef.current) {
+        firedRef.current = true;
+        setFetching(true);
+        setTimeout(() => {
+          onExpireRef.current?.();
+          setFetching(false);
+          firedRef.current = false;
+        }, diff + 1500); // wait until candle is actually closed + 1.5s buffer
+      }
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -216,15 +233,17 @@ function NextSignalCountdown({ barMs }: { barMs: number }) {
   if (!display) return null;
 
   return (
-    <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#EEF2FF] to-[#F8F9FC] border-b border-[#E0E3EB]">
+    <div className={`flex items-center justify-between px-3 py-2 border-b border-[#E0E3EB] transition-colors ${fetching ? "bg-gradient-to-r from-emerald-50 to-[#F8F9FC]" : "bg-gradient-to-r from-[#EEF2FF] to-[#F8F9FC]"}`}>
       <div className="flex flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#2962FF] animate-pulse"/>
-          <span className="text-[9px] text-[#9598A1] font-medium">Next signal in</span>
+          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${fetching ? "bg-emerald-500" : "bg-[#2962FF]"}`}/>
+          <span className="text-[9px] text-[#9598A1] font-medium">
+            {fetching ? "Fetching new signal…" : "Next signal in"}
+          </span>
         </div>
-        <span className="text-[8px] text-[#C9CBD4] pl-3">computed at candle close</span>
+        {!fetching && <span className="text-[8px] text-[#C9CBD4] pl-3">computed at candle close</span>}
       </div>
-      <span className="font-mono text-[12px] font-bold text-[#2962FF] tracking-wider">{display}</span>
+      <span className={`font-mono text-[12px] font-bold tracking-wider ${fetching ? "text-emerald-600" : "text-[#2962FF]"}`}>{display}</span>
     </div>
   );
 }
@@ -320,6 +339,12 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
   useEffect(() => {
     if (panelOpen && !hasFetchedRef.current) fetchSignals();
   }, [panelOpen, fetchSignals]);
+
+  // Called by countdown when candle closes — auto-refresh signals
+  const handleCountdownExpire = useCallback(() => {
+    hasFetchedRef.current = false;
+    fetchSignals();
+  }, [fetchSignals]);
 
   // Reset fetch flag when symbol or range changes so re-open refetches
   useEffect(() => {
@@ -431,7 +456,7 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
         </div>
       ) : sigView === "latest" ? (
         <div className="flex-1 overflow-y-auto">
-          <NextSignalCountdown barMs={range.barMs}/>
+          <NextSignalCountdown barMs={range.barMs} onExpire={handleCountdownExpire}/>
           {latestSig && <SignalDetailCard signal={latestSig} currency={currency}/>}
           {aiAnalysis && (
             <div className="mx-3 mb-3 rounded-xl bg-[#EEF2FF] border border-[#2962FF]/20 px-3 py-2">
@@ -452,7 +477,7 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
       ) : (
         /* ── All signals — accordion (click row to expand inline) ── */
         <div className="flex-1 flex flex-col min-h-0">
-          <NextSignalCountdown barMs={range.barMs}/>
+          <NextSignalCountdown barMs={range.barMs} onExpire={handleCountdownExpire}/>
           <div className="flex-1 overflow-y-auto">
             {signals.map((sig) => {
               const expanded = selSig?.timestamp === sig.timestamp;

@@ -13,7 +13,7 @@ import {
   Bell, BellOff, Loader2, ExternalLink, Minus, TrendingUp as TLIcon,
   Square, MousePointer, Trash2,
 } from "lucide-react";
-import { ForexTVPanel, FOREX_SYMBOLS } from "./ForexTVPanel";
+import { ForexTVPanel, FOREX_SYMBOLS, NextSignalCountdown } from "./ForexTVPanel";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OHLCBar { timestamp: number; open: number; high: number; low: number; close: number; volume: number; }
@@ -928,6 +928,14 @@ export function TradingChart() {
 
             {/* RSI pane */}
             {showRSI&&<div ref={rsiContainerRef} className="border-t border-[#E0E3EB] shrink-0" style={{height:"120px"}}/>}
+
+            {/* Next signal countdown */}
+            {!loading&&data&&(
+              <NextSignalCountdown
+                barMs={RANGES[rangeIdx].barMs}
+                onExpire={()=>setRefreshKey(k=>k+1)}
+              />
+            )}
 
             {/* Signal bar (non-forex only) */}
             {isPremium&&lastSignal&&!loading&&(
