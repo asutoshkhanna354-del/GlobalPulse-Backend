@@ -821,7 +821,12 @@ export function TradingChart() {
             <button
               onClick={()=>setChartMode("globalpulse")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="globalpulse"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
-              <span className="text-[11px]">🔲</span>
+              <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                <circle cx="14" cy="14" r="11" stroke="#26A69A" strokeWidth="2"/>
+                <ellipse cx="14" cy="14" rx="5.5" ry="11" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
+                <line x1="3" y1="14" x2="25" y2="14" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
+                <path d="M8 14.5l1.5-4 2.5 7 2.5-10L17 15l1.5-3.5 1.5 2.5" stroke="#26A69A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               GlobalPulse Chart
             </button>
             {/* TradingView Chart */}
@@ -833,14 +838,26 @@ export function TradingChart() {
                   indianToastTimer.current=setTimeout(()=>setIndianToast(false),3500);
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#C9CBD4] cursor-not-allowed opacity-60 select-none">
-                <span className="text-[11px]">📊</span>
+                <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <rect width="28" height="28" rx="5" fill="#C9CBD4"/>
+                  <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.7"/>
+                  <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.7"/>
+                  <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.7"/>
+                </svg>
                 TradingView Chart
               </button>
             ) : (
               <button
                 onClick={()=>setChartMode("tradingview")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="tradingview"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
-                <span className="text-[11px]">📊</span>
+                <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <rect width="28" height="28" rx="5" fill="#2962FF"/>
+                  <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.8"/>
+                  <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.8"/>
+                  <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.8"/>
+                </svg>
                 TradingView Chart
               </button>
             )}
