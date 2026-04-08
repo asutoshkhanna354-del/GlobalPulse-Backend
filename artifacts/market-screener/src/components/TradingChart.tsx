@@ -632,7 +632,7 @@ export function TradingChart() {
       candleRef.current=null;
       setChartInstance(null);
     };
-  },[data,isPremium,showEMA,showMA,showVol]);
+  },[data,isPremium,showEMA,showMA,showVol,chartMode]);
 
   // ── RSI pane (separate chart, synced) ─────────────────────────────────────
   useEffect(()=>{
@@ -790,13 +790,20 @@ export function TradingChart() {
             ))}
           </div>
           {chartMode==="globalpulse" && (
-            <div className="flex gap-1 ml-auto">
-              {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
-                <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
-                  className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
-                  {lbl}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] text-[#9598A1]">Powered by</span>
+                <span className="text-[9px] font-bold text-[#26A69A]">GlobalPulse</span>
+              </div>
+              <div className="w-px h-3 bg-[#E0E3EB]"/>
+              <div className="flex gap-1">
+                {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
+                  <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
+                    className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {chartMode==="tradingview" && (
