@@ -187,15 +187,17 @@ function SignalListItem({ signal, currency, onClick, isSelected }: {
 }
 
 // ─── Next Signal Countdown ────────────────────────────────────────────────────
-function NextSignalCountdown({ lastSig, barMs }: { lastSig: Signal | null; barMs: number }) {
+function NextSignalCountdown({ barMs }: { barMs: number }) {
   const [display, setDisplay] = useState("");
 
   useEffect(() => {
-    if (!lastSig || !barMs) return;
-    const nextTs = lastSig.timestamp + barMs;
+    if (!barMs) return;
 
     const tick = () => {
-      const diff = nextTs - Date.now();
+      const now = Date.now();
+      // next candle close = ceiling of (now / barMs) * barMs
+      const nextTs = Math.ceil(now / barMs) * barMs;
+      const diff = nextTs - now;
       if (diff <= 0) { setDisplay("Incoming…"); return; }
       const h = Math.floor(diff / 3_600_000);
       const m = Math.floor((diff % 3_600_000) / 60_000);
@@ -209,9 +211,9 @@ function NextSignalCountdown({ lastSig, barMs }: { lastSig: Signal | null; barMs
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [lastSig, barMs]);
+  }, [barMs]);
 
-  if (!lastSig || !display) return null;
+  if (!display) return null;
 
   return (
     <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#EEF2FF] to-[#F8F9FC] border-b border-[#E0E3EB]">
@@ -426,7 +428,7 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
         </div>
       ) : sigView === "latest" ? (
         <div className="flex-1 overflow-y-auto">
-          <NextSignalCountdown lastSig={signals[0] ?? null} barMs={range.barMs}/>
+          <NextSignalCountdown barMs={range.barMs}/>
           {latestSig && <SignalDetailCard signal={latestSig} currency={currency}/>}
           {aiAnalysis && (
             <div className="mx-3 mb-3 rounded-xl bg-[#EEF2FF] border border-[#2962FF]/20 px-3 py-2">
@@ -447,7 +449,7 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
       ) : (
         /* ── All signals — accordion (click row to expand inline) ── */
         <div className="flex-1 flex flex-col min-h-0">
-          <NextSignalCountdown lastSig={signals[0] ?? null} barMs={range.barMs}/>
+          <NextSignalCountdown barMs={range.barMs}/>
           <div className="flex-1 overflow-y-auto">
             {signals.map((sig) => {
               const expanded = selSig?.timestamp === sig.timestamp;
