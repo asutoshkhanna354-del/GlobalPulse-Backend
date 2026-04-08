@@ -39,7 +39,7 @@ const YAHOO_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 // TradingView symbol for each futures-spot pair
 const TV_SPOT_SYMBOL: Record<string, string> = {
   "XAUUSD=X": "OANDA:XAUUSD",
-  "XAGUSD=X": "OANDA:XAGUSD",
+  "XAGUSD=X": "TVC:SILVER",   // OANDA:XAGUSD blocked on scanner
 };
 
 async function fetchSpotPrice(spotSymbol: string): Promise<number | null> {
@@ -129,7 +129,7 @@ type TVEntry = { tvSym: string; name: string; currency: string };
 const TV_QUOTE_MAP: Record<string, TVEntry> = {
   // Gold / Silver (spot via OANDA — more accurate than futures)
   XAUUSD: { tvSym: "OANDA:XAUUSD",    name: "Gold Spot (XAU/USD)",     currency: "USD" },
-  XAGUSD: { tvSym: "OANDA:XAGUSD",    name: "Silver Spot (XAG/USD)",   currency: "USD" },
+  XAGUSD: { tvSym: "TVC:SILVER",       name: "Silver Spot (XAG/USD)",   currency: "USD" },
   // Commodities (futures continuations)
   USOIL:  { tvSym: "NYMEX:CL1!",      name: "Crude Oil WTI",           currency: "USD" },
   BRENT:  { tvSym: "ICEEUR:BRN1!",    name: "Brent Crude Oil",         currency: "USD" },

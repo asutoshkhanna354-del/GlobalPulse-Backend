@@ -2,79 +2,123 @@ import { db } from "@workspace/db";
 import { marketAssetsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-const HEADERS = {
+// ─── TradingView scanner symbol map (non-Indian international symbols) ────────
+// Confirmed working via scanner.tradingview.com/global/scan
+const TV_SYMBOL_MAP: Record<string, string> = {
+  // US Indices
+  SPX:    "SP:SPX",
+  NDX:    "NASDAQ:NDX",
+  DJI:    "DJ:DJI",
+  VIX:    "CBOE:VIX",
+  DXY:    "TVC:DXY",
+  // Global Indices
+  DAX:    "XETR:DAX",
+  FTSE:   "TVC:UKX",
+  CAC40:  "EURONEXT:PX1",
+  N225:   "TVC:NI225",
+  SSEC:   "SSE:000001",
+  HSI:    "TVC:HSI",
+  // Commodities (spot / continuous futures)
+  XAUUSD: "OANDA:XAUUSD",
+  XAGUSD: "TVC:SILVER",    // OANDA:XAGUSD blocked on scanner; TVC:SILVER works
+  USOIL:  "NYMEX:CL1!",
+  BRENT:  "ICEEUR:BRN1!",
+  NATGAS: "NYMEX:NG1!",
+  COPPER: "COMEX:HG1!",
+  WHEAT:  "CBOT:ZW1!",
+  // Forex
+  EURUSD: "OANDA:EURUSD",
+  GBPUSD: "OANDA:GBPUSD",
+  USDJPY: "OANDA:USDJPY",
+  USDCNY: "FX_IDC:USDCNY",
+  USDRUB: "FX_IDC:USDRUB",
+  USDTRY: "FX_IDC:USDTRY",
+  // Crypto
+  BTCUSD: "COINBASE:BTCUSD",
+  ETHUSD: "COINBASE:ETHUSD",
+  SOLUSD: "COINBASE:SOLUSD",
+  BNBUSD: "BINANCE:BNBUSDT",
+  // US & Global Bonds
+  US10Y:  "TVC:US10Y",
+  US2Y:   "TVC:US02Y",
+  DE10Y:  "TVC:DE10Y",
+  JP10Y:  "TVC:JP10Y",
+};
+
+// Indian symbols — keep Yahoo Finance (no TradingView equivalent)
+const YAHOO_SYMBOL_MAP: Record<string, string> = {
+  NIFTY50: "^NSEI",
+  SENSEX:  "^BSESN",
+  USDINR:  "INR=X",
+};
+
+const YAHOO_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
   "Accept": "application/json",
   "Accept-Language": "en-US,en;q=0.9",
 };
 
-const YAHOO_SYMBOL_MAP: Record<string, string> = {
-  SPX:    "^GSPC",
-  NDX:    "^NDX",
-  DJI:    "^DJI",
-  DAX:    "^GDAXI",
-  FTSE:   "^FTSE",
-  CAC40:  "^FCHI",
-  N225:   "^N225",
-  SSEC:   "000001.SS",
-  HSI:    "^HSI",
-  NIFTY50:"^NSEI",
-  SENSEX: "^BSESN",
-  XAUUSD: "GC=F",
-  USOIL:  "CL=F",
-  BRENT:  "BZ=F",
-  NATGAS: "NG=F",
-  COPPER: "HG=F",
-  WHEAT:  "ZW=F",
-  SILVER: "SI=F",
-  EURUSD: "EURUSD=X",
-  USDJPY: "JPY=X",
-  GBPUSD: "GBPUSD=X",
-  USDINR: "INR=X",
-  USDCNY: "CNY=X",
-  USDRUB: "RUB=X",
-  USDTRY: "TRY=X",
-  BTCUSD: "BTC-USD",
-  ETHUSD: "ETH-USD",
-  SOLUSD: "SOL-USD",
-  BNBUSD: "BNB-USD",
-  VIX:    "^VIX",
-  DXY:    "DX-Y.NYB",
-  US10Y:  "^TNX",
-  US2Y:   "^IRX",
+const TV_HEADERS = {
+  "Content-Type": "application/json",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Origin": "https://www.tradingview.com",
+  "Referer": "https://www.tradingview.com/",
 };
 
-const COINGECKO_MAP: Record<string, string> = {
-  BTCUSD: "bitcoin",
-  ETHUSD: "ethereum",
-  SOLUSD: "solana",
-  BNBUSD: "binancecoin",
-};
-
-async function fetchSparkBatch(yahooSymbols: string[]): Promise<Record<string, any>> {
-  const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${yahooSymbols.join(",")}&range=1d&interval=1d`;
-  const resp = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
-  if (!resp.ok) throw new Error(`Yahoo spark ${resp.status}`);
-  const data = await resp.json() as any;
-  const result: Record<string, any> = {};
-  for (const item of (data?.spark?.result ?? [])) {
-    const meta = item?.response?.[0]?.meta;
-    if (meta && item.symbol) result[item.symbol] = meta;
-  }
-  return result;
-}
-
-async function fetchCoinGeckoPrices(): Promise<Record<string, { price: number; change24h: number }>> {
-  const ids = Object.values(COINGECKO_MAP).join(",");
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+// Fetch a batch of symbols from TradingView scanner in one request
+async function fetchTVBatch(
+  tickers: string[]
+): Promise<Record<string, { price: number; changeAbs: number; prevClose: number }>> {
   try {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const resp = await fetch("https://scanner.tradingview.com/global/scan", {
+      method: "POST",
+      headers: TV_HEADERS,
+      body: JSON.stringify({
+        columns: ["close", "change_abs"],
+        symbols: { tickers },
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
     if (!resp.ok) return {};
     const data = await resp.json() as any;
-    const result: Record<string, { price: number; change24h: number }> = {};
-    for (const [dbSymbol, geckoId] of Object.entries(COINGECKO_MAP)) {
-      const row = data[geckoId];
-      if (row) result[dbSymbol] = { price: row.usd, change24h: row.usd_24h_change ?? 0 };
+    const result: Record<string, { price: number; changeAbs: number; prevClose: number }> = {};
+    for (const item of data.data ?? []) {
+      const [price, changeAbs] = item.d ?? [];
+      if (price != null) {
+        result[item.s] = {
+          price,
+          changeAbs: changeAbs ?? 0,
+          prevClose: price - (changeAbs ?? 0),
+        };
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+// Fetch a batch of Indian symbols from Yahoo Finance spark API
+async function fetchYahooBatch(
+  symbols: string[]
+): Promise<Record<string, { price: number; prevClose: number }>> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols.join(",")}&range=1d&interval=1d`;
+    const resp = await fetch(url, {
+      headers: YAHOO_HEADERS,
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!resp.ok) return {};
+    const data = await resp.json() as any;
+    const result: Record<string, { price: number; prevClose: number }> = {};
+    for (const item of data?.spark?.result ?? []) {
+      const meta = item?.response?.[0]?.meta;
+      if (meta?.regularMarketPrice && item.symbol) {
+        result[item.symbol] = {
+          price: meta.regularMarketPrice,
+          prevClose: meta.chartPreviousClose ?? meta.regularMarketPrice,
+        };
+      }
     }
     return result;
   } catch {
@@ -92,61 +136,62 @@ export async function refreshMarketDataIfStale(force = false): Promise<{ refresh
   lastRefresh = Date.now();
 
   try {
-    const dbSymbols = Object.keys(YAHOO_SYMBOL_MAP);
-    const yahooSymbols = dbSymbols.map(s => YAHOO_SYMBOL_MAP[s]);
-
-    const BATCH_SIZE = 20;
-    const batches: string[][] = [];
-    for (let i = 0; i < yahooSymbols.length; i += BATCH_SIZE) {
-      batches.push(yahooSymbols.slice(i, i + BATCH_SIZE));
+    // Build TradingView tickers list (batched into chunks of 40)
+    const tvSymbols = Object.keys(TV_SYMBOL_MAP);
+    const tvTickers = tvSymbols.map(s => TV_SYMBOL_MAP[s]);
+    const BATCH_SIZE = 40;
+    const tvBatches: string[][] = [];
+    for (let i = 0; i < tvTickers.length; i += BATCH_SIZE) {
+      tvBatches.push(tvTickers.slice(i, i + BATCH_SIZE));
     }
 
-    const [batchResults, cgPrices] = await Promise.allSettled([
-      Promise.allSettled(batches.map(b => fetchSparkBatch(b))),
-      fetchCoinGeckoPrices(),
-    ]) as [PromiseSettledResult<PromiseSettledResult<Record<string, any>>[]>, PromiseSettledResult<Record<string, { price: number; change24h: number }>>];
+    // Fetch TradingView + Yahoo in parallel
+    const [tvBatchResults, yahooData] = await Promise.allSettled([
+      Promise.all(tvBatches.map(b => fetchTVBatch(b))),
+      fetchYahooBatch(Object.values(YAHOO_SYMBOL_MAP)),
+    ]);
 
-    const quotes: Record<string, any> = {};
-    if (batchResults.status === "fulfilled") {
-      for (const r of batchResults.value) {
-        if (r.status === "fulfilled") Object.assign(quotes, r.value);
+    // Merge all TradingView batch results
+    const tvQuotes: Record<string, { price: number; changeAbs: number; prevClose: number }> = {};
+    if (tvBatchResults.status === "fulfilled") {
+      for (const batchResult of tvBatchResults.value) {
+        Object.assign(tvQuotes, batchResult);
       }
     }
 
-    const cgData = cgPrices.status === "fulfilled" ? cgPrices.value : {};
+    const yahooQuotes = yahooData.status === "fulfilled" ? yahooData.value : {};
 
     const now = new Date();
-    const updates = dbSymbols.map(async (dbSym) => {
+
+    // Update all TV symbols
+    const tvUpdates = tvSymbols.map(async (dbSym) => {
       try {
-        if (COINGECKO_MAP[dbSym] && cgData[dbSym]) {
-          const { price, change24h } = cgData[dbSym];
-          const prevClose = price / (1 + change24h / 100);
-          const change = price - prevClose;
-          await db.update(marketAssetsTable)
-            .set({ price, change, changePercent: change24h, lastUpdated: now })
-            .where(eq(marketAssetsTable.symbol, dbSym));
-          return;
-        }
-
-        const yahooSym = YAHOO_SYMBOL_MAP[dbSym];
-        const quote = quotes[yahooSym];
-        if (!quote) return;
-
-        const price: number = quote.regularMarketPrice ?? 0;
-        if (!price) return;
-        const prevClose: number = quote.chartPreviousClose ?? price;
-        const change = price - prevClose;
-        const changePercent = prevClose ? (change / prevClose) * 100 : 0;
-        const volume = quote.regularMarketVolume ? String(quote.regularMarketVolume) : null;
-
+        const tvSym = TV_SYMBOL_MAP[dbSym];
+        const q = tvQuotes[tvSym];
+        if (!q || !q.price) return;
+        const change = q.changeAbs;
+        const changePercent = q.prevClose > 0 ? (change / q.prevClose) * 100 : 0;
         await db.update(marketAssetsTable)
-          .set({ price, change, changePercent, volume, lastUpdated: now })
+          .set({ price: q.price, change, changePercent, lastUpdated: now })
           .where(eq(marketAssetsTable.symbol, dbSym));
-      } catch {
-      }
+      } catch {}
     });
 
-    await Promise.allSettled(updates);
+    // Update Indian / Yahoo symbols
+    const yahooUpdates = Object.keys(YAHOO_SYMBOL_MAP).map(async (dbSym) => {
+      try {
+        const yahoSym = YAHOO_SYMBOL_MAP[dbSym];
+        const q = yahooQuotes[yahoSym];
+        if (!q || !q.price) return;
+        const change = q.price - q.prevClose;
+        const changePercent = q.prevClose > 0 ? (change / q.prevClose) * 100 : 0;
+        await db.update(marketAssetsTable)
+          .set({ price: q.price, change, changePercent, lastUpdated: now })
+          .where(eq(marketAssetsTable.symbol, dbSym));
+      } catch {}
+    });
+
+    await Promise.allSettled([...tvUpdates, ...yahooUpdates]);
     return { refreshed: true };
   } catch (err) {
     console.error("[marketRefresh] Error:", err);
