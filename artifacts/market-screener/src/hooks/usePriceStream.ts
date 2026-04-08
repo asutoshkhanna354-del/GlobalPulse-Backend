@@ -2,9 +2,13 @@
  * React hook — connects to the backend WebSocket price stream at /ws/prices
  * and exposes a live price map: { [symbol]: { price, timestamp, source } }
  *
+ * Also receives live candle updates from the NSE backend candle engine:
+ * { [symbol_timeframe]: OhlcCandle }
+ *
  * Usage:
- *   const { prices, connected } = usePriceStream();
- *   const livePrice = prices["BTCUSD"]?.price;
+ *   const { prices, candles, connected } = usePriceStream();
+ *   const livePrice  = prices["BTCUSD"]?.price;
+ *   const liveCandle = candles["NIFTY50_1s"];
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -13,36 +17,49 @@ export interface LivePrice {
   symbol:    string;
   price:     number;
   timestamp: number;
-  source:    "finnhub" | "twelvedata" | "tradingview";
+  source:    "finnhub" | "twelvedata" | "tradingview" | "nse";
 }
 
-type PriceMap = Record<string, LivePrice>;
+export interface LiveCandle {
+  symbol:    string;
+  timeframe: "1s" | "5s" | "1m";
+  open:      number;
+  high:      number;
+  low:       number;
+  close:     number;
+  volume:    number;
+  startTime: number;
+  updatedAt: number;
+}
+
+type PriceMap  = Record<string, LivePrice>;
+type CandleMap = Record<string, LiveCandle>; // key: `${symbol}_${timeframe}`
 
 // Singleton WebSocket shared across all hook instances on the same page
 let sharedWS: WebSocket | null = null;
-const listeners: Set<(map: PriceMap) => void> = new Set();
-let priceCache: PriceMap = {};
+const priceListeners:  Set<(map: PriceMap)  => void> = new Set();
+const candleListeners: Set<(map: CandleMap) => void> = new Set();
+let priceCache:  PriceMap  = {};
+let candleCache: CandleMap = {};
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let wsUrl = "";
 
 function getWSUrl(): string {
   if (wsUrl) return wsUrl;
-  const proto  = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const proto   = window.location.protocol === "https:" ? "wss:" : "ws:";
   const apiBase = import.meta.env["VITE_API_URL"] || "";
   if (apiBase) {
     const base = apiBase.replace(/^https?:/, proto).replace(/\/$/, "");
     wsUrl = `${base}/ws/prices`;
   } else {
-    // Same-origin — replace port with backend port (8080) or use same host
     const host = window.location.host.replace(/:\d+$/, "") + ":8080";
     wsUrl = `${proto}//${host}/ws/prices`;
   }
   return wsUrl;
 }
 
-function notifyListeners() {
-  for (const fn of listeners) fn({ ...priceCache });
-}
+function notifyPriceListeners()  { for (const fn of priceListeners)  fn({ ...priceCache }); }
+function notifyCandleListeners() { for (const fn of candleListeners) fn({ ...candleCache }); }
 
 function connectSharedWS() {
   if (sharedWS && (sharedWS.readyState === WebSocket.CONNECTING || sharedWS.readyState === WebSocket.OPEN)) return;
@@ -60,15 +77,23 @@ function connectSharedWS() {
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data);
+
         if (msg.type === "tick") {
           const t = msg.data as LivePrice;
           priceCache[t.symbol] = t;
-          notifyListeners();
+          notifyPriceListeners();
+
         } else if (msg.type === "snapshot") {
           for (const t of (msg.data as LivePrice[])) {
             priceCache[t.symbol] = t;
           }
-          notifyListeners();
+          notifyPriceListeners();
+
+        } else if (msg.type === "candle") {
+          const c = msg.data as LiveCandle;
+          const key = `${c.symbol}_${c.timeframe}`;
+          candleCache[key] = c;
+          notifyCandleListeners();
         }
       } catch {}
     };
@@ -94,40 +119,59 @@ if (typeof window !== "undefined") {
 // ─── React hook ─────────────────────────────────────────────────────────────
 
 export function usePriceStream() {
-  const [prices, setPrices] = useState<PriceMap>(() => ({ ...priceCache }));
+  const [prices,  setPrices]  = useState<PriceMap>( () => ({ ...priceCache }));
+  const [candles, setCandles] = useState<CandleMap>(() => ({ ...candleCache }));
   const [connected, setConnected] = useState(false);
 
-  // Throttle state updates to ~60fps (every ~16ms)
-  const pendingRef = useRef(false);
-  const latestRef  = useRef<PriceMap>({ ...priceCache });
+  // Throttle price updates to ~60fps
+  const pendingPriceRef  = useRef(false);
+  const latestPriceRef   = useRef<PriceMap>({ ...priceCache });
 
-  const onUpdate = useCallback((map: PriceMap) => {
-    latestRef.current = map;
-    if (!pendingRef.current) {
-      pendingRef.current = true;
+  // Throttle candle updates to ~10fps (candles are lower frequency)
+  const pendingCandleRef = useRef(false);
+  const latestCandleRef  = useRef<CandleMap>({ ...candleCache });
+
+  const onPriceUpdate = useCallback((map: PriceMap) => {
+    latestPriceRef.current = map;
+    if (!pendingPriceRef.current) {
+      pendingPriceRef.current = true;
       requestAnimationFrame(() => {
-        pendingRef.current = false;
-        setPrices({ ...latestRef.current });
+        pendingPriceRef.current = false;
+        setPrices({ ...latestPriceRef.current });
+      });
+    }
+  }, []);
+
+  const onCandleUpdate = useCallback((map: CandleMap) => {
+    latestCandleRef.current = map;
+    if (!pendingCandleRef.current) {
+      pendingCandleRef.current = true;
+      requestAnimationFrame(() => {
+        pendingCandleRef.current = false;
+        setCandles({ ...latestCandleRef.current });
       });
     }
   }, []);
 
   useEffect(() => {
-    listeners.add(onUpdate);
-    // Trigger an initial paint with whatever is already cached
-    if (Object.keys(priceCache).length > 0) onUpdate({ ...priceCache });
+    priceListeners.add(onPriceUpdate);
+    candleListeners.add(onCandleUpdate);
+
+    if (Object.keys(priceCache).length  > 0) onPriceUpdate({ ...priceCache });
+    if (Object.keys(candleCache).length > 0) onCandleUpdate({ ...candleCache });
+
     connectSharedWS();
 
-    // Poll connection status
     const statusInterval = setInterval(() => {
       setConnected(sharedWS?.readyState === WebSocket.OPEN);
     }, 1000);
 
     return () => {
-      listeners.delete(onUpdate);
+      priceListeners.delete(onPriceUpdate);
+      candleListeners.delete(onCandleUpdate);
       clearInterval(statusInterval);
     };
-  }, [onUpdate]);
+  }, [onPriceUpdate, onCandleUpdate]);
 
   const subscribe = useCallback((symbol: string) => {
     if (sharedWS?.readyState === WebSocket.OPEN) {
@@ -135,5 +179,5 @@ export function usePriceStream() {
     }
   }, []);
 
-  return { prices, connected, subscribe };
+  return { prices, candles, connected, subscribe };
 }

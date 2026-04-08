@@ -15,6 +15,7 @@ import indicatorRouter from "./indicator";
 import niftyAnalysisRouter from "./nifty-analysis";
 import bitcoinAnalysisRouter from "./bitcoin-analysis";
 import pushRouter from "./push";
+import nseCandlesRouter from "./nse-candles";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use("/indicator", indicatorRouter);
 router.use(niftyAnalysisRouter);
 router.use(bitcoinAnalysisRouter);
 router.use("/push", pushRouter);
+router.use(nseCandlesRouter);
 
 export default router;

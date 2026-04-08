@@ -1,0 +1,209 @@
+Alright 😈 — here’s your FULL POWER setup with a clean Replit prompt + architecture + upgrades so your site runs like a mini trading terminal.
+
+⸻
+
+⚠️ Before You Use This
+
+This system uses unofficial endpoints from
+National Stock Exchange of India
+
+👉 Use only for:
+ • personal dashboard
+ • testing
+ • learning
+
+⸻
+
+🧠 WHAT THIS BUILD WILL DO
+
+✅ Near real-time NSE (200–300 ms)
+✅ Multi-symbol streaming (NIFTY, BANKNIFTY, stocks)
+✅ Backend WebSocket server
+✅ Frontend live updates
+✅ Auto candle builder (1s / 5s / 1m)
+✅ Anti-block (cookie + throttling)
+✅ Replit-ready structure
+
+⸻
+
+🚀 REPLIT MASTER PROMPT (COPY THIS)
+
+Paste this into Replit AI 👇
+Build a high-performance real-time stock streaming web app using Node.js and WebSockets.
+
+Goal:
+Simulate a low-latency NSE live feed and generate candles dynamically.
+
+Tech Stack:
+ • Backend: Node.js (Express + ws)
+ • Frontend: HTML + Vanilla JS (or React if needed)
+ • Use axios + cookie jar for NSE requests
+
+Backend Requirements:
+ 1. Session Handling:
+
+ • Initialize NSE session by first requesting https://www.nseindia.com
+ • Store cookies using tough-cookie and axios-cookiejar-support
+
+ 2. Data Source:
+
+ • Fetch from:
+https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050
+
+ 3. Polling Engine:
+
+ • Poll every 300ms (configurable)
+ • DO NOT create new connection each time (reuse session)
+
+ 4. Multi-Symbol Extraction:
+
+ • Extract multiple symbols from response (NIFTY, top stocks)
+ • Normalize:
+{
+symbol: string,
+price: number,
+timestamp: number
+}
+
+ 5. WebSocket Server:
+
+ • Create WebSocket server (ws)
+ • Broadcast live ticks to all clients
+ • Handle multiple clients efficiently
+
+ 6. Smart Throttling:
+
+ • If request fails → backoff retry
+ • Avoid aggressive polling under errors
+
+ 7. Candle Engine (IMPORTANT):
+
+ • Build OHLC candles in backend
+ • Support:
+ • 1 second
+ • 5 seconds
+ • 1 minute
+
+Structure:
+{
+symbol: “NIFTY”,
+timeframe: “1s”,
+open: number,
+high: number,
+low: number,
+close: number,
+startTime: number
+}
+ • Update candle on every tick
+ • Emit updated candle via WebSocket
+
+ 8. Performance:
+
+ • Use in-memory store (Map)
+ • Avoid blocking event loop
+ • Efficient loops
+
+Frontend Requirements:
+ 1. Connect to backend WebSocket
+ 2. Display:
+ • Live price
+ • Candle updates
+ 3. Maintain smooth UI updates
+ 4. Do not re-render entire UI
+
+Advanced Features:
+ • Add symbol subscription system:
+Client sends:
+{ type: “subscribe”, symbol: “NIFTY” }
+ • Backend only sends requested symbols
+ • Add reconnection logic in frontend
+
+Folder Structure:
+/server
+/client
+
+Environment:
+ • Make it fully runnable on Replit
+
+Goal Output:
+A smooth, low-latency live market dashboard similar to TradingView backend behavior.:—
+
+⚡ EXTRA BOOST (ADD THIS AFTER BUILD)
+
+After Replit generates code, ask it:
+
+👉 “Add multi-index support (BANKNIFTY, FINNIFTY)”
+
+👉 Endpoint:
+
+https://www.nseindia.com/api/allIndices
+
+
+⸻
+
+🔥 PRO UPGRADE (IMPORTANT)
+
+Tell Replit:
+
+👉 “Add tick buffer + smoothing system”
+
+What it does:
+ • Prevents candle spikes
+ • Makes your chart look like TradingView
+
+⸻
+
+🧠 ARCHITECTURE (HOW YOUR SYSTEM WORKS)
+
+NSE (unofficial API)
+        ↓
+Node.js backend (polling engine)
+        ↓
+WebSocket server
+        ↓
+Frontend (your website)
+        ↓
+Live candles + price updates
+
+
+⸻
+
+⚡ PERFORMANCE SETTINGS
+
+Change this after build:
+ • Polling speed:
+
+300 ms  ✅ best
+200 ms  ⚡ faster
+100 ms  ⚠️ risky
+
+
+⸻
+
+🧨 NEXT LEVEL (OPTIONAL)
+
+If you want to go CRAZY fast:
+
+👉 Add hybrid:
+ • NSE hack (India)
+ • Finnhub (global WebSocket)
+
+⸻
+
+🏆 RESULT
+
+After this you’ll have:
+
+👉 Your own mini TradingView backend
+👉 Real-time streaming
+👉 Custom candle engine
+👉 Multi-symbol support
+
+⸻
+
+If you want next upgrade, I can give you:
+ • 🔥 TradingView-style chart UI (exact clone feel)
+ • 🔥 Liquidity sweep detection (fits your 5:30 method)
+ • 🔥 Order block auto-marking
+
+Just say: “make it like tradingview UI” 🚀

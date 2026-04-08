@@ -12,6 +12,8 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { IncomingMessage } from "http";
 import type { Server } from "http";
+import { startNseStream, setNseCallbacks } from "./nseStream.js";
+import type { NseTick, OhlcCandle } from "./nseStream.js";
 
 // ─── Normalised tick ────────────────────────────────────────────────────────
 
@@ -19,7 +21,7 @@ export interface PriceTick {
   symbol:    string;
   price:     number;
   timestamp: number; // epoch ms
-  source:    "finnhub" | "twelvedata" | "tradingview";
+  source:    "finnhub" | "twelvedata" | "tradingview" | "nse";
 }
 
 // ─── In-memory last-price cache ────────────────────────────────────────────
@@ -287,6 +289,18 @@ async function pollTVFallback() {
   } catch {}
 }
 
+// ─── Candle broadcast ────────────────────────────────────────────────────────
+
+function broadcastCandle(candle: OhlcCandle) {
+  if (!frontendWSS) return;
+  const msg = JSON.stringify({ type: "candle", data: candle });
+  for (const client of frontendWSS.clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      try { client.send(msg); } catch {}
+    }
+  }
+}
+
 // ─── Attach WebSocket server to HTTP server + start feeds ───────────────────
 
 export function initPriceStream(httpServer: Server) {
@@ -307,6 +321,26 @@ export function initPriceStream(httpServer: Server) {
         if (msg.type === "subscribe" && msg.symbol) subscribeSymbol(msg.symbol);
       } catch {}
     });
+  });
+
+  // ── NSE real-time stream (Indian markets, 300ms polling) ──────────────────
+  setNseCallbacks(
+    // tick callback — normalise NseTick → PriceTick and broadcast
+    (nseTick: NseTick) => {
+      broadcast({
+        symbol:    nseTick.symbol,
+        price:     nseTick.price,
+        timestamp: nseTick.timestamp,
+        source:    "nse",
+      });
+    },
+    // candle callback — broadcast to all WS clients
+    (candle: OhlcCandle) => {
+      broadcastCandle(candle);
+    },
+  );
+  startNseStream().catch((e) => {
+    console.warn("[priceStream] NSE stream failed to start:", e.message);
   });
 
   // Start both upstream feeds
