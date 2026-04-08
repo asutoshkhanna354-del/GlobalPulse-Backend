@@ -525,9 +525,14 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
           className="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-2xl shadow-2xl border-t border-[#E0E3EB] flex flex-col overflow-hidden"
           style={{ height: sheetHeight, transition: dragStartY.current !== null ? "none" : "height 0.3s cubic-bezier(0.32,0.72,0,1)" }}>
 
-          {/* drag handle bar */}
+          {/* drag handle bar — tap to open/close, drag to resize */}
           <div
-            className="flex flex-col items-center pt-2 pb-1 cursor-grab active:cursor-grabbing shrink-0 select-none touch-none"
+            className="flex flex-col items-center pt-2 pb-1 shrink-0 select-none touch-none active:bg-[#F8F9FC] transition-colors"
+            style={{ cursor: sheetHeight <= SNAP_COLLAPSED ? "pointer" : "grab" }}
+            onClick={() => {
+              if (sheetHeight <= SNAP_COLLAPSED) snapSheet(SNAP_HALF);
+              else snapSheet(SNAP_COLLAPSED);
+            }}
             onTouchStart={onHandleTouchStart}
             onTouchMove={onHandleTouchMove}
             onTouchEnd={onHandleTouchEnd}>
@@ -542,9 +547,9 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {isPremium && sheetHeight > SNAP_COLLAPSED + 10 && (
-                  <div className="flex items-center bg-[#F0F3FA] rounded-lg p-0.5">
+                  <div className="flex items-center bg-[#F0F3FA] rounded-lg p-0.5" onClick={e => e.stopPropagation()}>
                     <button onClick={() => setSigView("latest")}
                       className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${sigView==="latest"?"bg-[#2962FF] text-white":"text-[#9598A1]"}`}>
                       Latest
@@ -555,7 +560,14 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
                     </button>
                   </div>
                 )}
-                <GripHorizontal className="w-4 h-4 text-[#D1D4DC]"/>
+                {sheetHeight <= SNAP_COLLAPSED ? (
+                  <div className="flex items-center gap-1 bg-[#2962FF] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                    <ChevronLeft className="w-3 h-3 -rotate-90"/>
+                    Open
+                  </div>
+                ) : (
+                  <ChevronLeft className="w-4 h-4 text-[#9598A1] rotate-90"/>
+                )}
               </div>
             </div>
           </div>
