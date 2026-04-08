@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useGetMarketData } from "@workspace/api-client-react";
-import { ArrowUpRight, ArrowDownRight, Search, ArrowUp, ArrowDown, X, TrendingUp, BarChart2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Search, ArrowUp, ArrowDown, X, Zap, BarChart2 } from "lucide-react";
 import { AssetChartPanel } from "@/components/AssetChartPanel";
+import { usePriceStream } from "@/hooks/usePriceStream";
 
 type Category = "indices" | "currencies" | "commodities" | "crypto" | "bonds";
 type SortKey = "symbol" | "price" | "change" | "changePercent";
@@ -45,6 +46,9 @@ export function Markets() {
     { query: { refetchInterval: 30000 } }
   );
 
+  // Live WebSocket prices — overlay on top of DB prices in real-time
+  const { prices: livePrices, connected: wsConnected } = usePriceStream();
+
   const filtered = (assets ?? []).filter(a =>
     a.symbol.toLowerCase().includes(search.toLowerCase()) ||
     a.name.toLowerCase().includes(search.toLowerCase())
@@ -78,9 +82,15 @@ export function Markets() {
     <div className="flex flex-1 overflow-hidden">
       <div className={`flex flex-col overflow-hidden transition-all duration-300 ${selectedSymbol ? "w-full lg:w-[55%]" : "w-full"}`}>
         <div className="p-3 sm:p-4 space-y-3 flex-1 overflow-auto">
-          <div>
-            <h1 className="text-base font-semibold text-foreground">Market Screener</h1>
-            <p className="text-[11px] text-muted-foreground">Global markets — indices, currencies, commodities, crypto, bonds · Click any row to view chart</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-base font-semibold text-foreground">Market Screener</h1>
+              <p className="text-[11px] text-muted-foreground">Global markets — indices, currencies, commodities, crypto, bonds · Click any row to view chart</p>
+            </div>
+            <div className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border ${wsConnected ? "border-signal-up/40 text-signal-up bg-signal-up/10" : "border-border text-muted-foreground"}`}>
+              <Zap className="w-2.5 h-2.5" />
+              {wsConnected ? "Live Stream" : "Connecting…"}
+            </div>
           </div>
 
           <div className="flex gap-2 flex-wrap">
@@ -140,6 +150,10 @@ export function Markets() {
                   </tr>
                 )}
                 {sorted.map((asset, i) => {
+                  // Prefer live WebSocket price when available and recent (<5s)
+                  const liveWS = livePrices[asset.symbol];
+                  const wsIsLive = liveWS && (Date.now() - liveWS.timestamp) < 5000;
+                  const displayPrice = wsIsLive ? liveWS.price : asset.price;
                   const up = asset.changePercent >= 0;
                   const isSelected = selectedSymbol?.symbol === asset.symbol;
                   return (
@@ -156,6 +170,7 @@ export function Markets() {
                         <div className="flex items-center gap-1.5">
                           {asset.flag && <span>{asset.flag}</span>}
                           <span className="font-mono font-semibold text-foreground">{asset.symbol}</span>
+                          {wsIsLive && <span className="w-1 h-1 rounded-full bg-signal-up animate-pulse" title="Live WebSocket" />}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">{asset.name}</td>
@@ -169,7 +184,7 @@ export function Markets() {
                         }`}>{asset.category}</span>
                       </td>
                       <td className="px-3 py-2 text-right font-mono font-medium text-foreground">
-                        {asset.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                        {displayPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                       </td>
                       <td className={`px-3 py-2 text-right font-mono ${up ? "text-signal-up" : "text-signal-down"}`}>
                         {up ? "+" : ""}{asset.change.toFixed(4)}

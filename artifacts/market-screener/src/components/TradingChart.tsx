@@ -6,6 +6,7 @@ import {
 } from "lightweight-charts";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { usePriceStream } from "@/hooks/usePriceStream";
 import {
   Crown, TrendingUp, TrendingDown, Lock, AlertTriangle,
   ShieldCheck, RefreshCw, Search, X, Zap, Radio,
@@ -166,6 +167,9 @@ export function TradingChart() {
 
   const [chartInstance, setChartInstance] = useState<IChartApi|null>(null);
 
+  // ── WebSocket live price stream ────────────────────────────────────────────
+  const { prices: streamPrices, subscribe: streamSubscribe } = usePriceStream();
+
   const { isPremium, setShowActivation } = usePremium();
   const { isSubscribed, toggleSubscription, loadingSymbol: notifLoading, isSupported: notifOk, isInIframe: notifFrame, errorMessage: notifErr } = useNotifications();
   const [notifErrVis, setNotifErrVis] = useState(false);
@@ -250,7 +254,29 @@ export function TradingChart() {
     return()=>ctrl.abort();
   },[symbol,rangeIdx,refreshKey]);
 
-  // ── Live tick: poll API every 500ms, update target price only ─────────────
+  // ── WebSocket tick — primary real-time feed (zero-latency) ─────────────────
+  useEffect(()=>{
+    if(!data?.bars?.length)return;
+    // Subscribe this symbol on the price stream so the backend knows to forward it
+    streamSubscribe(symbol);
+    const live = streamPrices[symbol];
+    if(!live||live.price==null)return;
+    const p=live.price;
+    if(lastBarRef.current){
+      lastBarRef.current={
+        ...lastBarRef.current,
+        high:Math.max(lastBarRef.current.high,p),
+        low:Math.min(lastBarRef.current.low,p),
+        close:p,
+      };
+    }
+    targetPriceRef.current=p;
+    if(displayPriceRef.current===null) displayPriceRef.current=p;
+    setLiveTicking(true);
+  },[streamPrices,symbol,data,streamSubscribe]);
+
+  // ── REST poll every 2s — fallback + prevClose/change data ─────────────────
+  // (Reduced from 500ms since WebSocket already provides tick-level updates)
   useEffect(()=>{
     if(!data?.bars?.length){setLiveTicking(false);return;}
     setLiveTicking(true);
@@ -262,33 +288,36 @@ export function TradingChart() {
         if(!r.ok||disposed)return;
         const q:QuoteData=await r.json();
         if(q.price==null||disposed)return;
-        // Update state for header display
-        setLivePrice(q.price);setLiveChange(q.change);setLivePct(q.changePercent);
+        // Always update change/pct from REST (WS doesn't carry those)
+        setLiveChange(q.change);setLivePct(q.changePercent);
         if(q.currency)setCurrency(q.currency);
-        // Update the true OHLC high/low on lastBar (for accurate bar bounds)
-        if(lastBarRef.current){
-          lastBarRef.current={
-            ...lastBarRef.current,
-            high:Math.max(lastBarRef.current.high,q.price),
-            low:Math.min(lastBarRef.current.low,q.price),
-            close:q.price,
-          };
+        // Only update price target if WebSocket hasn't sent a more recent tick
+        const streamTick=streamPrices[symbol];
+        const wsIsRecent=streamTick&&(Date.now()-streamTick.timestamp)<3000;
+        if(!wsIsRecent){
+          if(lastBarRef.current){
+            lastBarRef.current={
+              ...lastBarRef.current,
+              high:Math.max(lastBarRef.current.high,q.price),
+              low:Math.min(lastBarRef.current.low,q.price),
+              close:q.price,
+            };
+          }
+          targetPriceRef.current=q.price;
+          if(displayPriceRef.current===null) displayPriceRef.current=q.price;
+          setLivePrice(q.price);
         }
-        // Set the target the animation loop will smoothly interpolate toward
-        targetPriceRef.current=q.price;
-        // Seed display price on first tick so animation starts from real price
-        if(displayPriceRef.current===null) displayPriceRef.current=q.price;
       }catch{}
     };
     tick();
-    liveRef.current=setInterval(tick,500);
+    liveRef.current=setInterval(tick,2000); // 2s fallback poll
     return()=>{
       disposed=true;
       if(liveRef.current)clearInterval(liveRef.current);
       targetPriceRef.current=null;
       displayPriceRef.current=null;
     };
-  },[symbol,data]);
+  },[symbol,data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 10ms animation loop — smooth 60-100fps candle interpolation ────────────
   useEffect(()=>{

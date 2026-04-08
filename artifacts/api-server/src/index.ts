@@ -1,5 +1,7 @@
+import http from "http";
 import app from "./app";
 import { logger } from "./lib/logger";
+import { initPriceStream } from "./lib/priceStream.js";
 import { refreshNewsIfStale } from "./lib/newsRefresh.js";
 import { refreshMarketDataIfStale } from "./lib/marketRefresh.js";
 import { refreshSocialIfStale } from "./lib/socialRefresh.js";
@@ -24,13 +26,19 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
+// Use an HTTP server so we can attach WebSocket server to the same port
+const httpServer = http.createServer(app);
+
+httpServer.listen(port, (err?: Error) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
 
   logger.info({ port }, "Server listening");
+
+  // Start real-time WebSocket price streaming
+  initPriceStream(httpServer);
 
   refreshMarketDataIfStale(true).then(() => {
     logger.info("Market data initial refresh done");
