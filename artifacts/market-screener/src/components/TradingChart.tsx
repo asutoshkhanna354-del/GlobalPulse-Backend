@@ -196,6 +196,7 @@ export function TradingChart() {
   const targetPriceRef  = useRef<number|null>(null);  // latest price from API
   const displayPriceRef = useRef<number|null>(null);  // current interpolated price shown on chart
   const animIntervalRef = useRef<ReturnType<typeof setInterval>|null>(null);
+  const lastTickSrcRef  = useRef<{source:string;ts:number}>({source:"rest",ts:0}); // for adaptive lerp
 
   // Indicators
   const [showEMA,    setShowEMA]    = useState(false);
@@ -272,6 +273,7 @@ export function TradingChart() {
     }
     targetPriceRef.current=p;
     if(displayPriceRef.current===null) displayPriceRef.current=p;
+    lastTickSrcRef.current={source:live.source,ts:Date.now()};
     setLiveTicking(true);
   },[streamPrices,symbol,data,streamSubscribe]);
 
@@ -319,7 +321,9 @@ export function TradingChart() {
     };
   },[symbol,data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── 10ms animation loop — smooth 60-100fps candle interpolation ────────────
+  // ── 10ms animation loop — adaptive lerp based on tick source ───────────────
+  // Binance / NSE real-time feeds: k=0.45  → snaps to price in ~20ms (2 frames)
+  // REST / Finnhub / TradingView:  k=0.08  → smooth 570ms glide for slower feeds
   useEffect(()=>{
     if(!data?.bars?.length)return;
     let frameCount=0;
@@ -332,9 +336,13 @@ export function TradingChart() {
       let display=displayPriceRef.current??target;
       const diff=target-display;
 
-      // Lerp factor: 8% per 10ms frame → reaches 99.5% of target in ~570ms
-      // This perfectly tracks a 500ms API poll with a smooth glide
-      const k=0.08;
+      // Adaptive lerp: fast for exchange-speed sources, smooth for slow polls
+      const src=lastTickSrcRef.current;
+      const isRealtime=
+        (src.source==="binance"||src.source==="nse") &&
+        Date.now()-src.ts<5000;
+      const k=isRealtime?0.45:0.08;
+
       if(Math.abs(diff)>0.00001){
         display=display+diff*k;
         displayPriceRef.current=display;
@@ -343,7 +351,7 @@ export function TradingChart() {
         displayPriceRef.current=target;
       }
 
-      // Update the candle with interpolated close, preserving real high/low from lastBarRef
+      // Update the candle with interpolated close, preserving real high/low
       try{
         series.update({
           time:lb.time as any,
@@ -354,9 +362,9 @@ export function TradingChart() {
         });
       }catch{}
 
-      // Every 6 frames (~60ms) nudge the header price display too for silky UI
+      // Every 3 frames (~30ms) nudge the header price display for silky UI
       frameCount++;
-      if(frameCount%6===0) setLivePrice(Math.round(display*10000)/10000);
+      if(frameCount%3===0) setLivePrice(Math.round(display*10000)/10000);
     };
 
     animIntervalRef.current=setInterval(loop,10); // ~100fps

@@ -75,12 +75,14 @@ const SYMBOL_MAP: Record<string, string> = {
 };
 
 // Initial set of symbols to subscribe (stream names are lowercase)
+// @trade       = every individual exchange fill (true last price)
+// @bookTicker  = best bid/ask update on every order-book change (very high Hz)
 const activeStreams = new Set<string>([
-  "btcusdt@trade",
-  "ethusdt@trade",
-  "solusdt@trade",
-  "bnbusdt@trade",
-  "xrpusdt@trade",
+  "btcusdt@trade",   "btcusdt@bookTicker",
+  "ethusdt@trade",   "ethusdt@bookTicker",
+  "solusdt@trade",   "solusdt@bookTicker",
+  "bnbusdt@trade",   "bnbusdt@bookTicker",
+  "xrpusdt@trade",   "xrpusdt@bookTicker",
 ]);
 
 export function normaliseBinanceSymbol(raw: string): string {
@@ -150,20 +152,10 @@ export function getAllBinanceCandles(): OhlcCandle[] {
   return out;
 }
 
-// ─── Tick throttle — broadcast at ~20 Hz to avoid WS flood ──────────────────
+// ─── Immediate tick dispatch — zero delay, every exchange event forwarded ────
 
-const pendingTicks = new Map<string, BinanceTick>(); // latest tick per symbol
-let   throttleTimer: ReturnType<typeof setInterval> | null = null;
-
-function startThrottle() {
-  if (throttleTimer) return;
-  throttleTimer = setInterval(() => {
-    if (!onTick || pendingTicks.size === 0) return;
-    for (const tick of pendingTicks.values()) {
-      try { onTick(tick); } catch {}
-    }
-    pendingTicks.clear();
-  }, 50); // flush every 50ms → max 20 ticks/symbol/second to frontend
+function dispatchTick(tick: BinanceTick) {
+  try { onTick?.(tick); } catch {}
 }
 
 // ─── Binance WebSocket connection ─────────────────────────────────────────────
@@ -199,24 +191,38 @@ function connect() {
     try {
       const msg = JSON.parse(raw.toString());
       // Combined stream wraps data: { stream: "btcusdt@trade", data: {...} }
-      const trade = msg.data ?? msg;
-      if (trade.e !== "trade") return;
+      const ev = msg.data ?? msg;
 
-      const rawSymbol = trade.s as string;           // "BTCUSDT"
-      const price     = parseFloat(trade.p);          // price string
-      const qty       = parseFloat(trade.q);          // quantity string
-      const tradeId   = trade.t as number;
-      const ts        = trade.T as number ?? Date.now();
+      if (ev.e === "trade") {
+        // ── Individual trade event ──────────────────────────────────────────
+        const rawSymbol = ev.s as string;
+        const price     = parseFloat(ev.p);
+        const qty       = parseFloat(ev.q);
+        const tradeId   = ev.t as number;
+        const ts        = (ev.T as number) ?? Date.now();
 
-      if (!isFinite(price) || price <= 0) return;
+        if (!isFinite(price) || price <= 0) return;
 
-      const symbol = normaliseBinanceSymbol(rawSymbol);
+        const symbol = normaliseBinanceSymbol(rawSymbol);
+        updateCandle(symbol, price, qty, ts);
+        dispatchTick({ symbol, rawSymbol, price, qty, tradeId, timestamp: ts });
 
-      // Always update candle on every tick (candle engine is O(1))
-      updateCandle(symbol, price, qty, ts);
+      } else if (ev.e === "bookTicker") {
+        // ── Best bid/ask update — fires on every order-book change (~1ms Hz) ─
+        const rawSymbol = ev.s as string;
+        const bid       = parseFloat(ev.b);
+        const ask       = parseFloat(ev.a);
+        if (!isFinite(bid) || !isFinite(ask) || bid <= 0 || ask <= 0) return;
 
-      // Throttle broadcast to frontend — keep only the latest tick per symbol
-      pendingTicks.set(symbol, { symbol, rawSymbol, price, qty, tradeId, timestamp: ts });
+        // Mid-price: (best_bid + best_ask) / 2 — best real-time price proxy
+        const price  = (bid + ask) / 2;
+        const ts     = Date.now();
+        const symbol = normaliseBinanceSymbol(rawSymbol);
+
+        // bookTicker updates candle close without adding volume (no trade)
+        updateCandle(symbol, price, 0, ts);
+        dispatchTick({ symbol, rawSymbol, price, qty: 0, tradeId: 0, timestamp: ts });
+      }
 
     } catch {}
   });
@@ -269,7 +275,6 @@ export function subscribeBinanceSymbol(rawSymbol: string) {
 export function startBinanceStream() {
   if (running) return;
   running = true;
-  startThrottle();
   connect();
   console.info("[binanceStream] Binance direct stream engine started");
 }
@@ -277,7 +282,6 @@ export function startBinanceStream() {
 export function stopBinanceStream() {
   running = false;
   if (reconnectTimer) clearTimeout(reconnectTimer);
-  if (throttleTimer)  clearInterval(throttleTimer);
   try { binanceWS?.close(); } catch {}
   binanceWS = null;
   console.info("[binanceStream] Binance stream stopped");
