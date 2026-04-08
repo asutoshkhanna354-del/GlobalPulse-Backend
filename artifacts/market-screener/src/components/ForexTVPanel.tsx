@@ -217,11 +217,14 @@ function NextSignalCountdown({ barMs }: { barMs: number }) {
 
   return (
     <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#EEF2FF] to-[#F8F9FC] border-b border-[#E0E3EB]">
-      <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#2962FF] animate-pulse"/>
-        <span className="text-[9px] text-[#9598A1] font-medium">Next signal in</span>
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#2962FF] animate-pulse"/>
+          <span className="text-[9px] text-[#9598A1] font-medium">Next signal in</span>
+        </div>
+        <span className="text-[8px] text-[#C9CBD4] pl-3">computed at candle close</span>
       </div>
-      <span className="font-mono text-[11px] font-bold text-[#2962FF] tracking-wider">{display}</span>
+      <span className="font-mono text-[12px] font-bold text-[#2962FF] tracking-wider">{display}</span>
     </div>
   );
 }
