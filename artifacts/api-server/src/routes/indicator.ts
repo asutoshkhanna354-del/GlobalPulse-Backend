@@ -123,57 +123,166 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// For these symbols, fetch live quote from TradingView scanner (spot price, not futures)
-const TV_SPOT_QUOTE: Record<string, { tvSym: string; name: string }> = {
-  XAUUSD: { tvSym: "OANDA:XAUUSD", name: "Gold Spot (XAU/USD)" },
-  XAGUSD: { tvSym: "OANDA:XAGUSD", name: "Silver Spot (XAG/USD)" },
+// ─── TradingView live quote map (all international / non-Indian symbols) ───────
+// Confirmed working via scanner.tradingview.com/global/scan on 2025-04
+type TVEntry = { tvSym: string; name: string; currency: string };
+const TV_QUOTE_MAP: Record<string, TVEntry> = {
+  // Gold / Silver (spot via OANDA — more accurate than futures)
+  XAUUSD: { tvSym: "OANDA:XAUUSD",    name: "Gold Spot (XAU/USD)",     currency: "USD" },
+  XAGUSD: { tvSym: "OANDA:XAGUSD",    name: "Silver Spot (XAG/USD)",   currency: "USD" },
+  // Commodities (futures continuations)
+  USOIL:  { tvSym: "NYMEX:CL1!",      name: "Crude Oil WTI",           currency: "USD" },
+  BRENT:  { tvSym: "ICEEUR:BRN1!",    name: "Brent Crude Oil",         currency: "USD" },
+  NATGAS: { tvSym: "NYMEX:NG1!",      name: "Natural Gas",             currency: "USD" },
+  COPPER: { tvSym: "COMEX:HG1!",      name: "Copper",                  currency: "USD" },
+  // Forex
+  EURUSD: { tvSym: "OANDA:EURUSD",    name: "EUR/USD",                 currency: "USD" },
+  GBPUSD: { tvSym: "OANDA:GBPUSD",    name: "GBP/USD",                 currency: "USD" },
+  USDJPY: { tvSym: "OANDA:USDJPY",    name: "USD/JPY",                 currency: "JPY" },
+  DXY:    { tvSym: "TVC:DXY",         name: "US Dollar Index",         currency: "USD" },
+  USDCNY: { tvSym: "FX_IDC:USDCNY",  name: "USD/CNY",                 currency: "CNY" },
+  USDCNH: { tvSym: "OANDA:USDCNH",    name: "USD/CNH (Offshore)",      currency: "CNH" },
+  // Crypto
+  BTCUSD: { tvSym: "COINBASE:BTCUSD", name: "Bitcoin (BTC/USD)",       currency: "USD" },
+  ETHUSD: { tvSym: "COINBASE:ETHUSD", name: "Ethereum (ETH/USD)",      currency: "USD" },
+  SOLUSD: { tvSym: "COINBASE:SOLUSD", name: "Solana (SOL/USD)",        currency: "USD" },
+  BNBUSD: { tvSym: "BINANCE:BNBUSDT", name: "BNB (BNB/USDT)",         currency: "USD" },
+  // US Indices
+  SPX:    { tvSym: "SP:SPX",          name: "S&P 500",                 currency: "USD" },
+  NDX:    { tvSym: "NASDAQ:NDX",      name: "Nasdaq 100",              currency: "USD" },
+  DJI:    { tvSym: "DJ:DJI",          name: "Dow Jones",               currency: "USD" },
+  VIX:    { tvSym: "CBOE:VIX",        name: "CBOE VIX",                currency: "USD" },
+  SPY:    { tvSym: "AMEX:SPY",        name: "SPDR S&P 500 ETF",        currency: "USD" },
+  QQQ:    { tvSym: "NASDAQ:QQQ",      name: "Invesco QQQ ETF",         currency: "USD" },
+  // Global Indices
+  DAX:    { tvSym: "XETR:DAX",        name: "DAX 40",                  currency: "EUR" },
+  FTSE:   { tvSym: "TVC:UKX",         name: "FTSE 100",                currency: "GBP" },
+  N225:   { tvSym: "TVC:NI225",       name: "Nikkei 225",              currency: "JPY" },
+  HSI:    { tvSym: "TVC:HSI",         name: "Hang Seng Index",         currency: "HKD" },
+  SSEC:   { tvSym: "SSE:000001",      name: "Shanghai Composite",      currency: "CNY" },
+  CAC40:  { tvSym: "EURONEXT:PX1",    name: "CAC 40",                  currency: "EUR" },
+  // Popular US Stocks
+  AAPL:   { tvSym: "NASDAQ:AAPL",     name: "Apple Inc",               currency: "USD" },
+  MSFT:   { tvSym: "NASDAQ:MSFT",     name: "Microsoft Corp",          currency: "USD" },
+  NVDA:   { tvSym: "NASDAQ:NVDA",     name: "NVIDIA Corp",             currency: "USD" },
+  TSLA:   { tvSym: "NASDAQ:TSLA",     name: "Tesla Inc",               currency: "USD" },
+  GOOGL:  { tvSym: "NASDAQ:GOOGL",    name: "Alphabet Inc",            currency: "USD" },
+  AMZN:   { tvSym: "NASDAQ:AMZN",     name: "Amazon.com Inc",          currency: "USD" },
+  META:   { tvSym: "NASDAQ:META",     name: "Meta Platforms",          currency: "USD" },
+  JPM:    { tvSym: "NYSE:JPM",        name: "JPMorgan Chase",          currency: "USD" },
+  GS:     { tvSym: "NYSE:GS",         name: "Goldman Sachs",           currency: "USD" },
+  BAC:    { tvSym: "NYSE:BAC",        name: "Bank of America",         currency: "USD" },
+  WMT:    { tvSym: "NYSE:WMT",        name: "Walmart Inc",             currency: "USD" },
+  XOM:    { tvSym: "NYSE:XOM",        name: "ExxonMobil Corp",         currency: "USD" },
+  BRK:    { tvSym: "NYSE:BRK.B",      name: "Berkshire Hathaway B",    currency: "USD" },
 };
+
+// Indian market guard — keep Yahoo Finance for these
+function isIndianSymbol(raw: string): boolean {
+  const u = raw.toUpperCase();
+  return u.endsWith(".NS") || u.endsWith(".BO") ||
+    ["NIFTY50","SENSEX","^NSEI","^BSESN","NIFTYBANK","NIFTYMID50"].includes(u);
+}
+
+// Shared TradingView scanner fetch helper
+const TV_HEADERS = {
+  "Content-Type": "application/json",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Origin": "https://www.tradingview.com",
+  "Referer": "https://www.tradingview.com/",
+};
+
+async function fetchTVQuote(tvSym: string): Promise<{
+  price: number; changeAbs: number; open: number; high: number; low: number; volume: number;
+} | null> {
+  try {
+    const resp = await fetch("https://scanner.tradingview.com/global/scan", {
+      method: "POST",
+      headers: TV_HEADERS,
+      body: JSON.stringify({ columns: ["close","change_abs","open","high","low","volume"], symbols: { tickers: [tvSym] } }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const d = data.data?.[0]?.d;
+    if (!d || d[0] == null) return null;
+    return { price: d[0], changeAbs: d[1] ?? 0, open: d[2] ?? d[0], high: d[3] ?? d[0], low: d[4] ?? d[0], volume: d[5] ?? 0 };
+  } catch { return null; }
+}
+
+// Auto-discover TradingView symbol for unknown tickers by trying common US exchanges
+async function autoTVQuote(ticker: string): Promise<{ q: Awaited<ReturnType<typeof fetchTVQuote>>; tvSym: string } | null> {
+  const candidates = [`NASDAQ:${ticker}`, `NYSE:${ticker}`, `AMEX:${ticker}`];
+  try {
+    const resp = await fetch("https://scanner.tradingview.com/global/scan", {
+      method: "POST",
+      headers: TV_HEADERS,
+      body: JSON.stringify({ columns: ["close","change_abs","open","high","low","volume"], symbols: { tickers: candidates } }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    for (const item of data.data ?? []) {
+      if (item.d?.[0] != null) {
+        const d = item.d;
+        return { tvSym: item.s, q: { price: d[0], changeAbs: d[1] ?? 0, open: d[2] ?? d[0], high: d[3] ?? d[0], low: d[4] ?? d[0], volume: d[5] ?? 0 } };
+      }
+    }
+  } catch {}
+  return null;
+}
 
 router.get("/quote/:symbol", async (req, res) => {
   try {
     const rawUpper = req.params.symbol.toUpperCase();
-    const tvSpot = TV_SPOT_QUOTE[rawUpper];
 
-    // Fetch spot price from TradingView for gold/silver
-    if (tvSpot) {
-      try {
-        const tvResp = await fetch("https://scanner.tradingview.com/global/scan", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Origin": "https://www.tradingview.com",
-            "Referer": "https://www.tradingview.com/",
-          },
-          body: JSON.stringify({
-            columns: ["close", "change_abs", "open", "high", "low", "volume"],
-            symbols: { tickers: [tvSpot.tvSym] },
-          }),
-          signal: AbortSignal.timeout(5000),
-        });
-        if (tvResp.ok) {
-          const tvData = await tvResp.json();
-          const d = tvData.data?.[0]?.d;
-          if (d && d[0] != null) {
-            const [price, changeAbs, open, high, low, volume] = d;
-            const prevClose = price - (changeAbs ?? 0);
-            return res.json({
-              symbol: tvSpot.tvSym,
-              price,
-              prevClose,
-              change: changeAbs ?? null,
-              changePercent: prevClose > 0 ? ((changeAbs ?? 0) / prevClose) * 100 : null,
-              lastBar: { timestamp: Date.now(), open, high, low, close: price, volume: volume ?? 0 },
-              currency: "USD",
-              marketState: "REGULAR",
-              name: tvSpot.name,
-            });
-          }
+    // ── Indian symbols → always use Yahoo Finance (unchanged behaviour) ─────
+    if (!isIndianSymbol(rawUpper)) {
+
+      // 1) Check the predefined TradingView map
+      const tvEntry = TV_QUOTE_MAP[rawUpper];
+      if (tvEntry) {
+        const q = await fetchTVQuote(tvEntry.tvSym);
+        if (q) {
+          const prevClose = q.price - q.changeAbs;
+          return res.json({
+            symbol: tvEntry.tvSym,
+            price: q.price,
+            prevClose,
+            change: q.changeAbs,
+            changePercent: prevClose > 0 ? (q.changeAbs / prevClose) * 100 : null,
+            lastBar: { timestamp: Date.now(), open: q.open, high: q.high, low: q.low, close: q.price, volume: q.volume },
+            currency: tvEntry.currency,
+            marketState: "REGULAR",
+            name: tvEntry.name,
+          });
         }
-      } catch {}
-      // fall through to Yahoo Finance if TradingView fails
+      }
+
+      // 2) Unknown clean ticker (no dots/carets/hyphens) → try US exchanges on TradingView
+      const isCleanTicker = /^[A-Z]{1,6}$/.test(rawUpper);
+      if (isCleanTicker) {
+        const result = await autoTVQuote(rawUpper);
+        if (result) {
+          const { q, tvSym } = result;
+          const prevClose = q.price - q.changeAbs;
+          return res.json({
+            symbol: tvSym,
+            price: q.price,
+            prevClose,
+            change: q.changeAbs,
+            changePercent: prevClose > 0 ? (q.changeAbs / prevClose) * 100 : null,
+            lastBar: { timestamp: Date.now(), open: q.open, high: q.high, low: q.low, close: q.price, volume: q.volume },
+            currency: "USD",
+            marketState: "REGULAR",
+            name: rawUpper,
+          });
+        }
+      }
+      // 3) Fall through to Yahoo Finance for anything TradingView couldn't resolve
     }
 
+    // ── Yahoo Finance fallback (Indian + unresolved symbols) ─────────────────
     const yahooSymbol = resolveSymbol(req.params.symbol);
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=1d&interval=1m&includePrePost=false`;
     const resp = await fetch(url, {
