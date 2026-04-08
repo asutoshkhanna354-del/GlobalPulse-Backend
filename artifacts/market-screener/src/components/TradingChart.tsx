@@ -16,7 +16,8 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OHLCBar { timestamp: number; open: number; high: number; low: number; close: number; volume: number; }
-interface Signal { timestamp: number; type: "buy" | "sell"; price: number; confidence: number; stopLoss: number; takeProfit: number; riskReward: number; }
+interface HoldingTerm { label: "SCALP" | "INTRADAY" | "SWING" | "POSITION"; timeRange: string; description: string; }
+interface Signal { timestamp: number; type: "buy" | "sell"; price: number; confidence: number; stopLoss: number; takeProfit: number; riskReward: number; holdingTerm?: HoldingTerm; }
 interface IndicatorData { bars: OHLCBar[]; signals: Signal[]; marketMode: string; strength: number; drsi: number[]; signalLine: number[]; aiAnalysis?: string; }
 interface SearchResult { symbol: string; name: string; type: string; exchange: string; }
 interface QuoteData { price: number | null; prevClose: number | null; change: number | null; changePercent: number | null; currency: string; marketState: string; name: string; lastBar?: any; }
@@ -114,38 +115,91 @@ function fmtTime(ts:number):string {
 function uid():string { return Math.random().toString(36).slice(2,9); }
 function s2ms(ts:number){ return Math.floor(ts/1000); }
 
+// ─── Holding term colour map ───────────────────────────────────────────────────
+const TERM_STYLE: Record<string,{bg:string;text:string;dot:string}> = {
+  SCALP:    { bg:"bg-purple-50",  text:"text-purple-700",  dot:"bg-purple-400"  },
+  INTRADAY: { bg:"bg-amber-50",   text:"text-amber-700",   dot:"bg-amber-400"   },
+  SWING:    { bg:"bg-blue-50",    text:"text-blue-700",    dot:"bg-blue-400"    },
+  POSITION: { bg:"bg-teal-50",    text:"text-teal-700",    dot:"bg-teal-500"    },
+};
+
 // ─── Signal Popup ──────────────────────────────────────────────────────────────
 function SignalPopup({signal,currency,onClose}:{signal:Signal;currency?:string;onClose:()=>void}) {
-  const buy=signal.type==="buy";
-  const pf=(v:number)=>fmtP(v,currency);
+  const buy = signal.type === "buy";
+  const pf  = (v: number) => fmtP(v, currency);
+  const ht  = signal.holdingTerm;
+  const ts  = ht ? TERM_STYLE[ht.label] ?? TERM_STYLE.SWING : null;
+
   return (
-    <div className="absolute top-14 right-3 z-50 w-52 rounded-2xl shadow-2xl border border-white/50 overflow-hidden bg-white"
+    <div className="absolute top-14 right-3 z-50 w-60 rounded-2xl shadow-2xl border border-white/50 overflow-hidden bg-white"
       style={{boxShadow:"0 8px 40px rgba(0,0,0,0.22)"}}>
+
+      {/* ── Header ── */}
       <div className={`flex items-center justify-between px-3 py-2.5 ${buy?"bg-emerald-500":"bg-red-500"}`}>
         <div className="flex items-center gap-1.5 text-white font-bold text-[12px]">
-          {buy?<TrendingUp className="w-4 h-4"/>:<TrendingDown className="w-4 h-4"/>}
-          {buy?"BUY Signal":"SELL Signal"}
+          {buy ? <TrendingUp className="w-4 h-4"/> : <TrendingDown className="w-4 h-4"/>}
+          {buy ? "LONG Signal" : "SHORT Signal"}
         </div>
         <button onClick={onClose} className="text-white/80 hover:text-white"><X className="w-3.5 h-3.5"/></button>
       </div>
-      <div className="px-3 py-3 flex flex-col gap-2">
+
+      <div className="px-3 py-3 flex flex-col gap-2.5">
+
+        {/* ── Confidence bar ── */}
         <div className="flex flex-col gap-1">
           <div className="flex justify-between items-center">
             <span className="text-[10px] text-[#9598A1]">Confidence</span>
-            <span className={`text-[13px] font-bold ${signal.confidence>=85?"text-emerald-600":signal.confidence>=72?"text-amber-500":"text-slate-500"}`}>{signal.confidence}%</span>
+            <span className={`text-[13px] font-bold ${signal.confidence>=85?"text-emerald-600":signal.confidence>=72?"text-amber-500":"text-slate-500"}`}>
+              {signal.confidence}%
+            </span>
           </div>
           <div className="w-full bg-[#F0F3FA] rounded-full h-1.5">
-            <div className={`h-1.5 rounded-full ${signal.confidence>=85?"bg-emerald-500":signal.confidence>=72?"bg-amber-400":"bg-slate-400"}`} style={{width:`${signal.confidence}%`}}/>
+            <div className={`h-1.5 rounded-full transition-all ${signal.confidence>=85?"bg-emerald-500":signal.confidence>=72?"bg-amber-400":"bg-slate-400"}`}
+              style={{width:`${signal.confidence}%`}}/>
           </div>
         </div>
-        <div className="flex flex-col gap-1.5 pt-1 border-t border-[#F0F3FA]">
-          <div className="flex justify-between text-[11px]"><span className="text-[#9598A1]">Entry</span><span className="font-mono font-bold text-[#131722]">{pf(signal.price)}</span></div>
-          <div className="flex justify-between text-[11px]"><span className="text-[#EF5350]">Stop Loss</span><span className="font-mono font-bold text-[#EF5350]">{pf(signal.stopLoss)}</span></div>
-          <div className="flex justify-between text-[11px]"><span className="text-[#26A69A]">Take Profit</span><span className="font-mono font-bold text-[#26A69A]">{pf(signal.takeProfit)}</span></div>
-          <div className="flex justify-between items-center text-[11px] pt-1.5 border-t border-[#F0F3FA]">
-            <span className="text-[#FF9800] font-bold">RR 1:{signal.riskReward.toFixed(1)}</span>
-            <span className="text-[#9598A1] text-[9px] font-mono">{fmtTime(signal.timestamp)}</span>
+
+        {/* ── Holding term badge ── */}
+        {ht && ts && (
+          <div className={`rounded-xl px-2.5 py-2 ${ts.bg} flex flex-col gap-1`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${ts.dot}`}/>
+                <span className={`text-[11px] font-extrabold tracking-wide ${ts.text}`}>{ht.label}</span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold ${ts.text} opacity-80`}>{ht.timeRange}</span>
+            </div>
+            <p className={`text-[9.5px] leading-[1.45] ${ts.text} opacity-75`}>{ht.description}</p>
           </div>
+        )}
+
+        {/* ── Price levels ── */}
+        <div className="flex flex-col gap-1.5 pt-0.5 border-t border-[#F0F3FA]">
+          <div className="flex justify-between text-[11px]">
+            <span className="text-[#9598A1]">Entry</span>
+            <span className="font-mono font-bold text-[#131722]">{pf(signal.price)}</span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="text-[#EF5350]">Stop Loss</span>
+            <span className="font-mono font-bold text-[#EF5350]">{pf(signal.stopLoss)}</span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="text-[#26A69A]">Take Profit</span>
+            <span className="font-mono font-bold text-[#26A69A]">{pf(signal.takeProfit)}</span>
+          </div>
+        </div>
+
+        {/* ── Direction summary ── */}
+        <div className={`rounded-lg px-2.5 py-1.5 text-[9.5px] leading-snug ${buy?"bg-emerald-50 text-emerald-700":"bg-red-50 text-red-700"}`}>
+          {buy
+            ? `Go LONG at ${pf(signal.price)}. Exit if price closes below ${pf(signal.stopLoss)}. Target ${pf(signal.takeProfit)}.`
+            : `Go SHORT at ${pf(signal.price)}. Exit if price closes above ${pf(signal.stopLoss)}. Target ${pf(signal.takeProfit)}.`}
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="flex justify-between items-center text-[10px] pt-0.5 border-t border-[#F0F3FA]">
+          <span className="text-[#FF9800] font-bold">Risk:Reward 1:{signal.riskReward.toFixed(1)}</span>
+          <span className="text-[#9598A1] font-mono text-[9px]">{fmtTime(signal.timestamp)}</span>
         </div>
       </div>
     </div>
@@ -776,8 +830,15 @@ export function TradingChart() {
             <button onClick={()=>setSelSignal(p=>p?.timestamp===lastSignal.timestamp?null:lastSignal)}
               className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-lg border transition-all ${lastSignal.type==="buy"?"bg-emerald-50 border-emerald-200 hover:bg-emerald-100":"bg-red-50 border-red-200 hover:bg-red-100"}`}>
               {lastSignal.type==="buy"?<TrendingUp className="w-3.5 h-3.5 text-[#26A69A]"/>:<TrendingDown className="w-3.5 h-3.5 text-[#EF5350]"/>}
-              <span className={`text-[11px] font-bold ${lastSignal.type==="buy"?"text-[#26A69A]":"text-[#EF5350]"}`}>{lastSignal.type.toUpperCase()}</span>
+              <span className={`text-[11px] font-bold ${lastSignal.type==="buy"?"text-[#26A69A]":"text-[#EF5350]"}`}>{lastSignal.type==="buy"?"LONG":"SHORT"}</span>
             </button>
+            {lastSignal.holdingTerm&&(()=>{const ts2=TERM_STYLE[lastSignal.holdingTerm!.label]??TERM_STYLE.SWING;return(
+              <span className={`shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold ${ts2.bg} ${ts2.text}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${ts2.dot}`}/>
+                {lastSignal.holdingTerm!.label}
+                <span className="font-normal opacity-75">·{lastSignal.holdingTerm!.timeRange}</span>
+              </span>
+            );})()}
             <span className="text-[10px] text-[#9598A1] shrink-0">@ {fmtP(lastSignal.price,currency)}</span>
             <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
             <div className="flex items-center gap-0.5 shrink-0"><ShieldCheck className="w-3 h-3 text-[#9598A1]"/><span className={`text-[10px] font-bold ${lastSignal.confidence>=85?"text-[#26A69A]":lastSignal.confidence>=72?"text-[#FF9800]":"text-[#9598A1]"}`}>{lastSignal.confidence}%</span></div>

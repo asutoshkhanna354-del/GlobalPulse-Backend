@@ -352,7 +352,7 @@ router.get("/signals/:symbol", async (req, res) => {
       }
     }
 
-    const result = computeSignals(bars);
+    const result = computeSignals(bars, { interval });
 
     const lastSignal = result.signals.length > 0 ? result.signals[result.signals.length - 1] : null;
     const lastBar = bars[bars.length - 1];

@@ -7,6 +7,12 @@ interface OHLCBar {
   volume: number;
 }
 
+interface HoldingTerm {
+  label: "SCALP" | "INTRADAY" | "SWING" | "POSITION";
+  timeRange: string;
+  description: string;
+}
+
 interface Signal {
   timestamp: number;
   type: "buy" | "sell" | "exitLong" | "exitShort";
@@ -15,6 +21,68 @@ interface Signal {
   stopLoss: number;
   takeProfit: number;
   riskReward: number;
+  holdingTerm: HoldingTerm;
+}
+
+function resolveHoldingTerm(interval: string, confidence: number): HoldingTerm {
+  // Lower-confidence signals suggest shorter hold to limit exposure
+  const highConf = confidence >= 80;
+  switch (interval) {
+    case "1m":
+      return {
+        label: "SCALP",
+        timeRange: highConf ? "10–30 min" : "5–15 min",
+        description: "Quick momentum scalp. Enter at signal, exit on first sign of reversal. Use tight stop-loss. Do not hold overnight.",
+      };
+    case "5m":
+      return {
+        label: "SCALP",
+        timeRange: highConf ? "30 min–2 hrs" : "15–45 min",
+        description: "Fast intra-session scalp. Watch for volume fade or candle reversal. Close same session — no overnight holding.",
+      };
+    case "15m":
+      return {
+        label: "INTRADAY",
+        timeRange: highConf ? "2–5 hrs" : "1–3 hrs",
+        description: "Intraday swing. Hold through the move, trail your stop every 30 min. Close before session end to avoid gap risk.",
+      };
+    case "30m":
+      return {
+        label: "INTRADAY",
+        timeRange: highConf ? "4–8 hrs" : "2–5 hrs",
+        description: "Same-day position. Monitor progress each hour. Close by end of day — do not carry overnight without strong trend confirmation.",
+      };
+    case "1h":
+      return {
+        label: "SWING",
+        timeRange: highConf ? "2–4 days" : "1–2 days",
+        description: "Overnight swing trade. Hold through normal retracements, trail stop daily. Reassess if price closes beyond your stop.",
+      };
+    case "4h":
+      return {
+        label: "SWING",
+        timeRange: highConf ? "5–10 days" : "3–6 days",
+        description: "Multi-day swing. Review position every morning. Use daily close as your reference — only exit on daily candle confirmation.",
+      };
+    case "1d":
+      return {
+        label: "POSITION",
+        timeRange: highConf ? "3–8 weeks" : "2–4 weeks",
+        description: "Position trade. Weekly review cadence. Hold through day-to-day noise, manage via weekly close. No intraday stop triggers.",
+      };
+    case "1wk":
+      return {
+        label: "POSITION",
+        timeRange: highConf ? "2–4 months" : "1–2 months",
+        description: "Macro trend trade. Monthly review. Wide stops allow for multi-week retracements. Exit only on monthly close reversal signal.",
+      };
+    default:
+      return {
+        label: "SWING",
+        timeRange: "1–3 days",
+        description: "Hold overnight and review daily. Trail stop as price moves in your favour.",
+      };
+  }
 }
 
 interface IndicatorResult {
@@ -251,12 +319,14 @@ export function computeSignals(bars: OHLCBar[], params?: {
   windowLength?: number;
   signalLength?: number;
   rrRatio?: number;
+  interval?: string;
 }): IndicatorResult {
   const rsiLen = params?.rsiLength ?? 14;
   const degree = params?.polyOrder ?? 2;
   const window = params?.windowLength ?? 28;
   const sigLen = params?.signalLength ?? 2;
   const rr = params?.rrRatio ?? 2.5;
+  const interval = params?.interval ?? "1h";
 
   const closes = bars.map(b => b.close);
   const rsi = computeRSI(closes, rsiLen);
@@ -430,6 +500,7 @@ export function computeSignals(bars: OHLCBar[], params?: {
         stopLoss: sl,
         takeProfit: tp,
         riskReward: rr,
+        holdingTerm: resolveHoldingTerm(interval, confidence),
       });
       lastSignalBar = i;
     }
@@ -449,6 +520,7 @@ export function computeSignals(bars: OHLCBar[], params?: {
         stopLoss: sl,
         takeProfit: tp,
         riskReward: rr,
+        holdingTerm: resolveHoldingTerm(interval, confidence),
       });
       lastSignalBar = i;
     }
