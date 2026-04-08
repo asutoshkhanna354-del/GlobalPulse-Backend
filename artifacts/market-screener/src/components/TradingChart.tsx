@@ -13,6 +13,7 @@ import {
   Bell, BellOff, Loader2, ExternalLink, Minus, TrendingUp as TLIcon,
   Square, MousePointer, Trash2,
 } from "lucide-react";
+import { ForexTVPanel, FOREX_SYMBOLS } from "./ForexTVPanel";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OHLCBar { timestamp: number; open: number; high: number; low: number; close: number; volume: number; }
@@ -232,6 +233,7 @@ export function TradingChart() {
 
   const [symbol,      setSymbol]      = useState("XAUUSD");
   const [symLabel,    setSymLabel]    = useState("Gold (XAU/USD)");
+  const isForex = FOREX_SYMBOLS.has(symbol.toUpperCase());
   const [currency,    setCurrency]    = useState<string|undefined>();
   const [rangeIdx,    setRangeIdx]    = useState(4);
   const [data,        setData]        = useState<IndicatorData|null>(null);
@@ -769,89 +771,114 @@ export function TradingChart() {
               </button>
             ))}
           </div>
-          <div className="flex gap-1 ml-auto">
-            {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
-              <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
-                className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
-                {lbl}
-              </button>
-            ))}
-          </div>
+          {!isForex && (
+            <div className="flex gap-1 ml-auto">
+              {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
+                <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
+                  className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          )}
+          {isForex && (
+            <div className="ml-auto flex items-center gap-1.5">
+              <span className="text-[9px] text-[#9598A1]">Powered by</span>
+              <span className="text-[9px] font-bold text-[#2962FF]">TradingView</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Chart area ── */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 relative min-h-0 flex">
-          {/* Drawing toolbar */}
-          <div className="absolute left-2 top-2 z-30 flex flex-col gap-0.5 bg-white border border-[#E0E3EB] rounded-xl shadow-md p-1">
-            {TOOLS.map(([tool,icon,title])=>(
-              <button key={tool} onClick={()=>setActiveTool(tool)} title={title}
-                className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${activeTool===tool?"bg-[#2962FF] text-white":"text-[#9598A1] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
-                {icon}
-              </button>
-            ))}
-            <div className="w-full h-px bg-[#E0E3EB] my-0.5"/>
-            <button onClick={()=>{setDrawings([]);setInProg(null);redrawCanvas();}} title="Clear drawings"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#9598A1] hover:bg-red-50 hover:text-red-500 transition-all">
-              <Trash2 className="w-3 h-3"/>
-            </button>
-          </div>
 
-          {loading&&<div className="absolute inset-0 flex items-center justify-center bg-white z-10"><div className="flex flex-col items-center gap-3"><div className="w-8 h-8 border-2 border-[#2962FF] border-t-transparent rounded-full animate-spin"/><span className="text-[#9598A1] text-xs">Loading {symLabel}...</span></div></div>}
-          {error&&!loading&&<div className="absolute inset-0 flex items-center justify-center bg-white z-10"><div className="flex flex-col items-center gap-3"><div className="flex items-center gap-2 text-[#EF5350] text-xs"><AlertTriangle className="w-4 h-4"/><span>{error}</span></div><button onClick={handleRefresh} className="text-[10px] text-[#9598A1] hover:text-[#131722] underline">Try again</button></div></div>}
+        {/* ── FOREX: TradingView live chart + signals panel ── */}
+        {isForex && (
+          <ForexTVPanel
+            key={symbol}
+            symbol={symbol}
+            symLabel={symLabel}
+            rangeIdx={rangeIdx}
+            ranges={RANGES}
+            currency={currency}
+            baseUrl={baseUrl}
+            aiAnalysis={data?.aiAnalysis}
+          />
+        )}
 
-          <div ref={chartContainerRef} className="flex-1 relative min-h-0">
-            {/* Drawing canvas overlay */}
-            <canvas ref={drawCanvasRef} className="absolute inset-0 z-20 pointer-events-none" style={{width:"100%",height:"100%"}}/>
-            {/* Mouse event overlay */}
-            <div ref={overlayRef}
-              className="absolute inset-0 z-25"
-              style={{pointerEvents:activeTool==="cursor"?"none":"all",cursor:activeTool==="cursor"?"default":activeTool==="hline"?"crosshair":"crosshair"}}
-              onMouseDown={handleOverlayMouseDown}
-              onMouseMove={handleOverlayMouseMove}
-              onMouseUp={handleOverlayMouseUp}
-            />
-          </div>
+        {/* ── NON-FOREX: existing lightweight-charts ── */}
+        {!isForex && (
+          <>
+            <div className="flex-1 relative min-h-0 flex">
+              {/* Drawing toolbar */}
+              <div className="absolute left-2 top-2 z-30 flex flex-col gap-0.5 bg-white border border-[#E0E3EB] rounded-xl shadow-md p-1">
+                {TOOLS.map(([tool,icon,title])=>(
+                  <button key={tool} onClick={()=>setActiveTool(tool)} title={title}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${activeTool===tool?"bg-[#2962FF] text-white":"text-[#9598A1] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
+                    {icon}
+                  </button>
+                ))}
+                <div className="w-full h-px bg-[#E0E3EB] my-0.5"/>
+                <button onClick={()=>{setDrawings([]);setInProg(null);redrawCanvas();}} title="Clear drawings"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#9598A1] hover:bg-red-50 hover:text-red-500 transition-all">
+                  <Trash2 className="w-3 h-3"/>
+                </button>
+              </div>
 
-          {selSignal&&<SignalPopup signal={selSignal} currency={currency} onClose={()=>setSelSignal(null)}/>}
+              {loading&&<div className="absolute inset-0 flex items-center justify-center bg-white z-10"><div className="flex flex-col items-center gap-3"><div className="w-8 h-8 border-2 border-[#2962FF] border-t-transparent rounded-full animate-spin"/><span className="text-[#9598A1] text-xs">Loading {symLabel}...</span></div></div>}
+              {error&&!loading&&<div className="absolute inset-0 flex items-center justify-center bg-white z-10"><div className="flex flex-col items-center gap-3"><div className="flex items-center gap-2 text-[#EF5350] text-xs"><AlertTriangle className="w-4 h-4"/><span>{error}</span></div><button onClick={handleRefresh} className="text-[10px] text-[#9598A1] hover:text-[#131722] underline">Try again</button></div></div>}
 
-          {!isPremium&&!loading&&<div className="absolute bottom-3 right-3 z-10 w-64"><div className="bg-white/95 backdrop-blur-xl border border-[#FFB300]/30 rounded-2xl p-3 shadow-lg"><div className="flex items-center gap-2 mb-1.5"><div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#FFB300] to-[#FF8F00] flex items-center justify-center"><Lock className="w-3 h-3 text-white"/></div><span className="text-[11px] font-bold text-[#FF8F00]">GlobalPulse Pro</span></div><p className="text-[9px] text-[#9598A1] mb-2">AI signal arrows on every candle. Click any arrow for entry, stop loss, take profit & confidence score.</p><button onClick={()=>setShowActivation(true)} className="w-full bg-gradient-to-r from-[#FFB300] to-[#FF8F00] text-white text-[10px] font-bold py-1.5 rounded-lg hover:from-[#FFC107] hover:to-[#FF9800] transition-all">Activate Key</button></div></div>}
-        </div>
+              <div ref={chartContainerRef} className="flex-1 relative min-h-0">
+                <canvas ref={drawCanvasRef} className="absolute inset-0 z-20 pointer-events-none" style={{width:"100%",height:"100%"}}/>
+                <div ref={overlayRef}
+                  className="absolute inset-0 z-25"
+                  style={{pointerEvents:activeTool==="cursor"?"none":"all",cursor:activeTool==="cursor"?"default":activeTool==="hline"?"crosshair":"crosshair"}}
+                  onMouseDown={handleOverlayMouseDown}
+                  onMouseMove={handleOverlayMouseMove}
+                  onMouseUp={handleOverlayMouseUp}
+                />
+              </div>
 
-        {/* RSI pane */}
-        {showRSI&&<div ref={rsiContainerRef} className="border-t border-[#E0E3EB] shrink-0" style={{height:"120px"}}/>}
+              {selSignal&&<SignalPopup signal={selSignal} currency={currency} onClose={()=>setSelSignal(null)}/>}
+              {!isPremium&&!loading&&<div className="absolute bottom-3 right-3 z-10 w-64"><div className="bg-white/95 backdrop-blur-xl border border-[#FFB300]/30 rounded-2xl p-3 shadow-lg"><div className="flex items-center gap-2 mb-1.5"><div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#FFB300] to-[#FF8F00] flex items-center justify-center"><Lock className="w-3 h-3 text-white"/></div><span className="text-[11px] font-bold text-[#FF8F00]">GlobalPulse Pro</span></div><p className="text-[9px] text-[#9598A1] mb-2">AI signal arrows on every candle. Click any arrow for entry, stop loss, take profit & confidence score.</p><button onClick={()=>setShowActivation(true)} className="w-full bg-gradient-to-r from-[#FFB300] to-[#FF8F00] text-white text-[10px] font-bold py-1.5 rounded-lg hover:from-[#FFC107] hover:to-[#FF9800] transition-all">Activate Key</button></div></div>}
+            </div>
+
+            {/* RSI pane */}
+            {showRSI&&<div ref={rsiContainerRef} className="border-t border-[#E0E3EB] shrink-0" style={{height:"120px"}}/>}
+
+            {/* Signal bar (non-forex only) */}
+            {isPremium&&lastSignal&&!loading&&(
+              <div className="border-t border-[#E0E3EB] px-3 py-2 bg-[#F0F3FA]">
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                  <button onClick={()=>setSelSignal(p=>p?.timestamp===lastSignal.timestamp?null:lastSignal)}
+                    className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-lg border transition-all ${lastSignal.type==="buy"?"bg-emerald-50 border-emerald-200 hover:bg-emerald-100":"bg-red-50 border-red-200 hover:bg-red-100"}`}>
+                    {lastSignal.type==="buy"?<TrendingUp className="w-3.5 h-3.5 text-[#26A69A]"/>:<TrendingDown className="w-3.5 h-3.5 text-[#EF5350]"/>}
+                    <span className={`text-[11px] font-bold ${lastSignal.type==="buy"?"text-[#26A69A]":"text-[#EF5350]"}`}>{lastSignal.type==="buy"?"LONG":"SHORT"}</span>
+                  </button>
+                  {lastSignal.holdingTerm&&(()=>{const ts2=TERM_STYLE[lastSignal.holdingTerm!.label]??TERM_STYLE.SWING;return(
+                    <span className={`shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold ${ts2.bg} ${ts2.text}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${ts2.dot}`}/>
+                      {lastSignal.holdingTerm!.label}
+                      <span className="font-normal opacity-75">·{lastSignal.holdingTerm!.timeRange}</span>
+                    </span>
+                  );})()}
+                  <span className="text-[10px] text-[#9598A1] shrink-0">@ {fmtP(lastSignal.price,currency)}</span>
+                  <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
+                  <div className="flex items-center gap-0.5 shrink-0"><ShieldCheck className="w-3 h-3 text-[#9598A1]"/><span className={`text-[10px] font-bold ${lastSignal.confidence>=85?"text-[#26A69A]":lastSignal.confidence>=72?"text-[#FF9800]":"text-[#9598A1]"}`}>{lastSignal.confidence}%</span></div>
+                  <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
+                  <span className="text-[10px] text-[#9598A1] shrink-0">SL:<span className="text-[#EF5350] font-mono ml-1">{fmtP(lastSignal.stopLoss,currency)}</span></span>
+                  <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
+                  <span className="text-[10px] text-[#9598A1] shrink-0">TP:<span className="text-[#26A69A] font-mono ml-1">{fmtP(lastSignal.takeProfit,currency)}</span></span>
+                  <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
+                  <span className="text-[10px] text-[#9598A1] shrink-0">RR:<span className="text-[#FF9800] font-mono ml-1">1:{lastSignal.riskReward.toFixed(1)}</span></span>
+                  {data?.aiAnalysis&&<><div className="w-px h-3 bg-[#E0E3EB] shrink-0"/><div className="flex items-center gap-1 shrink-0"><Zap className="w-3 h-3 text-[#2962FF]"/><span className="text-[9px] text-[#2962FF] font-medium max-w-[180px] truncate">{data.aiAnalysis}</span></div></>}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-
-      {/* ── Signal bar ── */}
-      {isPremium&&lastSignal&&!loading&&(
-        <div className="border-t border-[#E0E3EB] px-3 py-2 bg-[#F0F3FA]">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <button onClick={()=>setSelSignal(p=>p?.timestamp===lastSignal.timestamp?null:lastSignal)}
-              className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-lg border transition-all ${lastSignal.type==="buy"?"bg-emerald-50 border-emerald-200 hover:bg-emerald-100":"bg-red-50 border-red-200 hover:bg-red-100"}`}>
-              {lastSignal.type==="buy"?<TrendingUp className="w-3.5 h-3.5 text-[#26A69A]"/>:<TrendingDown className="w-3.5 h-3.5 text-[#EF5350]"/>}
-              <span className={`text-[11px] font-bold ${lastSignal.type==="buy"?"text-[#26A69A]":"text-[#EF5350]"}`}>{lastSignal.type==="buy"?"LONG":"SHORT"}</span>
-            </button>
-            {lastSignal.holdingTerm&&(()=>{const ts2=TERM_STYLE[lastSignal.holdingTerm!.label]??TERM_STYLE.SWING;return(
-              <span className={`shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold ${ts2.bg} ${ts2.text}`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${ts2.dot}`}/>
-                {lastSignal.holdingTerm!.label}
-                <span className="font-normal opacity-75">·{lastSignal.holdingTerm!.timeRange}</span>
-              </span>
-            );})()}
-            <span className="text-[10px] text-[#9598A1] shrink-0">@ {fmtP(lastSignal.price,currency)}</span>
-            <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
-            <div className="flex items-center gap-0.5 shrink-0"><ShieldCheck className="w-3 h-3 text-[#9598A1]"/><span className={`text-[10px] font-bold ${lastSignal.confidence>=85?"text-[#26A69A]":lastSignal.confidence>=72?"text-[#FF9800]":"text-[#9598A1]"}`}>{lastSignal.confidence}%</span></div>
-            <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
-            <span className="text-[10px] text-[#9598A1] shrink-0">SL:<span className="text-[#EF5350] font-mono ml-1">{fmtP(lastSignal.stopLoss,currency)}</span></span>
-            <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
-            <span className="text-[10px] text-[#9598A1] shrink-0">TP:<span className="text-[#26A69A] font-mono ml-1">{fmtP(lastSignal.takeProfit,currency)}</span></span>
-            <div className="w-px h-3 bg-[#E0E3EB] shrink-0"/>
-            <span className="text-[10px] text-[#9598A1] shrink-0">RR:<span className="text-[#FF9800] font-mono ml-1">1:{lastSignal.riskReward.toFixed(1)}</span></span>
-            {data?.aiAnalysis&&<><div className="w-px h-3 bg-[#E0E3EB] shrink-0"/><div className="flex items-center gap-1 shrink-0"><Zap className="w-3 h-3 text-[#2962FF]"/><span className="text-[9px] text-[#2962FF] font-medium max-w-[180px] truncate">{data.aiAnalysis}</span></div></>}
-          </div>
-        </div>
-      )}
 
       {/* ── Search modal ── */}
       {searchOpen&&(

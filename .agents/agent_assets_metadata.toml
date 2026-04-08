@@ -36,3 +36,9 @@ id = "Sgxl-eAsoWOjL47X9NA17"
 uri = "file://globalpulse-deploy.zip"
 type = "unspecified"
 title = "GlobalPulse Intelligence — Deploy Package"
+
+[[outputs]]
+id = "KB8FRt4PzzoUog3e39j64"
+uri = "file://globalpulse-deploy.tar.gz"
+type = "unspecified"
+title = "GlobalPulse Intelligence — Deploy Package (with TradingView Forex)"
