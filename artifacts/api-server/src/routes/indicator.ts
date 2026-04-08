@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { computeSignals, fetchOHLC } from "../lib/indicator.js";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai } from "../lib/openaiClient.js";
 
 const router = Router();
 
@@ -79,6 +79,7 @@ async function getAISignalAnalysis(
   takeProfit: number | null
 ): Promise<string> {
   try {
+    if (!openai) return "";
     const prompt = `You are a professional trading analyst. Analyze this signal concisely (max 12 words):
 Symbol: ${symbol}
 Market mode: ${marketMode}

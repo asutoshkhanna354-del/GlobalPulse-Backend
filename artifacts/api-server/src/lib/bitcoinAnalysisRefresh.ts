@@ -3,13 +3,7 @@ import { bitcoinAnalysisTable, marketAssetsTable, newsItemsTable } from "@worksp
 import { logger } from "./logger";
 import { fetchOHLC } from "./indicator.js";
 
-let openai: any = null;
-try {
-  const mod = await import("@workspace/integrations-openai-ai-server");
-  openai = mod.openai;
-} catch {
-  logger.warn("OpenAI integration not available for Bitcoin analysis");
-}
+import { openai } from "./openaiClient.js";
 
 function toIST(date: Date): string {
   return date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true, hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", year: "numeric" });

@@ -1,320 +1,240 @@
-# GlobalPulse — Self-Hosting Deployment Guide
-
-Deploy GlobalPulse (Global Market Intelligence Screener) on your own server or VPS.
-
----
-
-## Prerequisites
-
-- **Node.js** ≥ 20
-- **pnpm** ≥ 9 (`npm i -g pnpm`)
-- **PostgreSQL** ≥ 15 (local or managed)
-- A server with at least 1 GB RAM
+# GlobalPulse Intelligence — Self-Hosting Guide
+## Netlify (Frontend) + Render (Backend + PostgreSQL)
 
 ---
 
-## 1. Clone & Install
+## What You Need Before Starting
+
+| Account | Free? | Sign up at |
+|---------|-------|-----------|
+| GitHub | Free | github.com |
+| Render | Free tier available | render.com |
+| Netlify | Free tier available | netlify.com |
+| Finnhub | Free | finnhub.io/register |
+| Twelve Data | Free | twelvedata.com/register |
+| OpenAI | Pay-per-use | platform.openai.com/api-keys |
+
+---
+
+## Step 1 — Push Code to GitHub
+
+1. Create a new **private** GitHub repository (e.g. `globalpulse`)
+2. Push this entire project folder to it:
 
 ```bash
-git clone <your-repo-url> globalpulse
-cd globalpulse
-pnpm install
+git init
+git add .
+git commit -m "GlobalPulse Intelligence"
+git remote add origin https://github.com/YOUR_USERNAME/globalpulse.git
+git push -u origin main
 ```
 
 ---
 
-## 2. Environment Variables
+## Step 2 — Set Up PostgreSQL on Render
 
-Create a `.env` file in the project root:
+1. Go to **render.com** → Sign in → **New** → **PostgreSQL**
+2. Fill in:
+   - **Name**: `globalpulse-db`
+   - **Region**: Singapore (or closest to you)
+   - **Plan**: Free
+3. Click **Create Database**
+4. Wait ~1 min. Then click the database → copy the **External Database URL**
+5. Keep this URL handy — you'll need it in Step 3
 
-```env
-# Database — PostgreSQL connection string (required)
-DATABASE_URL=postgresql://user:password@localhost:5432/globalpulse
+### Create the Database Tables
 
-# OpenAI — for AI-powered signals & analysis (required)
-AI_INTEGRATIONS_OPENAI_API_KEY=sk-...
-AI_INTEGRATIONS_OPENAI_BASE_URL=https://api.openai.com/v1
+After the database is ready:
 
-# Server port — the API server + static files will run here
-PORT=3000
+1. In Render, click your database → **PSQL Command** tab → copy the `psql` command shown
+2. Run it in your terminal — it opens a PostgreSQL shell
+3. Paste and run the full contents of **`schema.sql`** (included in this package)
 
-# Frontend base path — use "/" for root deployment
-BASE_PATH=/
-
-# Session secret — random string for cookie signing (production)
-SESSION_SECRET=replace-with-a-random-64-char-string
-
-# Node environment
-NODE_ENV=production
-
-# Optional: log level (trace | debug | info | warn | error)
-LOG_LEVEL=info
-```
-
-### Environment Variable Reference
-
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection URL |
-| `AI_INTEGRATIONS_OPENAI_API_KEY` | Yes | OpenAI API key for signals/analysis |
-| `AI_INTEGRATIONS_OPENAI_BASE_URL` | Yes | OpenAI API base URL |
-| `PORT` | Yes | Port the server listens on |
-| `BASE_PATH` | Yes | URL base path for the frontend (usually `/`) |
-| `SESSION_SECRET` | Yes (prod) | Random secret for session signing |
-| `NODE_ENV` | No | Set to `production` for optimized builds |
-| `LOG_LEVEL` | No | Pino log level (default: `info`) |
+Alternatively, use any PostgreSQL client (DBeaver, TablePlus, pgAdmin) with the External Database URL, then run the `schema.sql` file.
 
 ---
 
-## 3. Database Setup
+## Step 3 — Deploy Backend on Render
 
+### Option A — One-Click with render.yaml (easiest)
+
+1. Go to **render.com** → **New** → **Blueprint**
+2. Connect your GitHub repo
+3. Render auto-detects `render.yaml` and sets up everything
+4. After the deploy, click your service → **Environment** tab → add:
+   - `FINNHUB_API_KEY` = your key
+   - `TWELVE_DATA_API_KEY` = your key
+   - `OPENAI_API_KEY` = your key (starts with `sk-proj-...`)
+5. Click **Save Changes** — Render restarts with the new keys
+
+### Option B — Manual Setup
+
+1. **New** → **Web Service** → connect your GitHub repo
+2. Fill in:
+   - **Name**: `globalpulse-api`
+   - **Runtime**: Node
+   - **Build Command**:
+     ```
+     npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
+     ```
+   - **Start Command**:
+     ```
+     node artifacts/api-server/dist/index.mjs
+     ```
+   - **Plan**: Free
+3. Under **Environment Variables**, add:
+
+   | Key | Value |
+   |-----|-------|
+   | `DATABASE_URL` | External DB URL from Step 2 |
+   | `FINNHUB_API_KEY` | Your Finnhub key |
+   | `TWELVE_DATA_API_KEY` | Your Twelve Data key |
+   | `OPENAI_API_KEY` | Your OpenAI key |
+   | `NODE_ENV` | `production` |
+   | `PORT` | `8080` |
+
+4. Click **Create Web Service**
+
+Your backend URL will look like: `https://globalpulse-api.onrender.com`
+
+**Test it:** Open `https://globalpulse-api.onrender.com/api/health` — should return `{"status":"ok"}`
+
+---
+
+## Step 4 — Deploy Frontend on Netlify
+
+1. Go to **netlify.com** → **Add new site** → **Import an existing project**
+2. Connect GitHub → select your repo
+3. Netlify auto-detects `netlify.toml`. Build settings:
+   - **Build command**: `npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/market-screener run build`
+   - **Publish directory**: `artifacts/market-screener/dist`
+4. Under **Environment variables** (before clicking Deploy), add:
+
+   | Key | Value |
+   |-----|-------|
+   | `VITE_API_URL` | Your Render backend URL e.g. `https://globalpulse-api.onrender.com` |
+
+5. Click **Deploy site**
+
+Your frontend URL will look like: `https://globalpulse-intelligence.netlify.app`
+
+---
+
+## Step 5 — Get Your API Keys
+
+### Finnhub (US stocks, forex, crypto WebSocket streaming)
+1. Register free at **https://finnhub.io/register**
+2. Dashboard → **API Key** → copy it
+3. Free tier includes full WebSocket access
+
+### Twelve Data (Indian NSE/BSE WebSocket backup)
+1. Register free at **https://twelvedata.com/register**
+2. Dashboard → **API Key** → copy it
+3. Free tier: 800 API calls/day + WebSocket
+
+### OpenAI (AI predictions — Nifty, BTC, USD signal, chart analysis)
+1. Go to **https://platform.openai.com/api-keys**
+2. Click **Create new secret key** → copy it
+3. Add payment method + $5 credit minimum (Billing section)
+4. Typical cost: ~$0.001–$0.003 per prediction call
+5. The app runs 4 AI calls roughly every 30 minutes = very cheap
+
+### VAPID Keys (Push Notifications — optional)
 ```bash
-# Push the schema to your PostgreSQL database
-pnpm --filter @workspace/db run push
+npx web-push generate-vapid-keys
 ```
-
-This creates all required tables (watchlist, IPOs, market data cache, etc.) using Drizzle ORM.
+Copy the public + private keys into Render environment variables:
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_CONTACT_EMAIL` (any email)
 
 ---
 
-## 4. Build
+## Step 6 — Verify Everything Works
 
-```bash
-# Build everything: API server, frontend, shared libraries
-pnpm run build
-```
-
-This produces:
-- **API server** → `artifacts/api-server/dist/index.mjs`
-- **Frontend** → `artifacts/market-screener/dist/public/` (static HTML/JS/CSS)
+1. Open your Netlify URL
+2. Market Screener loads with live prices → green "Live Stream" pulsing dot
+3. Click any symbol → chart opens with live candles and AI signals
+4. NSE Indian stocks show at 300ms update speed
+5. NIFTY, BANKNIFTY, FINNIFTY stream in real-time
 
 ---
 
-## 5. Serve Static Frontend from API Server
+## Architecture
 
-For a unified single-process deployment, add static file serving to the API server.
-Create or edit `artifacts/api-server/src/static.ts`:
-
-```typescript
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export function serveStatic(app: express.Express) {
-  const staticDir = path.resolve(__dirname, "../../market-screener/dist/public");
-  app.use(express.static(staticDir));
-  // SPA fallback — serve index.html for all non-API routes
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
-    res.sendFile(path.join(staticDir, "index.html"));
-  });
-}
 ```
-
-Then in `artifacts/api-server/src/app.ts`, add after the API routes:
-
-```typescript
-import { serveStatic } from "./static";
-// ... after app.use("/api", router);
-if (process.env.NODE_ENV === "production") {
-  serveStatic(app);
-}
-```
-
----
-
-## 6. Run in Production
-
-```bash
-# Start the server
-NODE_ENV=production node artifacts/api-server/dist/index.mjs
-```
-
-The app will be available at `http://localhost:3000` (or whatever `PORT` you set).
-
----
-
-## 7. Process Manager (Recommended)
-
-Use **PM2** to keep the server running and auto-restart on crashes:
-
-```bash
-npm i -g pm2
-
-# Start with PM2
-pm2 start artifacts/api-server/dist/index.mjs --name globalpulse
-
-# Auto-start on system boot
-pm2 startup
-pm2 save
-
-# View logs
-pm2 logs globalpulse
-
-# Restart after code updates
-pm2 restart globalpulse
-```
-
----
-
-## 8. Reverse Proxy (Nginx)
-
-For HTTPS and custom domains, put Nginx in front:
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    # Redirect HTTP to HTTPS
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name yourdomain.com;
-
-    ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-Get a free SSL certificate with:
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
-
----
-
-## 9. Docker (Alternative)
-
-```dockerfile
-FROM node:20-slim AS base
-RUN npm i -g pnpm@9
-WORKDIR /app
-
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY lib/ lib/
-COPY artifacts/ artifacts/
-COPY scripts/ scripts/
-
-RUN pnpm install --frozen-lockfile
-RUN pnpm run build
-
-EXPOSE 3000
-
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV BASE_PATH=/
-
-CMD ["node", "artifacts/api-server/dist/index.mjs"]
-```
-
-```bash
-docker build -t globalpulse .
-docker run -d \
-  --name globalpulse \
-  -p 3000:3000 \
-  -e DATABASE_URL="postgresql://user:pass@host:5432/globalpulse" \
-  -e AI_INTEGRATIONS_OPENAI_API_KEY="sk-..." \
-  -e AI_INTEGRATIONS_OPENAI_BASE_URL="https://api.openai.com/v1" \
-  -e SESSION_SECRET="your-secret" \
-  globalpulse
-```
-
----
-
-## 10. Data Refresh
-
-The API server automatically runs background data refreshes on startup:
-
-| Data Source | Interval | Description |
-|---|---|---|
-| Market prices | 60 seconds | Yahoo Finance + CoinGecko |
-| News/RSS | 60 seconds | 10 RSS feeds (Reuters, Bloomberg, etc.) |
-| Social signals | 60 seconds | Influencer signal aggregation |
-| IPO data | 1 hour | IPO listings refresh |
-| USD signal | 1 hour | OpenAI-powered USD direction analysis |
-| Forex calendar | 1 hour | Forex economic calendar events |
-| Nifty comprehensive | 1 hour | Full Nifty 50 outlook with support/resistance, demand/supply zones |
-| Nifty 30m candle | 25 minutes | Periodic candle demand-supply analysis (arrives ~5 min before next 30m slot) |
-| Bitcoin comprehensive | 1 hour | Full BTC outlook with support/resistance, demand/supply zones |
-| Bitcoin 4h candle | 4 hours | Periodic 4-hour candle demand-supply analysis |
-
-### AI Models Used
-
-| Feature | Model | Description |
-|---|---|---|
-| USD Signal | `gpt-5.2` | Comprehensive USD direction analysis with all market data |
-| Nifty Comprehensive | `gpt-5.2` | Full Nifty 50 outlook with Call/Put recommendations |
-| Nifty 30m Candle | `gpt-5.2` | Periodic intraday demand-supply analysis |
-| Bitcoin Comprehensive | `gpt-5.2` | Full BTC outlook with Long/Short recommendations |
-| Bitcoin 4h Candle | `gpt-5.2` | Periodic crypto demand-supply analysis |
-| Chart Signal Captions | `gpt-5-nano` | Short signal descriptions for chart overlays |
-
-> **Note:** All timestamps in the UI display in IST (India Standard Time, UTC+5:30). The Nifty 30-min candle analysis is timed to arrive 5-10 minutes before each 30-minute candle slot so traders can position accordingly.
-
-No cron jobs needed — all refresh logic runs inside the Node.js process.
-
----
-
-## 11. Updating
-
-```bash
-git pull origin main
-pnpm install
-pnpm --filter @workspace/db run push   # apply any schema changes
-pnpm run build
-pm2 restart globalpulse                 # or: docker restart globalpulse
+Browser
+  │
+  ▼
+Netlify (React + Vite frontend)
+  │  REST → /api/*
+  │  WebSocket → /ws/prices
+  ▼
+Render Web Service (Node.js, port 8080)
+  ├── Finnhub WebSocket      → US stocks, forex, crypto (~1,600 ticks/5s)
+  ├── Twelve Data WebSocket  → Indian NSE/BSE (backup)
+  ├── NSE unofficial API     → All 51 NIFTY50 stocks @ 300ms + candle engine (1s/5s/1m)
+  ├── TradingView scanner    → Gold, oil, indices, commodities @ 60s
+  └── OpenAI GPT-4           → AI analysis (Nifty, BTC, USD, chart signals)
+  │
+  ▼
+Render PostgreSQL
+  └── 14 tables: market data, news, IPOs, Nifty/BTC analysis,
+                 USD signals, forex calendar, watchlist, push subscriptions
 ```
 
 ---
 
 ## Troubleshooting
 
-| Issue | Solution |
-|---|---|
-| "Cannot connect to database" | Check `DATABASE_URL` — ensure PostgreSQL is running and the database exists |
-| "OpenAI API error" | Verify `AI_INTEGRATIONS_OPENAI_API_KEY` is valid and has credits |
-| Blank page on frontend | Ensure `BASE_PATH=/` is set and the build completed successfully |
-| Port already in use | Change `PORT` or stop the conflicting process |
-| No market data loading | Yahoo Finance may be rate-limiting; wait a few minutes for the next refresh cycle |
+**Backend won't start**
+- Check Render **Logs** tab
+- Most common cause: `DATABASE_URL` not set or wrong
+- Confirm: `PORT=8080` is in environment
+
+**Frontend shows blank / API errors**
+- Browser console → almost always `VITE_API_URL` wrong or missing
+- Must use `https://` not `http://` in production
+- No trailing slash: `https://globalpulse-api.onrender.com` ✓
+
+**WebSocket not connecting**
+- Render supports WebSockets on free tier
+- Browser requires `wss://` (secure) when site is HTTPS — the app does this automatically
+
+**AI shows "fallback analysis"**
+- `OPENAI_API_KEY` missing, invalid, or out of credit
+- Rule-based fallback still works, but add the key for full AI
+
+**NSE data not updating**
+- NSE blocks some cloud datacenter IPs intermittently
+- Twelve Data WebSocket takes over as backup automatically
+- No action needed
+
+**Render free tier sleeps after 15 min inactivity**
+- Set up a free uptime monitor at **uptimerobot.com**
+- Create HTTP monitor → ping `https://globalpulse-api.onrender.com/api/health` every 5 minutes
+- Or upgrade to Render Starter ($7/month) for always-on
 
 ---
 
-## Architecture Overview
+## Environment Variables — Complete Reference
 
-```
-┌─────────────────────────────────────────────┐
-│                   Nginx                      │
-│              (SSL termination)               │
-└──────────────────┬──────────────────────────┘
-                   │
-        ┌──────────▼──────────┐
-        │   Express (Node.js)  │
-        │   PORT=3000          │
-        ├──────────────────────┤
-        │  /api/*  → API routes│
-        │  /*      → Static UI │
-        └────┬───────────┬─────┘
-             │           │
-     ┌───────▼───┐  ┌────▼─────┐
-     │ PostgreSQL │  │  OpenAI  │
-     │  (Drizzle) │  │   API    │
-     └────────────┘  └──────────┘
-```
+Set on **Render** (backend):
+
+| Variable | Required | Where to get |
+|----------|----------|-------------|
+| `DATABASE_URL` | YES | Render PostgreSQL → External URL |
+| `FINNHUB_API_KEY` | YES | finnhub.io → Dashboard |
+| `TWELVE_DATA_API_KEY` | YES | twelvedata.com → Dashboard |
+| `OPENAI_API_KEY` | YES | platform.openai.com/api-keys |
+| `VAPID_PUBLIC_KEY` | Optional | `npx web-push generate-vapid-keys` |
+| `VAPID_PRIVATE_KEY` | Optional | `npx web-push generate-vapid-keys` |
+| `VAPID_CONTACT_EMAIL` | Optional | Any email address |
+| `PORT` | Auto | Render sets this (use 8080) |
+| `NODE_ENV` | Auto | Set to `production` |
+
+Set on **Netlify** (frontend):
+
+| Variable | Required | Value |
+|----------|----------|-------|
+| `VITE_API_URL` | YES | Your Render backend URL |

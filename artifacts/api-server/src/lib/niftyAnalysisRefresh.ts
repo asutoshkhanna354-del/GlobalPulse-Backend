@@ -3,13 +3,7 @@ import { niftyAnalysisTable, marketAssetsTable, newsItemsTable } from "@workspac
 import { logger } from "./logger";
 import { fetchOHLC } from "./indicator.js";
 
-let openai: any = null;
-try {
-  const mod = await import("@workspace/integrations-openai-ai-server");
-  openai = mod.openai;
-} catch {
-  logger.warn("OpenAI integration not available for Nifty analysis");
-}
+import { openai } from "./openaiClient.js";
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 

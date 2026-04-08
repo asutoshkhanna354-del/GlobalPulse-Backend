@@ -8,13 +8,7 @@ import {
 } from "@workspace/db";
 import { logger } from "./logger";
 
-let openai: any = null;
-try {
-  const mod = await import("@workspace/integrations-openai-ai-server");
-  openai = mod.openai;
-} catch {
-  logger.warn("OpenAI integration not available, USD signal will use fallback algorithm");
-}
+import { openai } from "./openaiClient.js";
 
 interface MarketSnapshot {
   dxy: number | null;

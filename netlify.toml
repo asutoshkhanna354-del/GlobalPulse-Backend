@@ -1,0 +1,12 @@
+[build]
+  base = "."
+  command = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/market-screener run build"
+  publish = "artifacts/market-screener/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
