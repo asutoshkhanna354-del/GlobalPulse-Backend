@@ -207,13 +207,15 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
   const [sigLoading, setSigLoading] = useState(false);
   const [sigView,    setSigView]    = useState<"latest"|"all">("latest");
   const [selSig,     setSelSig]     = useState<Signal|null>(null);
-  const [panelOpen,  setPanelOpen]  = useState(true);
+  const [panelOpen,  setPanelOpen]  = useState(false);
 
+  const hasFetchedRef = useRef(false);
   const range = ranges[rangeIdx];
 
-  // ── Fetch signals ────────────────────────────────────────────────────────────
+  // ── Fetch signals (lazy — only when panel is opened) ─────────────────────────
   const fetchSignals = useCallback(async () => {
     if (!isPremium) return;
+    hasFetchedRef.current = true;
     setSigLoading(true);
     try {
       const url = `${baseUrl}/api/indicator/signals/${encodeURIComponent(symbol)}?range=${range.yRange}&interval=${range.yInt}`;
@@ -222,17 +224,22 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
       const d: IndicatorData = await res.json();
       const sigs = (d.signals ?? []).slice().reverse();
       setSignals(sigs);
-      if (sigs.length && !selSig) setSelSig(sigs[0]);
+      setSelSig(sigs.length ? sigs[0] : null);
     } catch { setSignals([]); } finally { setSigLoading(false); }
   }, [symbol, range.yRange, range.yInt, isPremium, baseUrl]);
 
-  useEffect(() => { fetchSignals(); }, [fetchSignals]);
-
-  // Reset selected signal when switching symbols
+  // Trigger fetch only when panel is first opened
   useEffect(() => {
+    if (panelOpen && !hasFetchedRef.current) fetchSignals();
+  }, [panelOpen, fetchSignals]);
+
+  // Reset fetch flag when symbol or range changes so re-open refetches
+  useEffect(() => {
+    hasFetchedRef.current = false;
+    setSignals([]);
     setSelSig(null);
     setSigView("latest");
-  }, [symbol]);
+  }, [symbol, rangeIdx]);
 
   // ── TradingView widget ───────────────────────────────────────────────────────
   useEffect(() => {

@@ -49,6 +49,17 @@ const POPULAR = [
   { key: "DAX", label: "DAX 40", cat: "Index" },
 ];
 
+// Indian market symbol detection
+const INDIAN_INDICES = new Set([
+  "NIFTY50","SENSEX","NSEBANK","BANKNIFTY","NIFTYMIDCAP","NIFTYMIDCAP50",
+  "NIFTYMIDCAP100","NIFTYSMALLCAP","NIFTY100","NIFTY200","NIFTY500",
+  "NIFTYIT","NIFTYPHARMA","NIFTYAUTO","NIFTYFMCG","NIFTYFINSERVICE",
+]);
+function isIndianSymbol(sym: string): boolean {
+  const u = sym.toUpperCase();
+  return u.endsWith(".NS") || u.endsWith(".BO") || INDIAN_INDICES.has(u);
+}
+
 const RANGES = [
   { label: "1m",  tvI: "1",   yRange: "1d",  yInt: "1m",  barMs: 60_000 },
   { label: "5m",  tvI: "5",   yRange: "5d",  yInt: "5m",  barMs: 300_000 },
@@ -233,7 +244,9 @@ export function TradingChart() {
 
   const [symbol,      setSymbol]      = useState("XAUUSD");
   const [symLabel,    setSymLabel]    = useState("Gold (XAU/USD)");
-  const isForex = FOREX_SYMBOLS.has(symbol.toUpperCase());
+  const [chartMode,   setChartMode]   = useState<"globalpulse"|"tradingview">("tradingview");
+  const [indianToast, setIndianToast] = useState(false);
+  const indianToastTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const [currency,    setCurrency]    = useState<string|undefined>();
   const [rangeIdx,    setRangeIdx]    = useState(4);
   const [data,        setData]        = useState<IndicatorData|null>(null);
@@ -279,6 +292,11 @@ export function TradingChart() {
 
   const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, "");
   const range = RANGES[rangeIdx];
+
+  // ── Reset chart mode when symbol changes ────────────────────────────────────
+  useEffect(() => {
+    setChartMode(isIndianSymbol(symbol) ? "globalpulse" : "tradingview");
+  }, [symbol]);
 
   // ── Select symbol ──────────────────────────────────────────────────────────
   const selectSymbol = useCallback((sym:string,label:string)=>{
@@ -771,7 +789,7 @@ export function TradingChart() {
               </button>
             ))}
           </div>
-          {!isForex && (
+          {chartMode==="globalpulse" && (
             <div className="flex gap-1 ml-auto">
               {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
                 <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
@@ -781,10 +799,50 @@ export function TradingChart() {
               ))}
             </div>
           )}
-          {isForex && (
+          {chartMode==="tradingview" && (
             <div className="ml-auto flex items-center gap-1.5">
               <span className="text-[9px] text-[#9598A1]">Powered by</span>
               <span className="text-[9px] font-bold text-[#2962FF]">TradingView</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── Chart selector ── */}
+        <div className="relative flex items-center justify-between px-3 pb-2.5 pt-1">
+          <div className="flex items-center gap-1.5 bg-[#F0F3FA] border border-[#E0E3EB] rounded-xl p-0.5">
+            {/* GlobalPulse Chart */}
+            <button
+              onClick={()=>setChartMode("globalpulse")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="globalpulse"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
+              <span className="text-[11px]">🔲</span>
+              GlobalPulse Chart
+            </button>
+            {/* TradingView Chart */}
+            {isIndianSymbol(symbol) ? (
+              <button
+                onClick={()=>{
+                  if(indianToastTimer.current)clearTimeout(indianToastTimer.current);
+                  setIndianToast(true);
+                  indianToastTimer.current=setTimeout(()=>setIndianToast(false),3500);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#C9CBD4] cursor-not-allowed opacity-60 select-none">
+                <span className="text-[11px]">📊</span>
+                TradingView Chart
+              </button>
+            ) : (
+              <button
+                onClick={()=>setChartMode("tradingview")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="tradingview"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
+                <span className="text-[11px]">📊</span>
+                TradingView Chart
+              </button>
+            )}
+          </div>
+          {/* Indian toast */}
+          {indianToast && (
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 bg-[#131722] text-white text-[10px] font-medium px-4 py-2 rounded-xl shadow-xl whitespace-nowrap flex items-center gap-2">
+              <span>🇮🇳</span>
+              TradingView Chart is not available for Indian Stocks &amp; Indexes
             </div>
           )}
         </div>
@@ -793,10 +851,10 @@ export function TradingChart() {
       {/* ── Chart area ── */}
       <div className="flex-1 flex flex-col min-h-0">
 
-        {/* ── FOREX: TradingView live chart + signals panel ── */}
-        {isForex && (
+        {/* ── TradingView mode: live TV chart + signals panel ── */}
+        {chartMode==="tradingview" && (
           <ForexTVPanel
-            key={symbol}
+            key={symbol + "-tv"}
             symbol={symbol}
             symLabel={symLabel}
             rangeIdx={rangeIdx}
@@ -807,8 +865,8 @@ export function TradingChart() {
           />
         )}
 
-        {/* ── NON-FOREX: existing lightweight-charts ── */}
-        {!isForex && (
+        {/* ── GlobalPulse mode: custom WebSocket candlestick chart ── */}
+        {chartMode==="globalpulse" && (
           <>
             <div className="flex-1 relative min-h-0 flex">
               {/* Drawing toolbar */}
