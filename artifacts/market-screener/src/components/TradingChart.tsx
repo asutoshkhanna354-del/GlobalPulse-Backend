@@ -836,15 +836,17 @@ export function TradingChart() {
           {/* IMPORTANT: Indicators & chart-mode toggle are OUTSIDE the scroll div
               so the dropdown is never clipped by overflow:auto */}
           <div className="flex items-center px-3 pb-3 gap-2">
-            {/* Scrollable timeframe pills — scroll container holds pills only */}
-            <div className="flex items-center overflow-x-auto scrollbar-hide gap-1 flex-1 min-w-0">
-              {RANGES.map((r,i)=>(
-                <button key={r.label} onClick={()=>setRangeIdx(i)}
-                  className={`px-3 py-1.5 text-[13px] font-semibold rounded-full transition-all whitespace-nowrap shrink-0
-                    ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#787B86] hover:text-[#131722]"}`}>
-                  {r.label}
-                </button>
-              ))}
+            {/* Scrollable timeframe track — background container prevents cut-off look */}
+            <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-0.5 bg-[#F0F3FA] rounded-xl p-1 w-max">
+                {RANGES.map((r,i)=>(
+                  <button key={r.label} onClick={()=>setRangeIdx(i)}
+                    className={`px-3 py-1.5 text-[13px] font-semibold rounded-lg transition-all whitespace-nowrap shrink-0
+                      ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#787B86] hover:text-[#131722] hover:bg-white/70"}`}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Fixed controls — NOT inside overflow container, so dropdown renders freely */}
