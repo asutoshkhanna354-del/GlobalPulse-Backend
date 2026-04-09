@@ -374,7 +374,7 @@ Return ONLY valid JSON:
 
     const text = response.choices[0]?.message?.content?.trim() || "";
     logger.info({ responseLength: text.length, preview: text.slice(0, 300) }, "AI Nifty comprehensive raw response");
-    const jsonText = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const jsonText = (() => { const s = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim(); const m = s.match(/\{[\s\S]*\}/); return (m ? m[0] : s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ""); })();
     const parsed = JSON.parse(jsonText);
     return {
       analysisType: "comprehensive",
@@ -461,7 +461,7 @@ Return ONLY valid JSON:
 
     const text = response.choices[0]?.message?.content?.trim() || "";
     logger.info({ responseLength: text.length, preview: text.slice(0, 300) }, "AI Nifty 30m candle raw response");
-    const jsonText = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const jsonText = (() => { const s = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim(); const m = s.match(/\{[\s\S]*\}/); return (m ? m[0] : s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ""); })();
     const parsed = JSON.parse(jsonText);
 
     return {

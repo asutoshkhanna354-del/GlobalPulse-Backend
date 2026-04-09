@@ -1,0 +1,51 @@
+{"level":30,"time":1775721215361,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","msg":"Starting Nifty 50 comprehensive analysis refresh"}
+{"level":30,"time":1775721215362,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","msg":"Starting Bitcoin comprehensive analysis refresh"}
+{"level":30,"time":1775721215362,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","nextRefreshInMin":"2.0","msg":"Scheduling next Nifty 30m candle refresh"}
+{"level":30,"time":1775721215560,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","req":{"id":1,"method":"HEAD","url":"/"},"res":{"statusCode":404},"responseTime":3,"msg":"request completed"}
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":40,"time":1775721218858,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","status":403,"msg":"ForexFactory returned non-OK status"}
+{"level":40,"time":1775721218858,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","error":"Error: ForexFactory HTTP 403","msg":"ForexFactory fetch failed, trying backup RSS"}
+[nseStream] NSE session initialised, cookies: _abck=E6AAB45C0277DFF85D1CD2E26D73CE6A~-1~YAAQqqcpF2W6ck2dAQAAo4I7cQ8Y5KQtC3CZug…
+[binanceStream] Connected — Binance direct feed live
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775721220654,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":11,"msg":"Google News forex calendar parsed"}
+{"level":30,"time":1775721220760,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","msg":"Database already seeded, skipping."}
+[nseStream] NSE stream running — equities @ 300ms, indices @ 1s
+{"level":30,"time":1775721221260,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","req":{"id":2,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":3106,"msg":"request completed"}
+{"level":30,"time":1775721221556,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":20,"statuses":{"closed":2,"open":1,"upcoming":11,"listed":6},"markets":{"india":11,"us":9},"msg":"IPO data refresh complete"}
+{"level":30,"time":1775721221556,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":20,"msg":"IPO data initial refresh done"}
+{"level":30,"time":1775721222154,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","msg":"Market data initial refresh done"}
+{"level":30,"time":1775721222154,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","msg":"Starting AI-powered USD signal refresh"}
+{"level":30,"time":1775721222462,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","sessionStatus":"LIVE","dayOpen":23908.650390625,"dayHigh":23989.75,"dayLow":23760.55078125,"dayClose":23788.349609375,"prevDayClose":24010.599609375,"msg":"Nifty session data gathered"}
+{"level":30,"time":1775721222752,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":93,"msg":"News initial refresh done"}
+{"level":30,"time":1775721223062,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":41,"msg":"Forex calendar refresh complete"}
+{"level":30,"time":1775721223062,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":41,"msg":"Forex calendar initial refresh done"}
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775721224751,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","count":127,"msg":"Social intelligence initial refresh done"}
+[priceStream] Twelve Data WS connected
+{"level":30,"time":1775721225254,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","responseLength":673,"preview":"{\n  \"direction\": \"BULLISH\",\n  \"confidence\": 85,\n  \"summary\": \"The USD is poised for strength due to rising geopolitical tensions, a high VIX, and increased US 10Y yields. With the DXY index rising to 99.06, we recommend a LONG USD position, particularly against currencies like the EUR and JPY. The o","msg":"AI USD raw response"}
+{"level":30,"time":1775721225254,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"BULLISH","confidence":85,"source":"AI","msg":"AI USD analysis complete"}
+{"level":30,"time":1775721225353,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"BULLISH","confidence":85,"msg":"USD signal refresh complete"}
+{"level":30,"time":1775721225353,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"BULLISH","confidence":85,"msg":"USD signal initial refresh done"}
+{"level":30,"time":1775721225361,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","msg":"Starting Nifty 50 30-min candle analysis refresh"}
+{"level":30,"time":1775721225658,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","responseLength":2625,"preview":"```json\n{\n  \"direction\": \"BEARISH\",\n  \"confidence\": 68,\n  \"summary\": \"Nifty 50 opened at 23908.65 and has been trading in a range of 23760.55 to 23989.75, with a current price of 23788.35, indicating a bearish bias for the day. The index has faced resistance at the day's high of 23989.75 and has bee","msg":"AI Nifty comprehensive raw response"}
+{"level":40,"time":1775721225658,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","err":"SyntaxError: Bad control character in string literal in JSON at position 1165 (line 5 column 691)","msg":"AI Nifty comprehensive failed, using fallback"}
+{"level":30,"time":1775721225755,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"NEUTRAL","confidence":50,"msg":"Nifty comprehensive analysis complete"}
+{"level":30,"time":1775721225755,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"NEUTRAL","confidence":50,"msg":"Nifty comprehensive initial refresh done"}
+{"level":30,"time":1775721225761,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","sessionStatus":"LIVE","dayOpen":23908.650390625,"dayHigh":23989.75,"dayLow":23760.55078125,"todayBars5mCount":51,"msg":"Nifty session data for 30m analysis"}
+{"level":30,"time":1775721226154,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","responseLength":1703,"preview":"```json\n{\n  \"direction\": \"BEARISH\",\n  \"confidence\": 65,\n  \"summary\": \"Bitcoin's price is currently experiencing a pullback after failing to breach the $72,000 resistance level, with a potential short-term target of $68,000. The 4-hour candles are indicating a reversal pattern, with the recent candle","msg":"AI BTC comprehensive raw response"}
+{"level":30,"time":1775721226254,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"BEARISH","confidence":65,"msg":"BTC comprehensive analysis complete"}
+{"level":30,"time":1775721226254,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","direction":"BEARISH","confidence":65,"msg":"BTC comprehensive initial refresh done"}
+{"level":30,"time":1775721226353,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","req":{"id":3,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":200,"msg":"request completed"}
+{"level":30,"time":1775721226452,"pid":50,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-59cc5bb647-zxjlj","req":{"id":4,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":95,"msg":"request completed"}
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+Menu
+==> Available at your primary URL https://globalpulse-backend.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
