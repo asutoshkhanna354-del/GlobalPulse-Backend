@@ -170,7 +170,7 @@ interface NiftySnapshot {
   snapshotTime: Date;
 }
 
-async function gatherNiftySnapshot(): Promise<NiftySnapshot> {
+async function gatherNiftySnapshot(): Promise<NiftySnapshot & { realChangePercent: number; realChange: number }> {
   const now = new Date();
   const [assets, news] = await Promise.all([
     db.select().from(marketAssetsTable),
@@ -219,10 +219,23 @@ async function gatherNiftySnapshot(): Promise<NiftySnapshot> {
   const sessionStatus = getNiftySessionStatus(now);
   const sessionData = extractTodaySessionBars(bars5m.length > 0 ? bars5m : bars15m, now);
 
+  // When market is closed, compute real day change from candle data (DB price goes stale at 0%)
+  const rawChangePercent = nifty?.changePercent ?? 0;
+  const rawChange = nifty?.change ?? 0;
+  let realChangePercent = rawChangePercent;
+  let realChange = rawChange;
+  if (sessionStatus.status === "POST_CLOSE" && sessionData.dayClose != null && sessionData.prevDayClose != null && sessionData.prevDayClose !== 0) {
+    realChange = sessionData.dayClose - sessionData.prevDayClose;
+    realChangePercent = (realChange / sessionData.prevDayClose) * 100;
+  } else if (sessionStatus.status === "POST_CLOSE" && sessionData.dayClose != null && sessionData.dayOpen != null && sessionData.dayOpen !== 0) {
+    realChange = sessionData.dayClose - sessionData.dayOpen;
+    realChangePercent = (realChange / sessionData.dayOpen) * 100;
+  }
+
   return {
-    price: nifty?.price ?? null,
-    change: nifty?.change ?? 0,
-    changePercent: nifty?.changePercent ?? 0,
+    price: sessionStatus.status === "POST_CLOSE" && sessionData.dayClose != null ? sessionData.dayClose : (nifty?.price ?? null),
+    change: realChange,
+    changePercent: realChangePercent,
     dayOpen: sessionData.dayOpen,
     dayHigh: sessionData.dayHigh,
     dayLow: sessionData.dayLow,
@@ -243,6 +256,8 @@ async function gatherNiftySnapshot(): Promise<NiftySnapshot> {
     globalCues,
     indianNews,
     snapshotTime: now,
+    realChangePercent,
+    realChange,
   };
 }
 
@@ -334,15 +349,24 @@ ${formatBarsForAI(snapshot.bars15m, "15-MIN CANDLES (recent sessions)", 15)}
 INDIAN MARKET NEWS:
 ${snapshot.indianNews.length > 0 ? snapshot.indianNews.join("\n") : "No significant news"}
 
-ANALYSIS REQUIREMENTS — base your analysis on today's actual session:
-1. Use today's OPENING price (9:15 AM first candle) and CLOSING price (3:30 PM or current if market is live) to assess the full-day direction
+ANALYSIS REQUIREMENTS:
+${snapshot.sessionStatus.status === "POST_CLOSE" ? `
+⚠️ MARKET HAS CLOSED FOR TODAY (3:30 PM IST).
+Today's session is COMPLETE. You MUST:
+1. Determine if today was BULLISH or BEARISH: compare today's CLOSE (${snapshot.dayClose?.toFixed(2) ?? "N/A"}) vs today's OPEN (${snapshot.dayOpen?.toFixed(2) ?? "N/A"}) and previous day's close (${snapshot.prevDayClose?.toFixed(2) ?? "N/A"})
+2. Describe today's full session in detail (open, high, low, close, total range, key moves)
+3. Give a clear TOMORROW outlook — gap up/gap down probability, expected opening range
+4. Provide next-day CE/PE recommendation with entry, target, SL based on today's closing levels
+5. DO NOT return NEUTRAL unless today was literally a doji with zero move — today has a real close price, give a real direction
+` : `
+1. Use today's OPENING price (9:15 AM first candle) and current/closing price to assess direction
 2. Identify if today's candle is BULLISH or BEARISH based on open vs close
-3. Whether Nifty will FALL or RISE — give specific price targets and timeframes
-4. Key support and resistance levels using today's day high/low and previous day's close (at least 3 each)
+3. Whether Nifty will FALL or RISE — give specific price targets
+4. Key support and resistance levels (at least 3 each)
 5. Demand and supply zones based on intraday candle clusters
-6. Specific Call/Put recommendation for index options trading
+6. Specific Call/Put recommendation for index options
 7. Risk assessment and stop-loss levels
-8. If market is POST_CLOSE, give tomorrow's outlook based on today's closing candle
+`}
 
 Return ONLY valid JSON:
 {
@@ -368,7 +392,7 @@ Return ONLY valid JSON:
       max_completion_tokens: 2048,
       response_format: { type: "json_object" as const },
       messages: [
-        { role: "system", content: "You are a senior Indian equity strategist. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always base signals on today's actual opening price (first candle at 9:15 AM), today's day high/low, and today's closing price (last candle at 3:30 PM or latest candle if still live). Give clear intraday context in every analysis. All times in IST. Return only valid JSON." },
+        { role: "system", content: `You are a senior Indian equity strategist. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always base signals on today's actual opening price (first candle at 9:15 AM), today's day high/low, and today's closing price. ${snapshot.sessionStatus.status === "POST_CLOSE" ? "IMPORTANT: The market has CLOSED today. Give a definitive BULLISH or BEARISH direction based on today's close vs open/prev-close. Then give a clear next-day opening outlook with gap-up/gap-down probability and next-day CE/PE recommendation. NEVER return NEUTRAL when market has closed with a real close price." : "If market is live, mention time remaining."} All times in IST. Return only valid JSON.` },
         { role: "user", content: prompt },
       ],
     });
@@ -489,11 +513,26 @@ Return ONLY valid JSON:
   }
 }
 
-function fallbackNiftyAnalysis(snapshot: NiftySnapshot, type: string): any {
-  const price = snapshot.price ?? 24000;
-  const change = snapshot.changePercent;
+function fallbackNiftyAnalysis(snapshot: NiftySnapshot & { realChangePercent?: number; realChange?: number }, type: string): any {
+  const price = snapshot.price ?? snapshot.dayClose ?? 24000;
+  const isPostClose = snapshot.sessionStatus.status === "POST_CLOSE";
+  // Use real candle-derived change when available (avoids stale 0% after market close)
+  const change = (snapshot as any).realChangePercent ?? snapshot.changePercent;
   const dayOpen = snapshot.dayOpen;
-  const direction = change > 0.3 ? "BULLISH" : change < -0.3 ? "BEARISH" : "NEUTRAL";
+  const dayClose = snapshot.dayClose;
+  // For closed market, derive direction from dayClose vs dayOpen/prevDayClose
+  let direction: string;
+  if (isPostClose && dayClose != null) {
+    const ref = snapshot.prevDayClose ?? dayOpen;
+    if (ref != null && ref !== 0) {
+      const pct = ((dayClose - ref) / ref) * 100;
+      direction = pct > 0.2 ? "BULLISH" : pct < -0.2 ? "BEARISH" : "NEUTRAL";
+    } else {
+      direction = change > 0.2 ? "BULLISH" : change < -0.2 ? "BEARISH" : "NEUTRAL";
+    }
+  } else {
+    direction = change > 0.3 ? "BULLISH" : change < -0.3 ? "BEARISH" : "NEUTRAL";
+  }
   const confidence = Math.min(75, Math.max(40, 50 + Math.abs(change) * 5));
 
   const support1 = Math.round(price * 0.995 / 50) * 50;
@@ -504,30 +543,68 @@ function fallbackNiftyAnalysis(snapshot: NiftySnapshot, type: string): any {
   const resistance3 = Math.round(price * 1.015 / 50) * 50;
 
   const sessionLabel = snapshot.sessionStatus.label;
-  const dayOpenNote = dayOpen != null ? ` Day opened at ${dayOpen.toFixed(2)} (${price > dayOpen ? "trading above open" : price < dayOpen ? "trading below open" : "at open"}).` : "";
+  const closeNote = isPostClose && dayClose != null
+    ? ` Today closed at ${dayClose.toFixed(2)} (opened ${dayOpen?.toFixed(2) ?? "N/A"}, H: ${snapshot.dayHigh?.toFixed(2) ?? "N/A"}, L: ${snapshot.dayLow?.toFixed(2) ?? "N/A"}).`
+    : dayOpen != null ? ` Day opened at ${dayOpen.toFixed(2)} (${price > dayOpen ? "trading above open" : price < dayOpen ? "trading below open" : "at open"}).` : "";
+
+  const summaryBase = isPostClose
+    ? `Market Closed. Nifty closed at ${(dayClose ?? price).toFixed(2)} (${change > 0 ? "+" : ""}${change.toFixed(2)}%).${closeNote} ${direction === "BULLISH" ? "Today was a BULLISH session — closed above open." : direction === "BEARISH" ? "Today was a BEARISH session — closed below open." : "Session ended near open (doji)."} VIX: ${snapshot.vixValue?.toFixed(2) ?? "N/A"}.`
+    : `Nifty at ${price.toFixed(2)} (${change > 0 ? "+" : ""}${change.toFixed(2)}%).${closeNote} ${direction === "BULLISH" ? "Upward momentum detected." : direction === "BEARISH" ? "Selling pressure observed." : "Consolidation phase."} VIX: ${snapshot.vixValue?.toFixed(2) ?? "N/A"}. Session: ${sessionLabel}.`;
+
+  const outlookBase = isPostClose
+    ? (direction === "BULLISH"
+        ? `Today's session was positive with Nifty closing at ${(dayClose ?? price).toFixed(2)}, up from open of ${dayOpen?.toFixed(2) ?? "N/A"}. Key resistance for tomorrow is ${resistance1}-${resistance2}. If global cues remain supportive, expect a gap-up or positive opening tomorrow. Watch for continuation above ${resistance1}. Support for tomorrow's session is at ${support1}-${support2}.`
+        : direction === "BEARISH"
+          ? `Today's session was negative with Nifty closing at ${(dayClose ?? price).toFixed(2)}, down from open of ${dayOpen?.toFixed(2) ?? "N/A"}. Key support for tomorrow is ${support1}-${support2}. If selling pressure continues, expect gap-down or weak opening. Watch for recovery above ${resistance1} for reversal. Bears in control below ${resistance1}.`
+          : `Nifty ended today near its opening level, forming a doji-like pattern. Tomorrow's direction will depend on global cues. Key range: ${support1}–${resistance1}. A decisive break on either side will determine the trend.`)
+    : (direction === "BULLISH"
+        ? `Nifty showing strength above ${support1}.${dayOpen != null ? ` Opened at ${dayOpen.toFixed(2)}, currently ${price > dayOpen ? "above" : "near"} the day open.` : ""} If sustains above ${resistance1}, can target ${resistance2}-${resistance3}.`
+        : direction === "BEARISH"
+          ? `Nifty under pressure below ${resistance1}.${dayOpen != null ? ` Opened at ${dayOpen.toFixed(2)}, currently ${price < dayOpen ? "below" : "near"} the day open.` : ""} If breaks ${support1}, can slide to ${support2}-${support3}.`
+          : `Nifty consolidating between ${support1}-${resistance1}.${dayOpen != null ? ` Day opened at ${dayOpen.toFixed(2)}.` : ""} Wait for breakout direction.`);
 
   return {
     analysisType: type,
     direction,
     confidence: Math.round(confidence),
-    summary: `Nifty at ${price.toFixed(2)} (${change > 0 ? "+" : ""}${change.toFixed(2)}%).${dayOpenNote} ${direction === "BULLISH" ? "Upward momentum detected." : direction === "BEARISH" ? "Selling pressure observed." : "Consolidation phase."} VIX at ${snapshot.vixValue?.toFixed(2) ?? "N/A"}. Session: ${sessionLabel}.`,
-    outlook: `${direction === "BULLISH" ? `Nifty showing strength above ${support1}.${dayOpen != null ? ` Opened at ${dayOpen.toFixed(2)}, currently ${price > dayOpen ? "above" : "near"} the day open.` : ""} If sustains above ${resistance1}, can target ${resistance2}-${resistance3}. Global cues ${snapshot.globalCues.length > 0 ? "are mixed" : "awaited"}.` : direction === "BEARISH" ? `Nifty under pressure below ${resistance1}.${dayOpen != null ? ` Opened at ${dayOpen.toFixed(2)}, currently ${price < dayOpen ? "below" : "near"} the day open.` : ""} If breaks ${support1}, can slide to ${support2}-${support3}. Caution warranted.` : `Nifty consolidating between ${support1}-${resistance1}.${dayOpen != null ? ` Day opened at ${dayOpen.toFixed(2)}.` : ""} Wait for breakout direction. Range-bound strategy recommended.`}`,
+    summary: summaryBase,
+    outlook: outlookBase,
     supportLevels: [String(support1), String(support2), String(support3)],
     resistanceLevels: [String(resistance1), String(resistance2), String(resistance3)],
     demandZones: [`${support2}-${support1} (key demand zone)`],
     supplyZones: [`${resistance1}-${resistance2} (key supply zone)`],
-    candlePattern: "Algorithmic analysis (AI unavailable)",
+    candlePattern: isPostClose
+      ? (direction === "BULLISH" ? `Bullish session — closed ${dayClose != null && dayOpen != null ? (dayClose - dayOpen).toFixed(2) + " pts above open" : "above open"}` : direction === "BEARISH" ? `Bearish session — closed ${dayClose != null && dayOpen != null ? Math.abs(dayClose - dayOpen).toFixed(2) + " pts below open" : "below open"}` : "Doji — closed near open")
+      : "Algorithmic analysis (AI unavailable)",
     trendStrength: Math.abs(change) > 0.8 ? "STRONG" : Math.abs(change) > 0.3 ? "MODERATE" : "WEAK",
-    callPutRecommendation: direction === "BULLISH" ? `BUY NIFTY ${resistance1} CE near support ${support1}, target ${resistance2}, SL ${support2}` : direction === "BEARISH" ? `BUY NIFTY ${support1} PE near resistance ${resistance1}, target ${support2}, SL ${resistance2}` : `Wait for breakout above ${resistance1} or breakdown below ${support1}`,
+    callPutRecommendation: isPostClose
+      ? (direction === "BULLISH"
+          ? `Tomorrow: BUY NIFTY ${resistance1} CE on dip to ${support1} at open, target ${resistance2}, SL ${support2}. Watch global cues for gap-up confirmation.`
+          : direction === "BEARISH"
+            ? `Tomorrow: BUY NIFTY ${support1} PE on bounce to ${resistance1} at open, target ${support2}, SL ${resistance2}. Avoid longs unless recovery above ${resistance1}.`
+            : `Tomorrow: Wait for opening direction. BUY CE if breaks above ${resistance1}, BUY PE if breaks below ${support1}. Avoid pre-open positions.`)
+      : (direction === "BULLISH"
+          ? `BUY NIFTY ${resistance1} CE near support ${support1}, target ${resistance2}, SL ${support2}`
+          : direction === "BEARISH"
+            ? `BUY NIFTY ${support1} PE near resistance ${resistance1}, target ${support2}, SL ${resistance2}`
+            : `Wait for breakout above ${resistance1} or breakdown below ${support1}`),
     targetPrice: direction === "BULLISH" ? resistance2 : direction === "BEARISH" ? support2 : price,
     stopLoss: direction === "BULLISH" ? support2 : direction === "BEARISH" ? resistance2 : price,
-    keyFactors: [
-      `Nifty ${change > 0 ? "up" : "down"} ${Math.abs(change).toFixed(2)}% | Session: ${sessionLabel}`,
-      dayOpen != null ? `Day Open: ${dayOpen.toFixed(2)} | Current: ${price.toFixed(2)} (${price > dayOpen ? "above" : price < dayOpen ? "below" : "at"} open)` : "Day Open: Data awaited",
-      `VIX at ${snapshot.vixValue?.toFixed(2) ?? "N/A"}`,
-      `Bank Nifty ${snapshot.bankNiftyChange > 0 ? "+" : ""}${snapshot.bankNiftyChange.toFixed(2)}%`,
-      `Sensex ${snapshot.sensexChange > 0 ? "+" : ""}${snapshot.sensexChange.toFixed(2)}%`,
-    ],
+    keyFactors: isPostClose
+      ? [
+          `Market Closed | Today: ${direction} session (${change > 0 ? "+" : ""}${change.toFixed(2)}%)`,
+          dayOpen != null && dayClose != null ? `Today Open: ${dayOpen.toFixed(2)} → Close: ${dayClose.toFixed(2)} (${dayClose > dayOpen ? "+" : ""}${(dayClose - dayOpen).toFixed(2)} pts)` : "Session data awaited",
+          snapshot.dayHigh != null && snapshot.dayLow != null ? `Day Range: ${snapshot.dayLow.toFixed(2)} – ${snapshot.dayHigh.toFixed(2)} (${(snapshot.dayHigh - snapshot.dayLow).toFixed(2)} pts spread)` : "Range data unavailable",
+          `VIX: ${snapshot.vixValue?.toFixed(2) ?? "N/A"} | Bank Nifty: ${snapshot.bankNiftyChange > 0 ? "+" : ""}${snapshot.bankNiftyChange.toFixed(2)}%`,
+          `Tomorrow key levels: Support ${support1}-${support2} | Resistance ${resistance1}-${resistance2}`,
+        ]
+      : [
+          `Nifty ${change > 0 ? "up" : "down"} ${Math.abs(change).toFixed(2)}% | Session: ${sessionLabel}`,
+          dayOpen != null ? `Day Open: ${dayOpen.toFixed(2)} | Current: ${price.toFixed(2)} (${price > dayOpen ? "above" : price < dayOpen ? "below" : "at"} open)` : "Day Open: Data awaited",
+          `VIX at ${snapshot.vixValue?.toFixed(2) ?? "N/A"}`,
+          `Bank Nifty ${snapshot.bankNiftyChange > 0 ? "+" : ""}${snapshot.bankNiftyChange.toFixed(2)}%`,
+          `Sensex ${snapshot.sensexChange > 0 ? "+" : ""}${snapshot.sensexChange.toFixed(2)}%`,
+        ],
   };
 }
 
