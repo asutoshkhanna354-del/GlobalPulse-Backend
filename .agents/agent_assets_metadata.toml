@@ -66,3 +66,9 @@ id = "_EHFN2Hv1UHIED13W7Ju1"
 uri = "file://globalpulse-frontend.zip"
 type = "unspecified"
 title = "globalpulse-frontend.zip — Netlify Ready (pre-built)"
+
+[[outputs]]
+id = "EhBFUvcrEoZPJb1gb-uVe"
+uri = "file://globalpulse-full-deploy.tar.gz"
+type = "unspecified"
+title = "GlobalPulse Full Deploy (Backend + Frontend + .env)"
