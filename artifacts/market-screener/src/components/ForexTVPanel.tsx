@@ -237,12 +237,14 @@ interface Props {
   currency?: string;
   baseUrl: string;
   aiAnalysis?: string;
+  panelOpenProp?: boolean;
+  onPanelOpenChange?: (open: boolean) => void;
 }
 
 const SNAP_HALF      = 280;
 const snapFull = () => Math.round(window.innerHeight * 0.55);
 
-export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, baseUrl, aiAnalysis }: Props) {
+export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, baseUrl, aiAnalysis, panelOpenProp, onPanelOpenChange }: Props) {
   const { isPremium, setShowActivation } = usePremium();
 
   const tvRef  = useRef<HTMLDivElement>(null);
@@ -252,7 +254,17 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
   const [sigLoading, setSigLoading] = useState(false);
   const [sigView,    setSigView]    = useState<"latest"|"all">("latest");
   const [selSig,     setSelSig]     = useState<Signal|null>(null);
-  const [panelOpen,  setPanelOpen]  = useState(false);
+  const [panelOpen,  setPanelOpenInternal]  = useState(false);
+
+  const panelOpen2 = panelOpenProp !== undefined ? panelOpenProp : panelOpen;
+  const setPanelOpen = (v: boolean) => {
+    setPanelOpenInternal(v);
+    onPanelOpenChange?.(v);
+  };
+
+  useEffect(() => {
+    if (panelOpenProp !== undefined) setPanelOpenInternal(panelOpenProp);
+  }, [panelOpenProp]);
 
   // Mobile bottom-sheet state
   const [isMobile,    setIsMobile]    = useState(false);
@@ -316,8 +328,8 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
 
   // Trigger fetch only when panel is first opened
   useEffect(() => {
-    if (panelOpen && !hasFetchedRef.current) fetchSignals();
-  }, [panelOpen, fetchSignals]);
+    if (panelOpen2 && !hasFetchedRef.current) fetchSignals();
+  }, [panelOpen2, fetchSignals]);
 
   // Called by countdown when candle closes — auto-refresh signals
   const handleCountdownExpire = useCallback(() => {
@@ -571,24 +583,11 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
       </div>
 
       {/* ══ DESKTOP / TABLET — right-side slide-in panel ══ */}
-      {!isMobile && (
-        <>
-          {!panelOpen && isPremium && (
-            <button
-              onClick={() => setPanelOpen(true)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white border border-[#E0E3EB] border-r-0 rounded-l-xl px-1.5 py-3 shadow-md hover:bg-[#F0F3FA] transition-all flex flex-col items-center gap-1"
-              title="Show signals panel">
-              <ChevronLeft className="w-3 h-3 text-[#2962FF] rotate-180"/>
-              <span className="text-[8px] font-bold text-[#2962FF] [writing-mode:vertical-lr]">SIGNALS</span>
-            </button>
-          )}
-          {panelOpen && (
-            <div className="w-[260px] shrink-0 border-l border-[#E0E3EB] flex flex-col bg-white">
-              <PanelHeader onClose={() => setPanelOpen(false)}/>
-              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">{SignalsBody}</div>
-            </div>
-          )}
-        </>
+      {!isMobile && panelOpen2 && (
+        <div className="w-[260px] shrink-0 border-l border-[#E0E3EB] flex flex-col bg-white">
+          <PanelHeader onClose={() => setPanelOpen(false)}/>
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">{SignalsBody}</div>
+        </div>
       )}
 
       {/* ══ MOBILE — draggable bottom panel (flex child, true split screen) ══ */}

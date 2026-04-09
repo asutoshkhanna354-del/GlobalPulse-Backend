@@ -755,6 +755,7 @@ export function TradingChart() {
   },[activeTool,getChartCoords]);
 
   const [showIndMobile, setShowIndMobile] = useState(false);
+  const [signalsPanelOpen, setSignalsPanelOpen] = useState(false);
 
   // ─── Derived ────────────────────────────────────────────────────────────────
   const lastSignal=data?.signals?.length?data.signals[data.signals.length-1]:null;
@@ -915,6 +916,17 @@ export function TradingChart() {
               <a href={toTVLink(symbol)} target="_blank" rel="noopener noreferrer" className="flex items-center bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1.5 text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6] transition-all" title="Open on TradingView"><ExternalLink className="w-3 h-3"/></a>
               {!isPremium&&<button onClick={()=>setShowActivation(true)} className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/30 rounded-lg px-2 py-1 text-[#FF8F00] hover:bg-[#FFE082]/40 transition-all"><Crown className="w-3 h-3"/><span className="text-[9px] font-bold">PRO</span></button>}
               {isPremium&&<div className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/30 rounded-lg px-2 py-1"><Crown className="w-3 h-3 text-[#FF8F00]"/><span className="text-[9px] font-bold text-[#FF8F00]">PRO</span></div>}
+              {/* Blue AI Signal pill — desktop/tablet only */}
+              <button
+                onClick={()=>isPremium?setSignalsPanelOpen(v=>!v):setShowActivation(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all shadow-sm
+                  ${signalsPanelOpen
+                    ?"bg-[#1E53E5] text-white border border-[#1E53E5]"
+                    :"bg-[#2962FF] text-white hover:bg-[#1E53E5] border border-[#2962FF]/80"}`}>
+                <Zap className="w-3 h-3"/>
+                AI Signal
+                {isPremium&&data?.signals?.length?<span className="bg-white/25 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">{data.signals.length}</span>:null}
+              </button>
               {isPremium&&(notifOk||notifFrame)&&(
                 <div className="relative">
                   <button onClick={()=>toggleSubscription(symbol,symLabel)} disabled={notifLoading===symbol} title={notifFrame?"Open in new tab for notifications":isSubscribed(symbol)?"Unsubscribe":"Subscribe to signals"}
@@ -1035,6 +1047,8 @@ export function TradingChart() {
             currency={currency}
             baseUrl={baseUrl}
             aiAnalysis={data?.aiAnalysis}
+            panelOpenProp={signalsPanelOpen}
+            onPanelOpenChange={setSignalsPanelOpen}
           />
         )}
 
@@ -1072,6 +1086,59 @@ export function TradingChart() {
               </div>
 
               {selSignal&&<SignalPopup signal={selSignal} currency={currency} onClose={()=>setSelSignal(null)}/>}
+
+              {/* GlobalPulse signals side panel — desktop only */}
+              {signalsPanelOpen && isPremium && !loading && (
+                <div className="hidden sm:flex w-[260px] shrink-0 border-l border-[#E0E3EB] flex-col bg-white">
+                  {/* Panel header */}
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[#E0E3EB] shrink-0">
+                    <Zap className="w-3.5 h-3.5 text-[#2962FF] shrink-0"/>
+                    <span className="text-[12px] font-bold text-[#131722]">AI Signals</span>
+                    {data?.signals?.length ? <span className="bg-[#2962FF] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">{data.signals.length}</span> : null}
+                    <div className="flex-1"/>
+                    <button onClick={()=>setSignalsPanelOpen(false)} className="w-6 h-6 flex items-center justify-center rounded-lg text-[#9598A1] hover:bg-[#F0F3FA] hover:text-[#131722] transition-all">
+                      <X className="w-3.5 h-3.5"/>
+                    </button>
+                  </div>
+                  {/* Signals list */}
+                  <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5">
+                    {(!data?.signals||data.signals.length===0)&&(
+                      <div className="flex flex-col items-center justify-center h-full gap-2 py-8">
+                        <Zap className="w-6 h-6 text-[#D1D4DC]"/>
+                        <span className="text-[11px] text-[#9598A1] text-center">No signals yet.<br/>They appear on candles.</span>
+                      </div>
+                    )}
+                    {[...(data?.signals??[])].reverse().map((sig,i)=>{
+                      const TERM_STYLE_GP: Record<string,{bg:string;text:string}> = {
+                        SCALP:    {bg:"bg-purple-50",text:"text-purple-700"},
+                        INTRADAY: {bg:"bg-amber-50", text:"text-amber-700"},
+                        SWING:    {bg:"bg-blue-50",  text:"text-blue-700"},
+                        POSITION: {bg:"bg-teal-50",  text:"text-teal-700"},
+                      };
+                      const isBuy=sig.type==="buy";
+                      const ts=sig.holdingTerm?TERM_STYLE_GP[sig.holdingTerm.label]??{bg:"bg-blue-50",text:"text-blue-700"}:null;
+                      return(
+                        <button key={sig.timestamp+"-"+i}
+                          onClick={()=>setSelSignal(p=>p?.timestamp===sig.timestamp?null:sig as any)}
+                          className={`w-full text-left rounded-xl p-2.5 border transition-all ${isBuy?"bg-emerald-50 border-emerald-200 hover:bg-emerald-100":"bg-red-50 border-red-200 hover:bg-red-100"}`}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {isBuy?<TrendingUp className="w-3 h-3 text-[#26A69A]"/>:<TrendingDown className="w-3 h-3 text-[#EF5350]"/>}
+                            <span className={`text-[11px] font-bold ${isBuy?"text-[#26A69A]":"text-[#EF5350]"}`}>{isBuy?"LONG":"SHORT"}</span>
+                            {ts&&sig.holdingTerm&&<span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${ts.bg} ${ts.text}`}>{sig.holdingTerm.label}</span>}
+                            <span className={`ml-auto text-[10px] font-bold ${sig.confidence>=85?"text-[#26A69A]":sig.confidence>=72?"text-[#FF9800]":"text-[#9598A1]"}`}>{sig.confidence}%</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[9px] text-[#9598A1]">
+                            <span>@ {fmtP(sig.price,currency)}</span>
+                            <span>SL:<span className="text-[#EF5350] font-mono ml-0.5">{fmtP(sig.stopLoss,currency)}</span></span>
+                            <span>TP:<span className="text-[#26A69A] font-mono ml-0.5">{fmtP(sig.takeProfit,currency)}</span></span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {!isPremium&&!loading&&<div className="absolute bottom-3 right-3 z-10 w-64"><div className="bg-white/95 backdrop-blur-xl border border-[#FFB300]/30 rounded-2xl p-3 shadow-lg"><div className="flex items-center gap-2 mb-1.5"><div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#FFB300] to-[#FF8F00] flex items-center justify-center"><Lock className="w-3 h-3 text-white"/></div><span className="text-[11px] font-bold text-[#FF8F00]">GlobalPulse Pro</span></div><p className="text-[9px] text-[#9598A1] mb-2">AI signal arrows on every candle. Click any arrow for entry, stop loss, take profit & confidence score.</p><button onClick={()=>setShowActivation(true)} className="w-full bg-gradient-to-r from-[#FFB300] to-[#FF8F00] text-white text-[10px] font-bold py-1.5 rounded-lg hover:from-[#FFC107] hover:to-[#FF9800] transition-all">Activate Key</button></div></div>}
             </div>
 
