@@ -1,0 +1,51 @@
+{"level":30,"time":1775719529570,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","nextRefreshInMin":"30.0","msg":"Scheduling next Nifty 30m candle refresh"}
+{"level":30,"time":1775719529676,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","req":{"id":1,"method":"HEAD","url":"/"},"res":{"statusCode":404},"responseTime":2,"msg":"request completed"}
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":40,"time":1775719532868,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","status":403,"msg":"ForexFactory returned non-OK status"}
+{"level":40,"time":1775719532868,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","error":"Error: ForexFactory HTTP 403","msg":"ForexFactory fetch failed, trying backup RSS"}
+[binanceStream] Connected — Binance direct feed live
+[nseStream] NSE session initialised, cookies: _abck=59FCE0D75299CC3C0CD005FAF71EC5D9~-1~YAAQmacpF9OUqUedAQAAecghcQ9A9VahjvExUO…
+{"level":30,"time":1775719534074,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":11,"msg":"Google News forex calendar parsed"}
+{"level":30,"time":1775719534272,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","msg":"Seeding database..."}
+[nseStream] NSE stream running — equities @ 300ms, indices @ 1s
+{"level":30,"time":1775719534966,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":20,"statuses":{"closed":2,"open":1,"upcoming":11,"listed":6},"markets":{"india":11,"us":9},"msg":"IPO data refresh complete"}
+{"level":30,"time":1775719534966,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":20,"msg":"IPO data initial refresh done"}
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775719535173,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","msg":"Market data initial refresh done"}
+{"level":30,"time":1775719535173,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","msg":"Starting AI-powered USD signal refresh"}
+{"level":30,"time":1775719535774,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":89,"msg":"News initial refresh done"}
+{"level":30,"time":1775719536069,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":41,"msg":"Forex calendar refresh complete"}
+{"level":30,"time":1775719536069,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":41,"msg":"Forex calendar initial refresh done"}
+{"level":30,"time":1775719536566,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","msg":"Database seeded successfully."}
+{"level":30,"time":1775719536567,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","sessionStatus":"LIVE","dayOpen":23908.650390625,"dayHigh":23989.75,"dayLow":23760.55078125,"dayClose":23832.75,"prevDayClose":24010.599609375,"msg":"Nifty session data gathered"}
+{"level":30,"time":1775719536872,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","count":129,"msg":"Social intelligence initial refresh done"}
+{"level":40,"time":1775719537167,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","err":"Error: 401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************Zh8A. You can find your API key at https://platform.openai.com/account/api-keys.","msg":"AI USD analysis failed, using fallback algorithm"}
+{"level":40,"time":1775719537266,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","err":"Error: 401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************Zh8A. You can find your API key at https://platform.openai.com/account/api-keys.","msg":"AI BTC comprehensive failed, using fallback"}
+{"level":40,"time":1775719537268,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","err":"Error: 401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************Zh8A. You can find your API key at https://platform.openai.com/account/api-keys.","msg":"AI Nifty comprehensive failed, using fallback"}
+{"level":30,"time":1775719537269,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"USD signal refresh complete"}
+{"level":30,"time":1775719537269,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"USD signal initial refresh done"}
+[priceStream] Finnhub WS connected
+{"level":30,"time":1775719537363,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"BTC comprehensive analysis complete"}
+{"level":30,"time":1775719537363,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"BTC comprehensive initial refresh done"}
+{"level":30,"time":1775719537365,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"Nifty comprehensive analysis complete"}
+{"level":30,"time":1775719537365,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"Nifty comprehensive initial refresh done"}
+{"level":30,"time":1775719538183,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","req":{"id":2,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":312,"msg":"request completed"}
+{"level":30,"time":1775719538467,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","req":{"id":3,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":199,"msg":"request completed"}
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+==> Your service is live 🎉
+{"level":30,"time":1775719539570,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","msg":"Starting Nifty 50 30-min candle analysis refresh"}
+{"level":30,"time":1775719539667,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","req":{"id":4,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://globalpulse-backend.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+{"level":30,"time":1775719540166,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","sessionStatus":"LIVE","dayOpen":23908.650390625,"dayHigh":23989.75,"dayLow":23760.55078125,"todayBars5mCount":45,"msg":"Nifty session data for 30m analysis"}
+[priceStream] Twelve Data WS connected
+Menu
+{"level":40,"time":1775719540466,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","err":"Error: 401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************Zh8A. You can find your API key at https://platform.openai.com/account/api-keys.","msg":"AI Nifty 30m candle failed, using fallback"}
+{"level":30,"time":1775719540565,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"Nifty 30m candle analysis complete"}
+{"level":30,"time":1775719540565,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-d9d6bdd8-jggxn","direction":"NEUTRAL","confidence":50,"msg":"Nifty 30m candle initial refresh done"}
