@@ -11,7 +11,7 @@ import {
   Crown, TrendingUp, TrendingDown, Lock, AlertTriangle,
   ShieldCheck, RefreshCw, Search, X, Zap, Radio,
   Bell, BellOff, Loader2, ExternalLink, Minus, TrendingUp as TLIcon,
-  Square, MousePointer, Trash2,
+  Square, MousePointer, Trash2, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { ForexTVPanel, FOREX_SYMBOLS, NextSignalCountdown } from "./ForexTVPanel";
 
@@ -731,9 +731,22 @@ export function TradingChart() {
     setInProg(null);
   },[activeTool,getChartCoords]);
 
+  const [showIndMobile, setShowIndMobile] = useState(false);
+
   // ─── Derived ────────────────────────────────────────────────────────────────
   const lastSignal=data?.signals?.length?data.signals[data.signals.length-1]:null;
   const handleRefresh=()=>{setRefreshKey(k=>k+1);setSelSignal(null);};
+
+  // Mobile header helpers
+  const symDisplayName=(label:string)=>label.split("(")[0].trim()||label;
+  const symDisplayTicker=(label:string,sym:string)=>{const m=label.match(/\(([^)]+)\)/);return m?m[1]:sym;};
+  const CRYPTO_SET=new Set(["BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","ADAUSDT","XRPUSDT","DOGEUSDT","DOTUSDT","AVAXUSDT","MATICUSDT","LINKUSDT","UNIUSDT","ATOMUSDT","LTCUSDT","ETCUSDT"]);
+  const symBgStyle=(sym:string)=>{
+    if(CRYPTO_SET.has(sym))return{background:"#F7931A"};
+    if(FOREX_SYMBOLS.has(sym))return{background:"#F59E0B"};
+    if(isIndianSymbol(sym))return{background:"#1565C0"};
+    return{background:"#26A69A"};
+  };
 
   const TOOLS:[DrawTool,React.ReactNode,string][]=[
     ["cursor",<MousePointer className="w-3.5 h-3.5"/>,"Select"],
@@ -746,122 +759,225 @@ export function TradingChart() {
     <div className="flex flex-col h-full bg-white">
       {/* ── Header ── */}
       <div className="flex flex-col border-b border-[#E0E3EB]">
-        <div className="flex flex-wrap items-center px-3 py-2 gap-2">
-          <button onClick={()=>setSearchOpen(true)}
-            className="flex items-center gap-2 bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-3 py-1.5 hover:bg-[#E8ECF6] hover:border-[#2962FF]/30 transition-all min-w-0 max-w-[200px] sm:max-w-[260px] shrink-0">
-            <Search className="w-3 h-3 text-[#9598A1] shrink-0"/>
-            <span className="text-[#131722] text-xs font-semibold truncate">{symLabel}</span>
-          </button>
 
+        {/* ══ MOBILE HEADER (hidden on sm+) ══ */}
+        <div className="sm:hidden">
+          {/* Row 1: Symbol nav bar */}
+          <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+            <button onClick={()=>setSearchOpen(true)}
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#F0F3FA] border border-[#E0E3EB] shrink-0">
+              <Search className="w-4 h-4 text-[#5D6578]"/>
+            </button>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-white text-[12px] font-bold"
+              style={symBgStyle(symbol)}>
+              {symDisplayName(symLabel).charAt(0).toUpperCase()}
+            </div>
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <span className="text-[#131722] font-bold text-[15px] truncate">{symDisplayName(symLabel)}</span>
+              <span className="shrink-0 text-[11px] text-[#787B86] bg-[#F0F3FA] border border-[#E0E3EB] rounded-md px-1.5 py-0.5 font-medium">
+                {symDisplayTicker(symLabel,symbol)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button onClick={handleRefresh}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#F0F3FA] border border-[#E0E3EB]">
+                <RefreshCw className={`w-3.5 h-3.5 text-[#787B86] ${loading?"animate-spin":""}`}/>
+              </button>
+              <a href={toTVLink(symbol)} target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#F0F3FA] border border-[#E0E3EB]">
+                <ExternalLink className="w-3.5 h-3.5 text-[#787B86]"/>
+              </a>
+              {!isPremium
+                ? <button onClick={()=>setShowActivation(true)} className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/40 rounded-xl px-2.5 py-1.5"><Crown className="w-3 h-3 text-[#FF8F00]"/><span className="text-[11px] font-bold text-[#FF8F00]">PRO</span></button>
+                : <div className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/40 rounded-xl px-2.5 py-1.5"><Crown className="w-3 h-3 text-[#FF8F00]"/><span className="text-[11px] font-bold text-[#FF8F00]">PRO</span></div>
+              }
+            </div>
+          </div>
+
+          {/* Row 2: Live price */}
           {livePrice!=null&&(
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[#131722] font-mono text-sm font-bold tabular-nums shrink-0">{fmtP(livePrice,currency)}</span>
-              {liveChange!=null&&<span className={`text-[10px] font-mono font-bold shrink-0 ${liveChange>=0?"text-[#26A69A]":"text-[#EF5350]"}`}>{liveChange>=0?"+":""}{liveChange.toFixed(2)} ({livePct?.toFixed(2)}%)</span>}
+            <div className="flex items-baseline gap-2 px-4 pb-2.5">
+              <span className="text-[#131722] font-bold text-[26px] leading-none tracking-tight font-mono tabular-nums">
+                {fmtP(livePrice,currency)}
+              </span>
+              {liveChange!=null&&(
+                <span className={`text-[13px] font-semibold ${liveChange>=0?"text-[#26A69A]":"text-[#EF5350]"}`}>
+                  {liveChange>=0?"+":""}{liveChange.toFixed(2)} ({liveChange>=0?"+":""}{livePct?.toFixed(2)}%)
+                </span>
+              )}
+              {liveTicking&&<span className="flex items-center gap-0.5 text-[9px] text-[#2962FF] ml-1"><Radio className="w-2.5 h-2.5 animate-pulse"/>LIVE</span>}
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 ml-auto shrink-0 flex-wrap justify-end">
-            {liveTicking&&<span className="hidden sm:flex items-center gap-0.5 text-[8px] text-[#2962FF]"><Radio className="w-2.5 h-2.5 animate-pulse"/>LIVE</span>}
-            {data?.marketMode&&<div className="hidden sm:flex items-center gap-1 bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1"><span className="text-[9px] text-[#9598A1]">MODE</span><span className={`text-[9px] font-bold ${data.marketMode==="BULLISH"?"text-[#26A69A]":data.marketMode==="BEARISH"?"text-[#EF5350]":"text-[#FF9800]"}`}>{data.marketMode}</span></div>}
-            <button onClick={handleRefresh} className="flex items-center bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1.5 text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6] transition-all" title="Refresh"><RefreshCw className={`w-3 h-3 ${loading?"animate-spin":""}`}/></button>
-            <a href={toTVLink(symbol)} target="_blank" rel="noopener noreferrer" className="flex items-center bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1.5 text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6] transition-all" title="Open on TradingView"><ExternalLink className="w-3 h-3"/></a>
-            {!isPremium&&<button onClick={()=>setShowActivation(true)} className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/30 rounded-lg px-2 py-1 text-[#FF8F00] hover:bg-[#FFE082]/40 transition-all"><Crown className="w-3 h-3"/><span className="text-[9px] font-bold">PRO</span></button>}
-            {isPremium&&<div className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/30 rounded-lg px-2 py-1"><Crown className="w-3 h-3 text-[#FF8F00]"/><span className="text-[9px] font-bold text-[#FF8F00]">PRO</span></div>}
-            {isPremium&&(notifOk||notifFrame)&&(
-              <div className="relative">
-                <button onClick={()=>toggleSubscription(symbol,symLabel)} disabled={notifLoading===symbol} title={notifFrame?"Open in new tab for notifications":isSubscribed(symbol)?"Unsubscribe":"Subscribe to signals"}
-                  className={`flex items-center gap-1 rounded-lg px-2 py-1.5 transition-all border ${notifFrame?"bg-[#F0F3FA] border-[#E0E3EB] text-[#C9CBD4] cursor-not-allowed":isSubscribed(symbol)?"bg-[#E3F2FD] border-[#2962FF]/30 text-[#2962FF] hover:bg-[#BBDEFB]/50":"bg-[#F0F3FA] border-[#E0E3EB] text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6]"}`}>
-                  {notifLoading===symbol?<Loader2 className="w-3 h-3 animate-spin"/>:isSubscribed(symbol)?<Bell className="w-3 h-3"/>:<BellOff className="w-3 h-3"/>}
-                </button>
-                {notifErrVis&&notifErr&&<div className="absolute right-0 top-full mt-1 z-50 w-64 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 shadow-lg">{notifErr}</div>}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Timeframe + Indicator toggles */}
-        <div className="flex items-center px-3 pb-2 gap-2 flex-wrap">
-          <div className="flex gap-1 bg-[#F0F3FA] rounded-lg p-0.5">
+          {/* Row 3: Timeframe strip + Indicators + Chart mode */}
+          <div className="flex items-center overflow-x-auto scrollbar-hide px-3 pb-3 gap-1">
             {RANGES.map((r,i)=>(
               <button key={r.label} onClick={()=>setRangeIdx(i)}
-                className={`px-2.5 sm:px-3 py-1.5 text-[10px] font-semibold rounded-md transition-all whitespace-nowrap ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#9598A1] hover:text-[#131722] hover:bg-white"}`}>
+                className={`px-3 py-1.5 text-[13px] font-semibold rounded-full transition-all whitespace-nowrap shrink-0
+                  ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#787B86] hover:text-[#131722]"}`}>
                 {r.label}
               </button>
             ))}
+            <div className="ml-2 shrink-0 flex items-center gap-1.5">
+              {/* Indicators dropdown */}
+              <div className="relative">
+                <button onClick={()=>setShowIndMobile(v=>!v)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-semibold border transition-all
+                    ${showIndMobile?"bg-[#EEF2FF] border-[#2962FF]/30 text-[#2962FF]":"bg-[#F0F3FA] border-[#E0E3EB] text-[#5D6578]"}`}>
+                  Indicators {showIndMobile?<ChevronUp className="w-3 h-3"/>:<ChevronDown className="w-3 h-3"/>}
+                </button>
+                {showIndMobile&&(
+                  <div className="absolute right-0 top-full mt-1.5 z-50 bg-white border border-[#E0E3EB] rounded-2xl shadow-xl p-2 min-w-[150px]">
+                    {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["Volume",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
+                      <button key={lbl} onClick={()=>{(setter as any)((v:boolean)=>!v);}}
+                        className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all
+                          ${active?"text-[#2962FF] bg-[#EEF2FF]":"text-[#5D6578] hover:bg-[#F0F3FA]"}`}>
+                        {lbl}
+                        {active&&<div className="w-2 h-2 rounded-full bg-[#2962FF]"/>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Chart mode icon toggle */}
+              {isIndianSymbol(symbol)?(
+                <button
+                  onClick={()=>{if(indianToastTimer.current)clearTimeout(indianToastTimer.current);setIndianToast(true);indianToastTimer.current=setTimeout(()=>setIndianToast(false),3500);}}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#F0F3FA] border border-[#E0E3EB] opacity-40 cursor-not-allowed" title="TradingView not available for Indian symbols">
+                  <svg width="14" height="14" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="5" fill="#C9CBD4"/><path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              ):(
+                <button onClick={()=>setChartMode(m=>m==="globalpulse"?"tradingview":"globalpulse")}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#F0F3FA] border border-[#E0E3EB]"
+                  title={chartMode==="globalpulse"?"Switch to TradingView":"Switch to GlobalPulse"}>
+                  {chartMode==="globalpulse"
+                    ?<svg width="14" height="14" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="5" fill="#2962FF"/><path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    :<svg width="14" height="14" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#26A69A" strokeWidth="2"/><path d="M8 14.5l1.5-4 2.5 7 2.5-10L17 15l1.5-3.5 1.5 2.5" stroke="#26A69A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  }
+                </button>
+              )}
+            </div>
           </div>
-          {chartMode==="globalpulse" && (
-            <div className="flex items-center gap-2 ml-auto">
-              <div className="flex items-center gap-1">
-                <span className="text-[9px] text-[#9598A1]">Powered by</span>
-                <span className="text-[9px] font-bold text-[#26A69A]">GlobalPulse</span>
-              </div>
-              <div className="w-px h-3 bg-[#E0E3EB]"/>
-              <div className="flex gap-1">
-                {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
-                  <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
-                    className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {chartMode==="tradingview" && (
-            <div className="ml-auto flex items-center gap-1.5">
-              <span className="text-[9px] text-[#9598A1]">Powered by</span>
-              <span className="text-[9px] font-bold text-[#2962FF]">TradingView</span>
-            </div>
-          )}
+          {/* Indian toast (mobile) */}
+          {indianToast&&<div className="mx-3 mb-2 bg-[#131722] text-white text-[11px] font-medium px-4 py-2 rounded-xl flex items-center gap-2"><span>🇮🇳</span>TradingView Chart is not available for Indian Stocks &amp; Indexes</div>}
         </div>
 
-        {/* ── Chart selector ── */}
-        <div className="relative flex items-center justify-between px-3 pb-2.5 pt-1">
-          <div className="flex items-center gap-1.5 bg-[#F0F3FA] border border-[#E0E3EB] rounded-xl p-0.5">
-            {/* GlobalPulse Chart */}
-            <button
-              onClick={()=>setChartMode("globalpulse")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="globalpulse"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
-              <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-                <circle cx="14" cy="14" r="11" stroke="#26A69A" strokeWidth="2"/>
-                <ellipse cx="14" cy="14" rx="5.5" ry="11" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
-                <line x1="3" y1="14" x2="25" y2="14" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
-                <path d="M8 14.5l1.5-4 2.5 7 2.5-10L17 15l1.5-3.5 1.5 2.5" stroke="#26A69A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              GlobalPulse Chart
+        {/* ══ DESKTOP HEADER (hidden on mobile) ══ */}
+        <div className="hidden sm:flex flex-col">
+          <div className="flex flex-wrap items-center px-3 py-2 gap-2">
+            <button onClick={()=>setSearchOpen(true)}
+              className="flex items-center gap-2 bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-3 py-1.5 hover:bg-[#E8ECF6] hover:border-[#2962FF]/30 transition-all min-w-0 max-w-[200px] sm:max-w-[260px] shrink-0">
+              <Search className="w-3 h-3 text-[#9598A1] shrink-0"/>
+              <span className="text-[#131722] text-xs font-semibold truncate">{symLabel}</span>
             </button>
-            {/* TradingView Chart */}
-            {isIndianSymbol(symbol) ? (
-              <button
-                onClick={()=>{
-                  if(indianToastTimer.current)clearTimeout(indianToastTimer.current);
-                  setIndianToast(true);
-                  indianToastTimer.current=setTimeout(()=>setIndianToast(false),3500);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#C9CBD4] cursor-not-allowed opacity-60 select-none">
-                <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-                  <rect width="28" height="28" rx="5" fill="#C9CBD4"/>
-                  <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.7"/>
-                  <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.7"/>
-                  <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.7"/>
-                </svg>
-                TradingView Chart
-              </button>
-            ) : (
-              <button
-                onClick={()=>setChartMode("tradingview")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="tradingview"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
-                <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-                  <rect width="28" height="28" rx="5" fill="#2962FF"/>
-                  <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.8"/>
-                  <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.8"/>
-                  <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.8"/>
-                </svg>
-                TradingView Chart
-              </button>
+            {livePrice!=null&&(
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[#131722] font-mono text-sm font-bold tabular-nums shrink-0">{fmtP(livePrice,currency)}</span>
+                {liveChange!=null&&<span className={`text-[10px] font-mono font-bold shrink-0 ${liveChange>=0?"text-[#26A69A]":"text-[#EF5350]"}`}>{liveChange>=0?"+":""}{liveChange.toFixed(2)} ({livePct?.toFixed(2)}%)</span>}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 ml-auto shrink-0 flex-wrap justify-end">
+              {liveTicking&&<span className="flex items-center gap-0.5 text-[8px] text-[#2962FF]"><Radio className="w-2.5 h-2.5 animate-pulse"/>LIVE</span>}
+              {data?.marketMode&&<div className="flex items-center gap-1 bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1"><span className="text-[9px] text-[#9598A1]">MODE</span><span className={`text-[9px] font-bold ${data.marketMode==="BULLISH"?"text-[#26A69A]":data.marketMode==="BEARISH"?"text-[#EF5350]":"text-[#FF9800]"}`}>{data.marketMode}</span></div>}
+              <button onClick={handleRefresh} className="flex items-center bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1.5 text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6] transition-all" title="Refresh"><RefreshCw className={`w-3 h-3 ${loading?"animate-spin":""}`}/></button>
+              <a href={toTVLink(symbol)} target="_blank" rel="noopener noreferrer" className="flex items-center bg-[#F0F3FA] border border-[#E0E3EB] rounded-lg px-2 py-1.5 text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6] transition-all" title="Open on TradingView"><ExternalLink className="w-3 h-3"/></a>
+              {!isPremium&&<button onClick={()=>setShowActivation(true)} className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/30 rounded-lg px-2 py-1 text-[#FF8F00] hover:bg-[#FFE082]/40 transition-all"><Crown className="w-3 h-3"/><span className="text-[9px] font-bold">PRO</span></button>}
+              {isPremium&&<div className="flex items-center gap-1 bg-[#FFF8E1] border border-[#FFB300]/30 rounded-lg px-2 py-1"><Crown className="w-3 h-3 text-[#FF8F00]"/><span className="text-[9px] font-bold text-[#FF8F00]">PRO</span></div>}
+              {isPremium&&(notifOk||notifFrame)&&(
+                <div className="relative">
+                  <button onClick={()=>toggleSubscription(symbol,symLabel)} disabled={notifLoading===symbol} title={notifFrame?"Open in new tab for notifications":isSubscribed(symbol)?"Unsubscribe":"Subscribe to signals"}
+                    className={`flex items-center gap-1 rounded-lg px-2 py-1.5 transition-all border ${notifFrame?"bg-[#F0F3FA] border-[#E0E3EB] text-[#C9CBD4] cursor-not-allowed":isSubscribed(symbol)?"bg-[#E3F2FD] border-[#2962FF]/30 text-[#2962FF] hover:bg-[#BBDEFB]/50":"bg-[#F0F3FA] border-[#E0E3EB] text-[#9598A1] hover:text-[#131722] hover:bg-[#E8ECF6]"}`}>
+                    {notifLoading===symbol?<Loader2 className="w-3 h-3 animate-spin"/>:isSubscribed(symbol)?<Bell className="w-3 h-3"/>:<BellOff className="w-3 h-3"/>}
+                  </button>
+                  {notifErrVis&&notifErr&&<div className="absolute right-0 top-full mt-1 z-50 w-64 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 shadow-lg">{notifErr}</div>}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Timeframe + Indicator toggles */}
+          <div className="flex items-center px-3 pb-2 gap-2 flex-wrap">
+            <div className="flex gap-1 bg-[#F0F3FA] rounded-lg p-0.5">
+              {RANGES.map((r,i)=>(
+                <button key={r.label} onClick={()=>setRangeIdx(i)}
+                  className={`px-2.5 sm:px-3 py-1.5 text-[10px] font-semibold rounded-md transition-all whitespace-nowrap ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#9598A1] hover:text-[#131722] hover:bg-white"}`}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            {chartMode==="globalpulse" && (
+              <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] text-[#9598A1]">Powered by</span>
+                  <span className="text-[9px] font-bold text-[#26A69A]">GlobalPulse</span>
+                </div>
+                <div className="w-px h-3 bg-[#E0E3EB]"/>
+                <div className="flex gap-1">
+                  {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
+                    <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
+                      className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {chartMode==="tradingview" && (
+              <div className="ml-auto flex items-center gap-1.5">
+                <span className="text-[9px] text-[#9598A1]">Powered by</span>
+                <span className="text-[9px] font-bold text-[#2962FF]">TradingView</span>
+              </div>
             )}
           </div>
+
+          {/* ── Chart selector ── */}
+          <div className="relative flex items-center justify-between px-3 pb-2.5 pt-1">
+            <div className="flex items-center gap-1.5 bg-[#F0F3FA] border border-[#E0E3EB] rounded-xl p-0.5">
+              {/* GlobalPulse Chart */}
+              <button
+                onClick={()=>setChartMode("globalpulse")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="globalpulse"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
+                <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <circle cx="14" cy="14" r="11" stroke="#26A69A" strokeWidth="2"/>
+                  <ellipse cx="14" cy="14" rx="5.5" ry="11" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
+                  <line x1="3" y1="14" x2="25" y2="14" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
+                  <path d="M8 14.5l1.5-4 2.5 7 2.5-10L17 15l1.5-3.5 1.5 2.5" stroke="#26A69A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                GlobalPulse Chart
+              </button>
+              {/* TradingView Chart */}
+              {isIndianSymbol(symbol) ? (
+                <button
+                  onClick={()=>{
+                    if(indianToastTimer.current)clearTimeout(indianToastTimer.current);
+                    setIndianToast(true);
+                    indianToastTimer.current=setTimeout(()=>setIndianToast(false),3500);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#C9CBD4] cursor-not-allowed opacity-60 select-none">
+                  <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                    <rect width="28" height="28" rx="5" fill="#C9CBD4"/>
+                    <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.7"/>
+                    <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.7"/>
+                    <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.7"/>
+                  </svg>
+                  TradingView Chart
+                </button>
+              ) : (
+                <button
+                  onClick={()=>setChartMode("tradingview")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="tradingview"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
+                  <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                    <rect width="28" height="28" rx="5" fill="#2962FF"/>
+                    <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.8"/>
+                    <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.8"/>
+                    <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.8"/>
+                  </svg>
+                  TradingView Chart
+                </button>
+              )}
+            </div>
           {/* Indian toast */}
           {indianToast && (
             <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 bg-[#131722] text-white text-[10px] font-medium px-4 py-2 rounded-xl shadow-xl whitespace-nowrap flex items-center gap-2">
@@ -870,6 +986,7 @@ export function TradingChart() {
             </div>
           )}
         </div>
+        </div>{/* end desktop header */}
       </div>
 
       {/* ── Chart area ── */}
