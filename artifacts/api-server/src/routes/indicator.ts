@@ -91,7 +91,8 @@ Provide a single short insight sentence (max 12 words, no punctuation at end, pr
 
     const response = await openai.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_completion_tokens: 40,
+      max_completion_tokens: 256,
+      response_format: { type: "json_object" as const },
       messages: [{ role: "user", content: prompt }],
     });
 

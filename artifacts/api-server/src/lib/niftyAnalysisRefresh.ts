@@ -366,6 +366,7 @@ Return ONLY valid JSON:
     const response = await openai.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       max_completion_tokens: 2048,
+      response_format: { type: "json_object" as const },
       messages: [
         { role: "system", content: "You are a senior Indian equity strategist. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always base signals on today's actual opening price (first candle at 9:15 AM), today's day high/low, and today's closing price (last candle at 3:30 PM or latest candle if still live). Give clear intraday context in every analysis. All times in IST. Return only valid JSON." },
         { role: "user", content: prompt },
@@ -453,6 +454,7 @@ Return ONLY valid JSON:
     const response = await openai.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       max_completion_tokens: 1536,
+      response_format: { type: "json_object" as const },
       messages: [
         { role: "system", content: "You are a professional Nifty 50 intraday options trader. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always reference today's actual opening price (9:15 AM first candle) and today's day high/low in your analysis. If market is live, mention time remaining. If market closed, give next-day outlook. Be specific with price levels. All times in IST. Return only valid JSON." },
         { role: "user", content: prompt },

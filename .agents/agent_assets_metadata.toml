@@ -59,7 +59,7 @@ title = "globalpulse.env — rename this to .env"
 id = "S10MddfG_vL3p-wGF-iPP"
 uri = "file://globalpulse-backend.zip"
 type = "unspecified"
-title = "globalpulse-backend.zip — Updated (Groq JSON fix)"
+title = "globalpulse-backend.zip — Final Fix (Groq JSON Mode)"
 
 [[outputs]]
 id = "_EHFN2Hv1UHIED13W7Ju1"
