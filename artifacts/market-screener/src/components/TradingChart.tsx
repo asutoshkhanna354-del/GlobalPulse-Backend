@@ -351,11 +351,36 @@ export function TradingChart() {
     setLiveTicking(true);
   },[streamPrices,symbol,data,streamSubscribe]);
 
-  // ── REST poll every 2s — fallback + prevClose/change data ─────────────────
+  // ── Header quote — fires immediately on symbol change, independent of bars ──
+  // This ensures the big price in Row 2 updates as soon as you switch symbols,
+  // even before the candlestick data finishes loading.
+  useEffect(()=>{
+    setLivePrice(null);setLiveChange(null);setLivePct(null);setLiveTicking(false);
+    let disposed=false;
+    const poll=async()=>{
+      if(disposed)return;
+      try{
+        const r=await fetch(`${baseUrl}/api/indicator/quote/${encodeURIComponent(symbol)}`);
+        if(!r.ok||disposed)return;
+        const q:QuoteData=await r.json();
+        if(q.price==null||disposed)return;
+        if(q.currency)setCurrency(q.currency);
+        setLiveChange(q.change);setLivePct(q.changePercent);
+        setLiveTicking(true);
+        const streamTick=streamPrices[symbol];
+        const wsIsRecent=streamTick&&(Date.now()-streamTick.timestamp)<3000;
+        if(!wsIsRecent)setLivePrice(q.price);
+      }catch{}
+    };
+    poll();
+    const id=setInterval(poll,3000);
+    return()=>{disposed=true;clearInterval(id);};
+  },[symbol]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── REST poll every 2s — chart animation refs + change data ────────────────
   // (Reduced from 500ms since WebSocket already provides tick-level updates)
   useEffect(()=>{
-    if(!data?.bars?.length){setLiveTicking(false);return;}
-    setLiveTicking(true);
+    if(!data?.bars?.length)return;
     let disposed=false;
     const tick=async()=>{
       if(disposed)return;
@@ -364,10 +389,8 @@ export function TradingChart() {
         if(!r.ok||disposed)return;
         const q:QuoteData=await r.json();
         if(q.price==null||disposed)return;
-        // Always update change/pct from REST (WS doesn't carry those)
         setLiveChange(q.change);setLivePct(q.changePercent);
         if(q.currency)setCurrency(q.currency);
-        // Only update price target if WebSocket hasn't sent a more recent tick
         const streamTick=streamPrices[symbol];
         const wsIsRecent=streamTick&&(Date.now()-streamTick.timestamp)<3000;
         if(!wsIsRecent){
@@ -810,15 +833,22 @@ export function TradingChart() {
           )}
 
           {/* Row 3: Timeframe strip + Indicators + Chart mode */}
-          <div className="flex items-center overflow-x-auto scrollbar-hide px-3 pb-3 gap-1">
-            {RANGES.map((r,i)=>(
-              <button key={r.label} onClick={()=>setRangeIdx(i)}
-                className={`px-3 py-1.5 text-[13px] font-semibold rounded-full transition-all whitespace-nowrap shrink-0
-                  ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#787B86] hover:text-[#131722]"}`}>
-                {r.label}
-              </button>
-            ))}
-            <div className="ml-2 shrink-0 flex items-center gap-1.5">
+          {/* IMPORTANT: Indicators & chart-mode toggle are OUTSIDE the scroll div
+              so the dropdown is never clipped by overflow:auto */}
+          <div className="flex items-center px-3 pb-3 gap-2">
+            {/* Scrollable timeframe pills — scroll container holds pills only */}
+            <div className="flex items-center overflow-x-auto scrollbar-hide gap-1 flex-1 min-w-0">
+              {RANGES.map((r,i)=>(
+                <button key={r.label} onClick={()=>setRangeIdx(i)}
+                  className={`px-3 py-1.5 text-[13px] font-semibold rounded-full transition-all whitespace-nowrap shrink-0
+                    ${rangeIdx===i?"bg-[#2962FF] text-white shadow-sm":"text-[#787B86] hover:text-[#131722]"}`}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Fixed controls — NOT inside overflow container, so dropdown renders freely */}
+            <div className="shrink-0 flex items-center gap-1.5">
               {/* Indicators dropdown */}
               <div className="relative">
                 <button onClick={()=>setShowIndMobile(v=>!v)}
@@ -827,7 +857,7 @@ export function TradingChart() {
                   Indicators {showIndMobile?<ChevronUp className="w-3 h-3"/>:<ChevronDown className="w-3 h-3"/>}
                 </button>
                 {showIndMobile&&(
-                  <div className="absolute right-0 top-full mt-1.5 z-50 bg-white border border-[#E0E3EB] rounded-2xl shadow-xl p-2 min-w-[150px]">
+                  <div className="absolute right-0 top-full mt-1.5 z-[200] bg-white border border-[#E0E3EB] rounded-2xl shadow-xl p-2 min-w-[150px]">
                     {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["Volume",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
                       <button key={lbl} onClick={()=>{(setter as any)((v:boolean)=>!v);}}
                         className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all

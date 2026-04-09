@@ -42,3 +42,9 @@ id = "KB8FRt4PzzoUog3e39j64"
 uri = "file://globalpulse-deploy.tar.gz"
 type = "unspecified"
 title = "GlobalPulse — Updated Deploy Package (Mobile UI)"
+
+[[outputs]]
+id = "Fhj3QzAceXp0eBcb4Ir0o"
+uri = "file://globalpulse-intelligence.zip"
+type = "unspecified"
+title = "GlobalPulse Intelligence — Full Source Code"
