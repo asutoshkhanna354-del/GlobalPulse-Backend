@@ -239,9 +239,8 @@ interface Props {
   aiAnalysis?: string;
 }
 
-const SNAP_COLLAPSED = 52;
-const SNAP_HALF      = 240;
-const snapFull = () => Math.round(window.innerHeight * 0.68);
+const SNAP_HALF      = 280;
+const snapFull = () => Math.round(window.innerHeight * 0.55);
 
 export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, baseUrl, aiAnalysis }: Props) {
   const { isPremium, setShowActivation } = usePremium();
@@ -257,9 +256,9 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
 
   // Mobile bottom-sheet state
   const [isMobile,    setIsMobile]    = useState(false);
-  const [sheetHeight, setSheetHeight] = useState(SNAP_COLLAPSED);
+  const [sheetHeight, setSheetHeight] = useState(0);
   const dragStartY  = useRef<number|null>(null);
-  const dragStartH  = useRef<number>(SNAP_COLLAPSED);
+  const dragStartH  = useRef<number>(0);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -270,25 +269,25 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
 
   const snapSheet = useCallback((h: number) => {
     const full = snapFull();
-    const snaps = [SNAP_COLLAPSED, SNAP_HALF, full];
+    const snaps = [0, SNAP_HALF, full];
     const closest = snaps.reduce((a,b) => Math.abs(a-h) < Math.abs(b-h) ? a : b);
     setSheetHeight(closest);
-    if (closest > SNAP_COLLAPSED) setPanelOpen(true);
+    if (closest > 0) setPanelOpen(true);
     else setPanelOpen(false);
   }, []);
 
   const onHandleTouchStart = useCallback((e: React.TouchEvent) => {
-    dragStartY.current  = e.touches[0].clientY;
-    dragStartH.current  = sheetHeight;
+    dragStartY.current = e.touches[0].clientY;
+    dragStartH.current = sheetHeight;
   }, [sheetHeight]);
 
   const onHandleTouchMove = useCallback((e: React.TouchEvent) => {
     if (dragStartY.current === null) return;
     const dy = dragStartY.current - e.touches[0].clientY;
     const full = snapFull();
-    const newH = Math.max(SNAP_COLLAPSED, Math.min(full, dragStartH.current + dy));
+    const newH = Math.max(0, Math.min(full, dragStartH.current + dy));
     setSheetHeight(newH);
-    if (newH > SNAP_COLLAPSED) setPanelOpen(true);
+    if (newH > 0) setPanelOpen(true);
   }, []);
 
   const onHandleTouchEnd = useCallback(() => {
@@ -528,10 +527,13 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
   );
 
   return (
-    <div className="flex-1 flex min-h-0 relative">
-      {/* ── TradingView chart ── */}
-      <div className="flex-1 relative min-h-0" style={isMobile && sheetHeight > SNAP_COLLAPSED ? {paddingBottom: sheetHeight} : undefined}>
+    <div className={`flex-1 flex min-h-0 ${isMobile ? "flex-col" : "relative"}`}>
+
+      {/* ── TradingView chart — always flex-1 so it fills remaining space ── */}
+      <div className="flex-1 relative min-h-0">
         <div ref={tvRef} className="absolute inset-0"/>
+
+        {/* Desktop pro upsell */}
         {!isPremium && !isMobile && (
           <div className="absolute bottom-3 left-3 z-10 w-64">
             <div className="bg-white/95 backdrop-blur-xl border border-[#FFB300]/30 rounded-2xl p-3 shadow-lg">
@@ -550,6 +552,21 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
               </button>
             </div>
           </div>
+        )}
+
+        {/* ── MOBILE FAB — visible only when sheet is fully closed ── */}
+        {isMobile && sheetHeight === 0 && (
+          <button
+            onClick={() => snapSheet(SNAP_HALF)}
+            className="absolute bottom-4 right-4 z-30 flex items-center gap-2 bg-[#2962FF] text-white rounded-2xl px-3.5 py-2.5 shadow-xl active:scale-95 transition-all">
+            <Zap className="w-4 h-4 shrink-0"/>
+            <span className="text-[13px] font-bold">AI Signal</span>
+            {signals.length > 0 && (
+              <span className="bg-white/25 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                {signals.length}
+              </span>
+            )}
+          </button>
         )}
       </div>
 
@@ -574,26 +591,24 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
         </>
       )}
 
-      {/* ══ MOBILE — draggable bottom sheet ══ */}
-      {isMobile && (
+      {/* ══ MOBILE — draggable bottom panel (flex child, true split screen) ══ */}
+      {isMobile && sheetHeight > 0 && (
         <div
-          className="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-2xl shadow-2xl border-t border-[#E0E3EB] flex flex-col overflow-hidden"
-          style={{ height: sheetHeight, transition: dragStartY.current !== null ? "none" : "height 0.3s cubic-bezier(0.32,0.72,0,1)" }}>
+          className="shrink-0 bg-white rounded-t-2xl shadow-2xl border-t border-[#E0E3EB] flex flex-col overflow-hidden"
+          style={{
+            height: sheetHeight,
+            transition: dragStartY.current !== null ? "none" : "height 0.3s cubic-bezier(0.32,0.72,0,1)",
+          }}>
 
-          {/* drag handle bar — tap to open/close, drag to resize */}
+          {/* ── Drag handle ── */}
           <div
-            className="flex flex-col items-center pt-2.5 pb-2 shrink-0 select-none touch-none transition-colors"
-            style={{ cursor: sheetHeight <= SNAP_COLLAPSED ? "pointer" : "grab" }}
-            onClick={() => {
-              if (sheetHeight <= SNAP_COLLAPSED) snapSheet(SNAP_HALF);
-              else snapSheet(SNAP_COLLAPSED);
-            }}
+            className="flex flex-col items-center pt-2.5 pb-2 shrink-0 select-none touch-none"
+            style={{ cursor: "grab" }}
             onTouchStart={onHandleTouchStart}
             onTouchMove={onHandleTouchMove}
             onTouchEnd={onHandleTouchEnd}>
-            {/* drag pill */}
             <div className="w-10 h-1 bg-[#D1D4DC] rounded-full mb-2.5"/>
-            {/* header row */}
+            {/* Header row */}
             <div className="flex items-center gap-2 w-full px-4">
               <Zap className="w-4 h-4 text-[#2962FF] shrink-0"/>
               <span className="text-[14px] font-bold text-[#131722]">Ai Signal</span>
@@ -615,16 +630,20 @@ export function ForexTVPanel({ symbol, symLabel, rangeIdx, ranges, currency, bas
                   </button>
                 </div>
               )}
-              <ChevronLeft className={`w-4 h-4 text-[#9598A1] transition-transform ml-1 ${sheetHeight <= SNAP_COLLAPSED?"-rotate-90":"rotate-90"}`}/>
+              {/* Close button */}
+              <button
+                onClick={() => snapSheet(0)}
+                className="w-7 h-7 flex items-center justify-center rounded-xl bg-[#F0F3FA] ml-1.5"
+                onTouchStart={e => e.stopPropagation()}>
+                <X className="w-3.5 h-3.5 text-[#9598A1]"/>
+              </button>
             </div>
           </div>
 
-          {/* sheet content — only visible when expanded enough */}
-          {sheetHeight > SNAP_COLLAPSED + 10 && (
-            <div className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-[#F0F3FA]">
-              {SignalsBody}
-            </div>
-          )}
+          {/* Sheet content */}
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-[#F0F3FA]">
+            {SignalsBody}
+          </div>
         </div>
       )}
     </div>
