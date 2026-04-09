@@ -137,7 +137,7 @@ Return ONLY valid JSON (no markdown):
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
+    model: "llama-3.3-70b-versatile",
     max_completion_tokens: 1024,
     messages: [
       { role: "system", content: "You are a senior FX strategist. Return only valid JSON. Be decisive — commit to BULLISH or BEARISH. Traders need clear signals, not fence-sitting." },

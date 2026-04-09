@@ -151,7 +151,7 @@ Return ONLY valid JSON:
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5.2",
+      model: "llama-3.3-70b-versatile",
       max_completion_tokens: 2048,
       messages: [
         { role: "system", content: "You are a senior crypto strategist. Analyze Bitcoin with candlestick patterns, demand-supply zones, on-chain context, and macro correlations. Give clear Long/Short recommendations. Return only valid JSON." },
@@ -221,7 +221,7 @@ Return ONLY valid JSON:
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5.2",
+      model: "llama-3.3-70b-versatile",
       max_completion_tokens: 1536,
       messages: [
         { role: "system", content: "You are a professional Bitcoin trader. Provide demand-supply analysis for the next 4-hour candle. Be specific with price levels. Return only valid JSON." },

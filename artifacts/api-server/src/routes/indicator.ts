@@ -90,7 +90,7 @@ ${stopLoss ? `SL: ${stopLoss.toFixed(2)}, TP: ${takeProfit?.toFixed(2)}` : ""}
 Provide a single short insight sentence (max 12 words, no punctuation at end, professional tone).`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
+      model: "llama-3.3-70b-versatile",
       max_completion_tokens: 40,
       messages: [{ role: "user", content: prompt }],
     });
