@@ -1,0 +1,50 @@
+    at async file:///opt/render/project/src/dist/index.mjs:66868:18
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775719072077,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":17,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":414,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66868:18
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[binanceStream] Connecting to 10 streams…
+[binanceStream] WS error: Unexpected server response: 451
+[binanceStream] Disconnected (1006), reconnecting in 30000ms…
+{"level":30,"time":1775719082077,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":18,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":414,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66868:18
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775719092115,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":19,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":452,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66868:18
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS connected
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775719104513,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":20,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":2808,"msg":"request completed"}
+[priceStream] Finnhub WS connected
+{"level":30,"time":1775719105905,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":21,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":1197,"msg":"request completed"}
+{"level":30,"time":1775719106722,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":22,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":59,"msg":"request completed"}
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://globalpulse-backend.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+{"level":30,"time":1775719107091,"pid":68,"hostname":"srv-d7bl046dqaus73fll6k0-hibernate-57d587d985-q9txj","req":{"id":23,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
