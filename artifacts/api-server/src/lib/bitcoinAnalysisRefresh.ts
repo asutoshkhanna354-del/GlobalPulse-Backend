@@ -3,7 +3,7 @@ import { bitcoinAnalysisTable, marketAssetsTable, newsItemsTable } from "@worksp
 import { logger } from "./logger";
 import { fetchOHLC } from "./indicator.js";
 
-import { openai } from "./openaiClient.js";
+import { getOpenAiBtc } from "./openaiClient.js";
 
 function toIST(date: Date): string {
   return date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true, hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", year: "numeric" });
@@ -102,6 +102,7 @@ function formatBarsForAI(bars: any[], label: string, limit = 10): string {
 }
 
 async function analyzeBtcComprehensive(snapshot: BtcSnapshot): Promise<any> {
+  const openai = getOpenAiBtc();
   if (!openai) return fallbackBtcAnalysis(snapshot, "comprehensive");
 
   const prompt = `You are a senior crypto strategist at a top hedge fund specializing in Bitcoin trading. Provide a COMPREHENSIVE, ACTIONABLE analysis.
@@ -188,6 +189,7 @@ Return ONLY valid JSON:
 }
 
 async function analyzeBtcCandle(snapshot: BtcSnapshot): Promise<any> {
+  const openai = getOpenAiBtc();
   if (!openai) return fallbackBtcAnalysis(snapshot, "candle_4h");
 
   const prompt = `You are a professional crypto trader specializing in Bitcoin. Analyze the 4-hour and 15-minute candle data for DEMAND-SUPPLY based trading.

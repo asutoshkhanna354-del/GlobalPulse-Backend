@@ -3,7 +3,7 @@ import { niftyAnalysisTable, marketAssetsTable, newsItemsTable } from "@workspac
 import { logger } from "./logger";
 import { fetchOHLC } from "./indicator.js";
 
-import { openai } from "./openaiClient.js";
+import { openaiNifty as openai } from "./openaiClient.js";
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 

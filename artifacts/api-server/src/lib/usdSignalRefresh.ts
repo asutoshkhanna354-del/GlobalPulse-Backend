@@ -8,7 +8,7 @@ import {
 } from "@workspace/db";
 import { logger } from "./logger";
 
-import { openai } from "./openaiClient.js";
+import { openaiUsd as openai } from "./openaiClient.js";
 
 interface MarketSnapshot {
   dxy: number | null;

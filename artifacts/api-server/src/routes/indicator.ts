@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { computeSignals, fetchOHLC } from "../lib/indicator.js";
-import { openai } from "../lib/openaiClient.js";
+import { openaiSignals as openai } from "../lib/openaiClient.js";
 
 const router = Router();
 

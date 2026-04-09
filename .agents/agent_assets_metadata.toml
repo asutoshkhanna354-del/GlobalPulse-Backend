@@ -72,3 +72,9 @@ id = "EhBFUvcrEoZPJb1gb-uVe"
 uri = "file://globalpulse-full-deploy.tar.gz"
 type = "unspecified"
 title = "GlobalPulse Full Deploy (Backend + Frontend + .env)"
+
+[[outputs]]
+id = "NZZV77TFtAa357UwnW65v"
+uri = "file://globalpulse-full-deploy-v4keys.tar.gz"
+type = "unspecified"
+title = "GlobalPulse Full Deploy — 4 Groq Keys (No Cuts)"
