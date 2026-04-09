@@ -48,3 +48,9 @@ id = "Fhj3QzAceXp0eBcb4Ir0o"
 uri = "file://globalpulse-intelligence.zip"
 type = "unspecified"
 title = "GlobalPulse Intelligence — Full Source Code"
+
+[[outputs]]
+id = "s6go5e8bSvbp6FzBGfA7R"
+uri = "file://globalpulse-env.txt"
+type = "text"
+title = "globalpulse.env — rename this to .env"
