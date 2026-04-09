@@ -939,8 +939,9 @@ export function TradingChart() {
             </div>
           </div>
 
-          {/* Timeframe + Indicator toggles */}
-          <div className="flex items-center px-3 pb-2 gap-2 flex-wrap">
+          {/* Timeframe + Chart selector + Indicator toggles — single merged row */}
+          <div className="relative flex items-center px-3 pb-2.5 gap-2 flex-wrap">
+            {/* Timeframe pills */}
             <div className="flex gap-1 bg-[#F0F3FA] rounded-lg p-0.5">
               {RANGES.map((r,i)=>(
                 <button key={r.label} onClick={()=>setRangeIdx(i)}
@@ -949,45 +950,21 @@ export function TradingChart() {
                 </button>
               ))}
             </div>
-            {chartMode==="globalpulse" && (
-              <div className="flex items-center gap-2 ml-auto">
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] text-[#9598A1]">Powered by</span>
-                  <span className="text-[9px] font-bold text-[#26A69A]">GlobalPulse</span>
-                </div>
-                <div className="w-px h-3 bg-[#E0E3EB]"/>
-                <div className="flex gap-1">
-                  {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
-                    <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
-                      className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {chartMode==="tradingview" && (
-              <div className="ml-auto flex items-center gap-1.5">
-                <span className="text-[9px] text-[#9598A1]">Powered by</span>
-                <span className="text-[9px] font-bold text-[#2962FF]">TradingView</span>
-              </div>
-            )}
-          </div>
 
-          {/* ── Chart selector ── */}
-          <div className="relative flex items-center justify-between px-3 pb-2.5 pt-1">
-            <div className="flex items-center gap-1.5 bg-[#F0F3FA] border border-[#E0E3EB] rounded-xl p-0.5">
+            {/* Chart selector — inline beside timeframes */}
+            <div className="flex items-center gap-1 bg-[#F0F3FA] border border-[#E0E3EB] rounded-xl p-0.5">
               {/* GlobalPulse Chart */}
               <button
                 onClick={()=>setChartMode("globalpulse")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="globalpulse"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
-                <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="globalpulse"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
+                <svg width="13" height="13" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
                   <circle cx="14" cy="14" r="11" stroke="#26A69A" strokeWidth="2"/>
                   <ellipse cx="14" cy="14" rx="5.5" ry="11" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
                   <line x1="3" y1="14" x2="25" y2="14" stroke="#26A69A" strokeWidth="1.5" strokeDasharray="2.5 1.5"/>
                   <path d="M8 14.5l1.5-4 2.5 7 2.5-10L17 15l1.5-3.5 1.5 2.5" stroke="#26A69A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                GlobalPulse Chart
+                GlobalPulse
+                <span className="bg-[#26A69A] text-white text-[7px] font-extrabold px-1 py-0.5 rounded leading-none tracking-wide">BETA</span>
               </button>
               {/* TradingView Chart */}
               {isIndianSymbol(symbol) ? (
@@ -997,39 +974,52 @@ export function TradingChart() {
                     setIndianToast(true);
                     indianToastTimer.current=setTimeout(()=>setIndianToast(false),3500);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#C9CBD4] cursor-not-allowed opacity-60 select-none">
-                  <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[#C9CBD4] cursor-not-allowed opacity-60 select-none">
+                  <svg width="13" height="13" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
                     <rect width="28" height="28" rx="5" fill="#C9CBD4"/>
                     <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                     <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.7"/>
                     <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.7"/>
                     <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.7"/>
                   </svg>
-                  TradingView Chart
+                  TradingView
                 </button>
               ) : (
                 <button
                   onClick={()=>setChartMode("tradingview")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="tradingview"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
-                  <svg width="14" height="14" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${chartMode==="tradingview"?"bg-white shadow-sm text-[#131722] border border-[#E0E3EB]":"text-[#9598A1] hover:text-[#131722]"}`}>
+                  <svg width="13" height="13" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
                     <rect width="28" height="28" rx="5" fill="#2962FF"/>
                     <path d="M5 19l4.5-7 3 4.5 4-8.5 4 8 2.5-4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                     <rect x="5" y="21" width="4" height="3" rx="1" fill="white" opacity="0.8"/>
                     <rect x="12" y="18" width="4" height="6" rx="1" fill="white" opacity="0.8"/>
                     <rect x="19" y="15" width="4" height="9" rx="1" fill="white" opacity="0.8"/>
                   </svg>
-                  TradingView Chart
+                  TradingView
                 </button>
               )}
             </div>
-          {/* Indian toast */}
-          {indianToast && (
-            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 bg-[#131722] text-white text-[10px] font-medium px-4 py-2 rounded-xl shadow-xl whitespace-nowrap flex items-center gap-2">
-              <span>🇮🇳</span>
-              TradingView Chart is not available for Indian Stocks &amp; Indexes
-            </div>
-          )}
-        </div>
+
+            {/* Indicator toggles — ml-auto, only in GlobalPulse mode */}
+            {chartMode==="globalpulse" && (
+              <div className="flex gap-1 ml-auto">
+                {([["RSI",showRSI,setShowRSI],["EMA",showEMA,setShowEMA],["MA",showMA,setShowMA],["VOL",showVol,setShowVol]] as const).map(([lbl,active,setter])=>(
+                  <button key={lbl} onClick={()=>(setter as any)((v:boolean)=>!v)}
+                    className={`px-2 py-1 text-[9px] font-bold rounded-md border transition-all ${active?"bg-[#2962FF] text-white border-[#2962FF]":"text-[#9598A1] border-[#E0E3EB] hover:bg-[#F0F3FA] hover:text-[#131722]"}`}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Indian toast */}
+            {indianToast && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 bg-[#131722] text-white text-[10px] font-medium px-4 py-2 rounded-xl shadow-xl whitespace-nowrap flex items-center gap-2">
+                <span>🇮🇳</span>
+                TradingView Chart is not available for Indian Stocks &amp; Indexes
+              </div>
+            )}
+          </div>
         </div>{/* end desktop header */}
       </div>
 
