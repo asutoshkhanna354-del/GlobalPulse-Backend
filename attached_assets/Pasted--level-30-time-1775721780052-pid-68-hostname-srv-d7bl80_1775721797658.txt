@@ -1,0 +1,49 @@
+{"level":30,"time":1775721780052,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","port":10000,"msg":"Server listening"}
+[binanceStream] Connecting to 10 streams…
+[binanceStream] Binance direct stream engine started
+[nseStream] Starting NSE real-time stream (300ms polling)…
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[priceStream] All price streams initialised: Binance + NSE + Finnhub + TwelveData + TradingView
+(node:68) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":1775721780455,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Starting IPO data refresh with curated market data"}
+{"level":30,"time":1775721780457,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Starting forex calendar refresh..."}
+{"level":30,"time":1775721780457,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Starting Nifty 50 comprehensive analysis refresh"}
+{"level":30,"time":1775721780458,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Starting Bitcoin comprehensive analysis refresh"}
+{"level":30,"time":1775721780458,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","nextRefreshInMin":"22.0","msg":"Scheduling next Nifty 30m candle refresh"}
+{"level":30,"time":1775721782353,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","req":{"id":1,"method":"HEAD","url":"/"},"res":{"statusCode":404},"responseTime":96,"msg":"request completed"}
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":40,"time":1775721784156,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","status":403,"msg":"ForexFactory returned non-OK status"}
+[nseStream] NSE session initialised, cookies: _abck=78D50A4B081A1B54245B2CFF5DCA32E7~-1~YAAQqqcpF05ic02dAQAA4iBEcQ+I85o7UxYjQi…
+{"level":40,"time":1775721784156,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","error":"Error: ForexFactory HTTP 403","msg":"ForexFactory fetch failed, trying backup RSS"}
+[binanceStream] Connected — Binance direct feed live
+{"level":30,"time":1775721785159,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Database already seeded, skipping."}
+[nseStream] NSE stream running — equities @ 300ms, indices @ 1s
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775721785853,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","req":{"id":2,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":2601,"msg":"request completed"}
+{"level":30,"time":1775721785960,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":11,"msg":"Google News forex calendar parsed"}
+{"level":30,"time":1775721786054,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":20,"statuses":{"closed":2,"open":1,"upcoming":11,"listed":6},"markets":{"india":11,"us":9},"msg":"IPO data refresh complete"}
+{"level":30,"time":1775721786055,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":20,"msg":"IPO data initial refresh done"}
+{"level":30,"time":1775721786258,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Market data initial refresh done"}
+{"level":30,"time":1775721786258,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","msg":"Starting AI-powered USD signal refresh"}
+{"level":30,"time":1775721786452,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","req":{"id":3,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":200},"responseTime":497,"msg":"request completed"}
+{"level":30,"time":1775721786558,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":92,"msg":"News initial refresh done"}
+{"level":30,"time":1775721786558,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":27,"msg":"Social intelligence initial refresh done"}
+{"level":30,"time":1775721786562,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","sessionStatus":"LIVE","dayOpen":23908.650390625,"dayHigh":23989.75,"dayLow":23759.05078125,"dayClose":23779,"prevDayClose":24010.599609375,"msg":"Nifty session data gathered"}
+{"level":30,"time":1775721786954,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":41,"msg":"Forex calendar refresh complete"}
+{"level":30,"time":1775721786955,"pid":68,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-5c9c65d78-8zs25","count":41,"msg":"Forex calendar initial refresh done"}
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+Menu
+==> Available at your primary URL https://globalpulse-backend.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
