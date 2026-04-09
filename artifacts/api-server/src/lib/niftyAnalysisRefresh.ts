@@ -340,11 +340,11 @@ GLOBAL CUES:
 ${snapshot.globalCues.length > 0 ? snapshot.globalCues.join("\n") : "No data"}
 
 TODAY'S INTRADAY BARS (5-MIN — today's full session):
-${snapshot.todayBars5m.length > 0 ? formatBarsForAI(snapshot.todayBars5m, "Today's 5-MIN candles", snapshot.todayBars5m.length) : "No intraday data for today yet"}
+${snapshot.todayBars5m.length > 0 ? formatBarsForAI(snapshot.todayBars5m, "Today's 5-MIN candles", 18) : "No intraday data for today yet"}
 
-${formatBarsForAI(snapshot.bars30m, "30-MIN CANDLES (recent sessions)", 12)}
+${formatBarsForAI(snapshot.bars30m, "30-MIN CANDLES (recent sessions)", 8)}
 
-${formatBarsForAI(snapshot.bars15m, "15-MIN CANDLES (recent sessions)", 15)}
+${formatBarsForAI(snapshot.bars15m, "15-MIN CANDLES (recent sessions)", 8)}
 
 INDIAN MARKET NEWS:
 ${snapshot.indianNews.length > 0 ? snapshot.indianNews.join("\n") : "No significant news"}
@@ -389,10 +389,10 @@ Return ONLY valid JSON:
   try {
     const response = await openai.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_completion_tokens: 2048,
+      max_completion_tokens: 900,
       response_format: { type: "json_object" as const },
       messages: [
-        { role: "system", content: `You are a senior Indian equity strategist. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always base signals on today's actual opening price (first candle at 9:15 AM), today's day high/low, and today's closing price. ${snapshot.sessionStatus.status === "POST_CLOSE" ? "IMPORTANT: The market has CLOSED today. Give a definitive BULLISH or BEARISH direction based on today's close vs open/prev-close. Then give a clear next-day opening outlook with gap-up/gap-down probability and next-day CE/PE recommendation. NEVER return NEUTRAL when market has closed with a real close price." : "If market is live, mention time remaining."} All times in IST. Return only valid JSON.` },
+        { role: "system", content: `You are a senior Indian equity strategist. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always base signals on today's actual opening price (first candle at 9:15 AM), today's day high/low, and today's closing price. ${snapshot.sessionStatus.status === "POST_CLOSE" ? "IMPORTANT: The market has CLOSED today. Give a definitive BULLISH or BEARISH direction based on today's close vs open/prev-close. Then give a clear next-day opening outlook with gap-up/gap-down probability and next-day CE/PE recommendation. NEVER return NEUTRAL when market has closed with a real close price." : "If market is live, mention time remaining."} All times in IST. Return only valid JSON. Be concise.` },
         { role: "user", content: prompt },
       ],
     });
@@ -441,10 +441,10 @@ NEXT 30-MIN CANDLE CLOSES AT: ${nextSlotIST}
 NIFTY 50: ${snapshot.price?.toFixed(2) ?? "N/A"} (${snapshot.changePercent > 0 ? "+" : ""}${snapshot.changePercent.toFixed(2)}%)
 India VIX: ${snapshot.vixValue?.toFixed(2) ?? "N/A"}
 
-${formatBarsForAI(snapshot.bars30m, "30-MIN CANDLES", 15)}
+${formatBarsForAI(snapshot.bars30m, "30-MIN CANDLES", 10)}
 
 TODAY'S 5-MIN BARS (intraday context — from 9:15 AM open):
-${snapshot.todayBars5m.length > 0 ? formatBarsForAI(snapshot.todayBars5m, "Today's 5-MIN candles", snapshot.todayBars5m.length) : "No intraday 5m data yet"}
+${snapshot.todayBars5m.length > 0 ? formatBarsForAI(snapshot.todayBars5m, "Today's 5-MIN candles", 12) : "No intraday 5m data yet"}
 
 TASK: Provide a 30-min demand-supply analysis for the NEXT candle. Consider:
 - Today's session direction (from 9:15 AM open to current price)
@@ -477,10 +477,10 @@ Return ONLY valid JSON:
   try {
     const response = await openai.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_completion_tokens: 1536,
+      max_completion_tokens: 700,
       response_format: { type: "json_object" as const },
       messages: [
-        { role: "system", content: "You are a professional Nifty 50 intraday options trader. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Always reference today's actual opening price (9:15 AM first candle) and today's day high/low in your analysis. If market is live, mention time remaining. If market closed, give next-day outlook. Be specific with price levels. All times in IST. Return only valid JSON." },
+        { role: "system", content: "You are a professional Nifty 50 intraday options trader. Nifty 50 trades 9:15 AM to 3:30 PM IST on NSE. Reference today's actual opening price and day high/low. If market is live, mention time remaining. If closed, give next-day outlook. Be concise and specific with price levels. Return only valid JSON." },
         { role: "user", content: prompt },
       ],
     });
@@ -633,6 +633,13 @@ export async function refreshNiftyComprehensive(): Promise<{ direction: string; 
 export async function refreshNiftyCandle30m(): Promise<{ direction: string; confidence: number }> {
   logger.info("Starting Nifty 50 30-min candle analysis refresh");
   const snapshot = await gatherNiftySnapshot();
+
+  // Skip 30m AI call when market is closed — comprehensive analysis covers POST_CLOSE outlook
+  if (snapshot.sessionStatus.status === "POST_CLOSE") {
+    logger.info("Nifty market is POST_CLOSE — skipping 30m AI refresh to save tokens");
+    const direction = snapshot.changePercent > 0.2 ? "BULLISH" : snapshot.changePercent < -0.2 ? "BEARISH" : "NEUTRAL";
+    return { direction, confidence: 65 };
+  }
   logger.info({ sessionStatus: snapshot.sessionStatus.status, dayOpen: snapshot.dayOpen, dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow, todayBars5mCount: snapshot.todayBars5m.length }, "Nifty session data for 30m analysis");
   const analysis = await analyzeNiftyCandle30m(snapshot);
 
