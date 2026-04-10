@@ -8,12 +8,10 @@ const PRIMARY_URL = process.env.DATABASE_URL;
 const BACKUP_URL  = process.env.DATABASE_BACKUP_URL;
 
 if (!PRIMARY_URL && !BACKUP_URL) {
-  throw new Error(
-    "No database URL configured. Set DATABASE_URL and optionally DATABASE_BACKUP_URL.",
-  );
+  throw new Error("No database URL configured. Set DATABASE_URL and optionally DATABASE_BACKUP_URL.");
 }
 
-// ── Pool configuration ─────────────────────────────────────────────────────
+// ── Pool instances ────────────────────────────────────────────────────────────
 const primaryPool: pg.Pool | null = PRIMARY_URL
   ? new Pool({ connectionString: PRIMARY_URL, connectionTimeoutMillis: 8_000, idleTimeoutMillis: 30_000, max: 5 })
   : null;
@@ -22,160 +20,110 @@ const backupPool: pg.Pool | null = BACKUP_URL
   ? new Pool({ connectionString: BACKUP_URL, connectionTimeoutMillis: 12_000, idleTimeoutMillis: 30_000, max: 5 })
   : null;
 
-// ── Health state ───────────────────────────────────────────────────────────
+// ── Mutable active pool — ALL drizzle operations read this reference ──────────
+// Switching this variable instantly redirects every query (connect + direct query)
+let activePool: pg.Pool = primaryPool ?? backupPool!;
+
 let primaryHealthy     = !!primaryPool;
 let lastPrimaryRetryAt = 0;
 const PRIMARY_RETRY_MS = 5 * 60 * 1000;
 
 function logDb(msg: string) { console.log(`[DB] ${msg}`); }
 
-// Detect quota / plan-limit errors that should trigger failover
 function isQuotaError(err: unknown): boolean {
-  const msg = (err as Error)?.message ?? "";
-  return (
-    msg.includes("exceeded the data transfer quota") ||
-    msg.includes("exceeded") ||
-    msg.includes("quota") ||
-    msg.includes("Upgrade your plan")
-  );
+  const msg = String((err as Error)?.message ?? "");
+  return msg.includes("exceeded") || msg.includes("quota") || msg.includes("Upgrade your plan");
 }
 
-// ── Wrapped client — intercepts query-level quota errors ──────────────────
-function wrapClientForFailover(client: pg.PoolClient, fromPrimary: boolean): pg.PoolClient {
-  if (!fromPrimary || !backupPool) return client;
-
-  const originalQuery = client.query.bind(client) as (...args: any[]) => any;
-
-  const wrapped = new Proxy(client, {
-    get(target, prop) {
-      if (prop !== "query") return (target as any)[prop];
-
-      return async (...args: any[]) => {
-        try {
-          return await originalQuery(...args);
-        } catch (err) {
-          if (isQuotaError(err)) {
-            logDb(
-              `Primary (CockroachDB) quota exceeded — falling back to backup (Neon) for this query.`,
-            );
-            primaryHealthy     = false;
-            lastPrimaryRetryAt = Date.now();
-            client.release();
-
-            // Run the same query on the backup pool
-            const backupClient = await backupPool!.connect();
-            try {
-              const result = await (backupClient.query as any)(...args);
-              backupClient.release();
-              return result;
-            } catch (backupErr) {
-              backupClient.release();
-              throw backupErr;
-            }
-          }
-          throw err;
-        }
-      };
-    },
-  });
-
-  return wrapped as unknown as pg.PoolClient;
+function switchToBackup(reason: string) {
+  if (!backupPool) return;
+  primaryHealthy     = false;
+  lastPrimaryRetryAt = Date.now();
+  activePool         = backupPool;          // ← all future pool ops go to Neon
+  logDb(`Switched to backup (Neon). Reason: ${reason}`);
 }
 
-// ── Resilient connect — tries primary, falls back to backup ───────────────
+// ── Resilient connect — used by drizzle for transaction sessions ──────────────
 async function resilientConnect(): Promise<pg.PoolClient> {
   const now = Date.now();
 
-  // Try to recover primary every 5 min
+  // Periodically retry primary
   if (primaryPool && !primaryHealthy && now - lastPrimaryRetryAt > PRIMARY_RETRY_MS) {
-    logDb("Retrying primary (CockroachDB) connection…");
+    logDb("Retrying primary (CockroachDB)…");
     try {
       const client = await primaryPool.connect();
-      // Run a lightweight test query to detect quota before declaring healthy
-      await (client as any).query("SELECT 1");
-      logDb("Primary (CockroachDB) is back online — switching back from backup.");
+      await client.query("SELECT count(*) FROM market_assets LIMIT 0");
+      client.release();
+      logDb("Primary (CockroachDB) is back — switching from backup.");
       primaryHealthy = true;
-      return wrapClientForFailover(client, true);
+      activePool     = primaryPool;
     } catch (err) {
       logDb(`Primary still unhealthy: ${(err as Error).message}`);
       lastPrimaryRetryAt = now;
-      primaryHealthy = false;
+      if (isQuotaError(err)) switchToBackup((err as Error).message);
     }
   }
 
-  if (primaryPool && primaryHealthy) {
-    try {
-      const client = await primaryPool.connect();
-      return wrapClientForFailover(client, true);
-    } catch (err) {
-      logDb(`Primary (CockroachDB) connect failed — switching to backup. Reason: ${(err as Error).message}`);
-      primaryHealthy     = false;
-      lastPrimaryRetryAt = now;
+  try {
+    return await activePool.connect();
+  } catch (err) {
+    if (primaryPool && primaryHealthy && isQuotaError(err)) {
+      switchToBackup((err as Error).message);
+      return await backupPool!.connect();
     }
-  }
-
-  if (backupPool) {
-    try {
-      const client = await backupPool.connect();
-      return client;
-    } catch (err) {
-      logDb(`Backup (Neon) also failed: ${(err as Error).message}`);
+    // Last resort: try the other pool
+    const other = activePool === primaryPool ? backupPool : primaryPool;
+    if (other) {
+      logDb(`Active pool connect failed — trying other pool.`);
+      return await other.connect();
     }
+    throw err;
   }
-
-  // Last resort
-  if (primaryPool) {
-    logDb("Both pools failed — forcing primary reconnect as last resort…");
-    const client = await primaryPool.connect();
-    primaryHealthy = true;
-    return wrapClientForFailover(client, true);
-  }
-
-  throw new Error("[DB] All database connections are unavailable.");
 }
 
-// ── Proxy pool (duck-typed so drizzle-orm uses our resilient connect) ─────
-const proxyPool = new Proxy(
-  (backupPool ?? primaryPool) as pg.Pool,
-  {
-    get(target, prop) {
-      if (prop === "connect") return resilientConnect;
-      if (prop === "end") {
-        return async () => {
-          await Promise.allSettled([primaryPool?.end(), backupPool?.end()]);
-        };
-      }
-      const value = (target as any)[prop];
-      return typeof value === "function" ? value.bind(target) : value;
-    },
-  },
-);
-
-// ── Startup health check ───────────────────────────────────────────────────
-(async () => {
-  if (primaryPool) {
-    try {
-      const client = await primaryPool.connect();
-      // Test a real query to catch quota errors at startup
-      await (client as any).query("SELECT 1");
-      client.release();
-      logDb("Connected to primary database (CockroachDB). Backup (Neon) is on standby.");
-    } catch (err) {
-      const reason = (err as Error).message;
-      if (isQuotaError(err)) {
-        logDb(`Primary (CockroachDB) quota exceeded at startup — switching to backup (Neon). Reason: ${reason}`);
-      } else {
-        logDb(`Primary (CockroachDB) unavailable at startup — using backup (Neon). Reason: ${reason}`);
-      }
-      primaryHealthy     = false;
-      lastPrimaryRetryAt = Date.now();
+// ── Proxy pool — ALL pg.Pool operations read activePool dynamically ───────────
+// This means pool.query(), pool.connect(), pool.totalCount etc. all route
+// through whichever pool is currently active (primary or backup).
+const proxyPool = new Proxy({} as pg.Pool, {
+  get(_, prop: string | symbol) {
+    if (prop === "connect") return resilientConnect;
+    if (prop === "end") {
+      return async () => {
+        await Promise.allSettled([primaryPool?.end(), backupPool?.end()]);
+      };
     }
-  } else {
-    logDb("No primary URL set — using backup (Neon) only.");
+    const value = (activePool as any)[prop as string];
+    return typeof value === "function" ? value.bind(activePool) : value;
+  },
+});
+
+// ── Startup health check — uses a real-data query to detect quota errors ──────
+(async () => {
+  if (!primaryPool) {
+    logDb("No primary URL — using backup (Neon) only.");
+    return;
+  }
+  try {
+    const client = await primaryPool.connect();
+    try {
+      // Real-data test: quota errors show up on actual table reads, not SELECT 1
+      await client.query("SELECT 1 FROM information_schema.tables LIMIT 1");
+    } finally {
+      client.release();
+    }
+    logDb("Connected to primary (CockroachDB). Backup (Neon) is on standby.");
+  } catch (err) {
+    const reason = (err as Error).message;
+    if (isQuotaError(err)) {
+      logDb(`Primary quota exceeded at startup — switching to backup (Neon). Reason: ${reason}`);
+    } else {
+      logDb(`Primary unavailable at startup — switching to backup (Neon). Reason: ${reason}`);
+    }
+    switchToBackup(reason);
   }
 })();
 
-// ── Exports ────────────────────────────────────────────────────────────────
+// ── Exports ───────────────────────────────────────────────────────────────────
 export const pool = proxyPool;
 export const db   = drizzle(proxyPool, { schema });
 export * from "./schema";

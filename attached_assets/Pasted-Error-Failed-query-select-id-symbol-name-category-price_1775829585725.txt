@@ -1,0 +1,273 @@
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829476504,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":5,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":565,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS connected
+{"level":30,"time":1775829486507,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":6,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":566,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829496510,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":7,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":567,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829507128,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":8,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":1190,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[newsRefresh] Error: _DrizzleQueryError: Failed query: delete from "news_items"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async refreshNewsIfStale (file:///opt/render/project/src/dist/index.mjs:69677:7) {
+  query: 'delete from "news_items"',
+  params: [],
+  cause: error: Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.
+      at file:///opt/render/project/src/dist/index.mjs:32643:15
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///opt/render/project/src/dist/index.mjs:54835:20
+      at async NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54604:16)
+      at async refreshNewsIfStale (file:///opt/render/project/src/dist/index.mjs:69677:7) {
+    length: 109,
+    severity: 'ERROR',
+    code: 'XX000',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: undefined,
+    line: undefined,
+    routine: undefined
+  }
+}
+[socialRefresh] Error: _DrizzleQueryError: Failed query: delete from "social_posts" where "social_posts"."published_at" < $1
+params: 2026-04-08T13:58:30.632Z
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async refreshSocialIfStale (file:///opt/render/project/src/dist/index.mjs:70403:5) {
+  query: 'delete from "social_posts" where "social_posts"."published_at" < $1',
+  params: [ '2026-04-08T13:58:30.632Z' ],
+  cause: error: Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.
+      at file:///opt/render/project/src/dist/index.mjs:32643:15
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///opt/render/project/src/dist/index.mjs:54835:20
+      at async NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54604:16)
+      at async refreshSocialIfStale (file:///opt/render/project/src/dist/index.mjs:70403:5) {
+    length: 109,
+    severity: 'ERROR',
+    code: 'XX000',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: undefined,
+    line: undefined,
+    routine: undefined
+  }
+}
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829516528,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":9,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":590,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829526496,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":10,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":558,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829536529,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":11,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at processTicksAndRejections (node:internal/process/task_queues:89:21)\n    at runNextTicks (node:internal/process/task_queues:69:3)\n    at process.processImmediate (node:internal/timers:472:9)"},"responseTime":590,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829546522,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":12,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":584,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS connected
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829556521,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":13,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":583,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829567132,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":14,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at processTicksAndRejections (node:internal/process/task_queues:89:21)\n    at runNextTicks (node:internal/process/task_queues:69:3)\n    at process.processImmediate (node:internal/timers:472:9)"},"responseTime":1194,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+{"level":50,"time":1775829569627,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","err":{"type":"_DrizzleQueryError","message":"Failed query: select distinct \"symbol\", \"symbol_label\" from \"push_subscriptions\"\nparams: : Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.","stack":"Error: Failed query: select distinct \"symbol\", \"symbol_label\" from \"push_subscriptions\"\nparams: \n    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///opt/render/project/src/dist/index.mjs:54839:22\n    at async checkAndSendSignalNotifications (file:///opt/render/project/src/dist/index.mjs:82003:18)\ncaused by: error: Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\n    at file:///opt/render/project/src/dist/index.mjs:32643:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///opt/render/project/src/dist/index.mjs:54846:18\n    at async NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54604:16)\n    at async file:///opt/render/project/src/dist/index.mjs:54839:22\n    at async checkAndSendSignalNotifications (file:///opt/render/project/src/dist/index.mjs:82003:18)","query":"select distinct \"symbol\", \"symbol_label\" from \"push_subscriptions\"","params":[]},"msg":"Error in signal notification check"}
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS connected
+[socialRefresh] Error: _DrizzleQueryError: Failed query: delete from "social_posts" where "social_posts"."published_at" < $1
+params: 2026-04-08T13:59:30.730Z
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async refreshSocialIfStale (file:///opt/render/project/src/dist/index.mjs:70403:5) {
+  query: 'delete from "social_posts" where "social_posts"."published_at" < $1',
+  params: [ '2026-04-08T13:59:30.730Z' ],
+  cause: error: Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.
+      at file:///opt/render/project/src/dist/index.mjs:32643:15
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///opt/render/project/src/dist/index.mjs:54835:20
+      at async NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54604:16)
+      at async refreshSocialIfStale (file:///opt/render/project/src/dist/index.mjs:70403:5) {
+    length: 109,
+    severity: 'ERROR',
+    code: 'XX000',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: undefined,
+    line: undefined,
+    routine: undefined
+  }
+}
+[newsRefresh] Error: _DrizzleQueryError: Failed query: delete from "news_items"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async refreshNewsIfStale (file:///opt/render/project/src/dist/index.mjs:69677:7) {
+  query: 'delete from "news_items"',
+  params: [],
+  cause: error: Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.
+      at file:///opt/render/project/src/dist/index.mjs:32643:15
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///opt/render/project/src/dist/index.mjs:54835:20
+      at async NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54604:16)
+      at async refreshNewsIfStale (file:///opt/render/project/src/dist/index.mjs:69677:7) {
+    length: 109,
+    severity: 'ERROR',
+    code: 'XX000',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: undefined,
+    line: undefined,
+    routine: undefined
+  }
+}
+[priceStream] Finnhub WS error: Unexpected server response: 429
+[priceStream] Finnhub WS closed (1006), reconnecting in 5s…
+[priceStream] Twelve Data WS closed (1006), reconnecting in 5s…
+{"level":30,"time":1775829576499,"pid":49,"hostname":"srv-d7bl80buibrs739qsqf0-hibernate-69b5d4cf86-vd5wj","req":{"id":15,"method":"GET","url":"/api/market-data/summary"},"res":{"statusCode":500},"err":{"type":"Error","message":"failed with status code 500","stack":"Error: failed with status code 500\n    at onResFinished (file:///opt/render/project/src/dist/index.mjs:28263:45)\n    at ServerResponse.onResponseComplete (file:///opt/render/project/src/dist/index.mjs:28313:18)\n    at ServerResponse.emit (node:events:521:24)\n    at onFinish (node:_http_outgoing:1026:10)\n    at callback (node:internal/streams/writable:764:21)\n    at afterWrite (node:internal/streams/writable:708:5)\n    at afterWriteTick (node:internal/streams/writable:694:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"},"responseTime":561,"msg":"request errored"}
+Error: Failed query: select "id", "symbol", "name", "category", "price", "change", "change_percent", "volume", "market_cap", "currency", "country", "flag", "last_updated" from "market_assets"
+params: 
+    at NodePgPreparedQuery.queryWithCache (file:///opt/render/project/src/dist/index.mjs:54606:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/render/project/src/dist/index.mjs:54839:22
+    at async file:///opt/render/project/src/dist/index.mjs:66993:18
+Menu
