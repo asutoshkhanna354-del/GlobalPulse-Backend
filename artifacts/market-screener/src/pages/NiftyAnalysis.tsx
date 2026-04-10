@@ -231,6 +231,17 @@ export function NiftyAnalysis() {
       {!isLoading && (
         <ProGate>
           <div className="space-y-6">
+            {!comp && !candle && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center space-y-3">
+                <RefreshCw className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="font-semibold text-amber-800">Analysis Warming Up</p>
+                <p className="text-sm text-amber-700">
+                  The AI analysis engine is initialising or the previous run is still processing.
+                  It typically takes up to 5 minutes after market open (9:15 AM IST) for the first analysis to appear.
+                  Please hit <strong>Refresh</strong> in a few minutes.
+                </p>
+              </div>
+            )}
             {comp && (
               <div className="bg-card border border-border rounded-xl p-5 space-y-5">
                 <div className="flex items-center justify-between">

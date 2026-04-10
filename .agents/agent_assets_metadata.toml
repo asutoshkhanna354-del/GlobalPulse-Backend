@@ -78,3 +78,9 @@ id = "NZZV77TFtAa357UwnW65v"
 uri = "file://globalpulse-full-deploy-v4keys.tar.gz"
 type = "unspecified"
 title = "GlobalPulse Full Deploy — 4 Groq Keys (No Cuts)"
+
+[[outputs]]
+id = "Xq78NLxbxIai7s8iSPQk2"
+uri = "file://globalpulse-full-deploy-v4keys-goldfixed.tar.gz"
+type = "unspecified"
+title = "GlobalPulse Deploy — Gold Fixed + 4 Groq Keys"
