@@ -324,8 +324,17 @@ export function TradingChart() {
     const ctrl=new AbortController();
     setLoading(true);setError("");setLivePrice(null);setSelSignal(null);
     fetch(`${baseUrl}/api/indicator/signals/${encodeURIComponent(symbol)}?range=${range.yRange}&interval=${range.yInt}`,{signal:ctrl.signal})
-      .then(r=>r.json()).then(d=>{if(!ctrl.signal.aborted){setData(d);setLoading(false);}})
-      .catch(e=>{if(!ctrl.signal.aborted){setError(e.message);setLoading(false);}});
+      .then(async r=>{
+        if(!r.ok) throw new Error(`Server error (${r.status}) — please try again shortly`);
+        return r.json();
+      })
+      .then(d=>{if(!ctrl.signal.aborted){setData(d);setLoading(false);}})
+      .catch(e=>{if(!ctrl.signal.aborted){
+        const msg = e.message?.includes("failed") || e.message?.includes("pattern") || e.message?.includes("NetworkError")
+          ? "Unable to reach the server — please check your connection and try again"
+          : e.message;
+        setError(msg);setLoading(false);
+      }});
     return()=>ctrl.abort();
   },[symbol,rangeIdx,refreshKey]);
 

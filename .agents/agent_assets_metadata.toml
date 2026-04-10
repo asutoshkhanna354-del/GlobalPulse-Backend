@@ -84,3 +84,9 @@ id = "Xq78NLxbxIai7s8iSPQk2"
 uri = "file://globalpulse-full-deploy-v4keys-goldfixed.tar.gz"
 type = "unspecified"
 title = "GlobalPulse Deploy — Gold Fixed + 4 Groq Keys"
+
+[[outputs]]
+id = "scYwS7nSOjGRF0mChGwUG"
+uri = "file://globalpulse-frontend-only.tar.gz"
+type = "unspecified"
+title = "GlobalPulse Frontend — Fixed Error Messages"
