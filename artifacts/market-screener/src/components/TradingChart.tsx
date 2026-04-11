@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
-  createChart, type IChartApi, type ISeriesApi,
+  createChart, type IChartApi, type ISeriesApi, type IPriceLine,
   ColorType, CrosshairMode, LineStyle,
   CandlestickSeries, HistogramSeries, LineSeries, createSeriesMarkers,
 } from "lightweight-charts";
+import { useSearch } from "wouter";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePriceStream } from "@/hooks/usePriceStream";
@@ -242,8 +243,12 @@ export function TradingChart() {
   const notifErrTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   useEffect(()=>{ if(!notifErr)return; setNotifErrVis(true); if(notifErrTimer.current)clearTimeout(notifErrTimer.current); notifErrTimer.current=setTimeout(()=>setNotifErrVis(false),5000); },[notifErr]);
 
-  const [symbol,      setSymbol]      = useState("XAUUSD");
-  const [symLabel,    setSymLabel]    = useState("Gold (XAU/USD)");
+  const _search = useSearch();
+  const _initSym = (() => { try { return new URLSearchParams(_search).get("symbol") ?? "XAUUSD"; } catch { return "XAUUSD"; } })();
+  const _initLbl = (() => { try { return new URLSearchParams(_search).get("label") ?? "Gold (XAU/USD)"; } catch { return "Gold (XAU/USD)"; } })();
+
+  const [symbol,      setSymbol]      = useState(_initSym);
+  const [symLabel,    setSymLabel]    = useState(_initLbl);
   const [chartMode,   setChartMode]   = useState<"globalpulse"|"tradingview">("tradingview");
   const [indianToast, setIndianToast] = useState(false);
   const indianToastTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -318,6 +323,26 @@ export function TradingChart() {
     return()=>{if(searchTimer.current)clearTimeout(searchTimer.current);ctrl.abort();};
   },[searchQ,searchOpen]);
   useEffect(()=>{if(searchOpen&&searchInputRef.current)searchInputRef.current.focus();},[searchOpen]);
+
+  // ── Bot trades for this symbol ─────────────────────────────────────────────
+  interface BotTradeChartItem { id:number; direction:"BUY"|"SELL"; entryPrice:number; targetPrice:number; stopLoss:number; tradeType:string; confidence:number; }
+  const [botTradesForChart, setBotTradesForChart] = useState<BotTradeChartItem[]>([]);
+  useEffect(()=>{
+    let active=true;
+    async function fetchBotTrades(){
+      try{
+        const r=await fetch(`${baseUrl}/api/bot/trades`);
+        if(!r.ok)return;
+        const d=await r.json();
+        if(!active)return;
+        const open=(d.trades??[]).filter((t:any)=>t.symbol===symbol&&t.status==="open");
+        setBotTradesForChart(open);
+      }catch{}
+    }
+    fetchBotTrades();
+    const timer=setInterval(fetchBotTrades,15000);
+    return()=>{active=false;clearInterval(timer);};
+  },[symbol]);
 
   // ── Fetch data ─────────────────────────────────────────────────────────────
   useEffect(()=>{
@@ -665,6 +690,21 @@ export function TradingChart() {
       setChartInstance(null);
     };
   },[data,isPremium,showEMA,showMA,showVol,chartMode]);
+
+  // ── Bot trade price lines (entry / target / stop-loss) ────────────────────
+  useEffect(()=>{
+    if(!candleRef.current||chartMode!=="globalpulse"||!botTradesForChart.length)return;
+    const series=candleRef.current;
+    const lines:IPriceLine[]=[];
+    for(const t of botTradesForChart){
+      try{
+        lines.push(series.createPriceLine({price:t.entryPrice,color:"#2962FF",lineWidth:2,lineStyle:LineStyle.Dashed,axisLabelVisible:true,title:`▶ ${t.direction} Entry`}));
+        lines.push(series.createPriceLine({price:t.targetPrice,color:"#26A69A",lineWidth:1,lineStyle:LineStyle.Dashed,axisLabelVisible:true,title:"✓ Target"}));
+        lines.push(series.createPriceLine({price:t.stopLoss,color:"#EF5350",lineWidth:1,lineStyle:LineStyle.Dashed,axisLabelVisible:true,title:"✗ Stop Loss"}));
+      }catch{}
+    }
+    return()=>{ for(const l of lines)try{series.removePriceLine(l);}catch{} };
+  },[chartInstance,botTradesForChart,chartMode]);
 
   // ── RSI pane (separate chart, synced) ─────────────────────────────────────
   useEffect(()=>{
@@ -1034,6 +1074,23 @@ export function TradingChart() {
 
       {/* ── Chart area ── */}
       <div className="flex-1 flex flex-col min-h-0">
+
+        {/* ── Bot trade active badge ── */}
+        {botTradesForChart.length>0&&(
+          <div className="flex items-center gap-3 px-4 py-2 bg-[#E3F2FD] border-b border-[#90CAF9]/60">
+            {botTradesForChart.map(t=>(
+              <div key={t.id} className="flex items-center gap-2 text-[11px]">
+                <div className="w-2 h-2 rounded-full bg-[#2196F3] animate-pulse"/>
+                <span className="font-bold text-[#1565C0]">BOT {t.direction}</span>
+                <span className="text-[#1565C0]">Entry <span className="font-mono font-bold">{t.entryPrice.toFixed(2)}</span></span>
+                <span className="text-[#26A69A]">TP <span className="font-mono font-bold">{t.targetPrice.toFixed(2)}</span></span>
+                <span className="text-[#EF5350]">SL <span className="font-mono font-bold">{t.stopLoss.toFixed(2)}</span></span>
+                <span className="ml-1 text-[9px] bg-[#2962FF] text-white rounded-full px-1.5 py-0.5 font-bold">{t.tradeType}</span>
+                {chartMode==="tradingview"&&<span className="text-[9px] text-[#9598A1]">(switch to GlobalPulse mode to see price lines on chart)</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── TradingView mode: live TV chart + signals panel ── */}
         {chartMode==="tradingview" && (

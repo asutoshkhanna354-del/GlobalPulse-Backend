@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import {
   Bot,
   TrendingUp,
@@ -22,6 +23,10 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  Search,
+  X,
+  CandlestickChart,
+  Plus,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
@@ -111,7 +116,7 @@ function ConfidenceBar({ value }: { value: number }) {
   );
 }
 
-function TradeCard({ trade }: { trade: Trade }) {
+function TradeCard({ trade, onViewChart }: { trade: Trade; onViewChart?: (t: Trade) => void }) {
   const isBuy = trade.direction === "BUY";
   const isOpen = trade.status === "open";
   const isProfit = (trade.pnlPercent ?? 0) >= 0;
@@ -190,15 +195,56 @@ function TradeCard({ trade }: { trade: Trade }) {
           {trade.closeReason} · {new Date(trade.closedAt!).toLocaleString()}
         </div>
       )}
+
+      {onViewChart && (
+        <button
+          onClick={() => onViewChart(trade)}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-[#F0F3FA] hover:bg-[#E0E3EB] rounded-xl text-[11px] font-semibold text-[#131722] transition-all border border-[#E0E3EB]"
+        >
+          <CandlestickChart className="w-3.5 h-3.5 text-[#2962FF]" />
+          View on Chart
+        </button>
+      )}
     </div>
   );
 }
 
+interface SearchResult { symbol: string; name: string; type: string; exchange: string; }
+
+function getSymbolLabel(symbol: string): string {
+  const found = ASSET_OPTIONS.find(a => a.value === symbol);
+  return found ? found.label : symbol;
+}
+
 export function AutoPilotBot() {
   const qc = useQueryClient();
+  const [, navigate] = useLocation();
   const [tab, setTab] = useState<"live" | "history">("live");
   const [showSettings, setShowSettings] = useState(false);
   const [localSettings, setLocalSettings] = useState<Partial<BotSettings>>({});
+
+  const [symSearch, setSymSearch] = useState("");
+  const [symResults, setSymResults] = useState<SearchResult[]>([]);
+  const [symLoading, setSymLoading] = useState(false);
+  const symTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (symSearch.length < 1) { setSymResults([]); return; }
+    if (symTimer.current) clearTimeout(symTimer.current);
+    symTimer.current = setTimeout(async () => {
+      setSymLoading(true);
+      try {
+        const r = await fetch(`${API_BASE}/indicator/search?q=${encodeURIComponent(symSearch)}`);
+        setSymResults(await r.json());
+      } catch { setSymResults([]); }
+      setSymLoading(false);
+    }, 350);
+    return () => { if (symTimer.current) clearTimeout(symTimer.current); };
+  }, [symSearch]);
+
+  function handleViewChart(trade: Trade) {
+    navigate(`/chart?symbol=${encodeURIComponent(trade.symbol)}&label=${encodeURIComponent(trade.symbolLabel)}`);
+  }
 
   const { data: statsData, isLoading: statsLoading } = useQuery<Stats>({
     queryKey: ["bot-stats"],
@@ -427,24 +473,73 @@ export function AutoPilotBot() {
             </div>
 
             <div className="mt-4">
-              <label className="block text-[11px] font-medium text-[#9598A1] mb-2">Enabled Assets</label>
+              <label className="block text-[11px] font-medium text-[#9598A1] mb-2">Tradable Assets (search any stock, crypto, index, forex)</label>
+
+              {/* Search box */}
+              <div className="relative mb-3">
+                <div className="flex items-center gap-2 bg-[#F8F9FE] border border-[#E0E3EB] rounded-xl px-3 py-2 focus-within:border-[#2962FF]">
+                  <Search className="w-3.5 h-3.5 text-[#9598A1] shrink-0" />
+                  <input
+                    type="text"
+                    value={symSearch}
+                    onChange={e => setSymSearch(e.target.value)}
+                    placeholder="Search symbol… e.g. Apple, RELIANCE, BTC, EUR"
+                    className="flex-1 text-[12px] text-[#131722] bg-transparent outline-none placeholder:text-[#9598A1]"
+                  />
+                  {symLoading && <Loader2 className="w-3 h-3 animate-spin text-[#9598A1]" />}
+                  {symSearch && <button onClick={() => { setSymSearch(""); setSymResults([]); }}><X className="w-3 h-3 text-[#9598A1]" /></button>}
+                </div>
+
+                {symResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E0E3EB] rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+                    {symResults.slice(0, 10).map(r => {
+                      const already = (localSettings.enabledAssets ?? []).includes(r.symbol);
+                      return (
+                        <button
+                          key={r.symbol}
+                          onClick={() => {
+                            if (!already) {
+                              setLocalSettings(s => ({ ...s, enabledAssets: [...(s.enabledAssets ?? []), r.symbol] }));
+                            }
+                            setSymSearch(""); setSymResults([]);
+                          }}
+                          className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-[#F0F3FA] transition-colors text-left"
+                        >
+                          <div>
+                            <span className="text-[12px] font-bold text-[#131722]">{r.symbol}</span>
+                            <span className="text-[10px] text-[#9598A1] ml-2">{r.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] text-[#9598A1]">{r.exchange}</span>
+                            {already ? (
+                              <CheckCircle className="w-3.5 h-3.5 text-[#26A69A]" />
+                            ) : (
+                              <Plus className="w-3.5 h-3.5 text-[#2962FF]" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Selected assets */}
               <div className="flex flex-wrap gap-2">
-                {ASSET_OPTIONS.map(a => {
-                  const active = (localSettings.enabledAssets ?? []).includes(a.value);
-                  return (
+                {(localSettings.enabledAssets ?? []).map(sym => (
+                  <div key={sym} className="flex items-center gap-1 bg-[#2962FF] text-white pl-3 pr-1.5 py-1.5 rounded-xl text-[11px] font-medium">
+                    {getSymbolLabel(sym)}
                     <button
-                      key={a.value}
-                      onClick={() => toggleAsset(a.value)}
-                      className={`px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-all ${
-                        active
-                          ? "bg-[#2962FF] text-white border-[#2962FF]"
-                          : "bg-white text-[#9598A1] border-[#E0E3EB] hover:border-[#2962FF]"
-                      }`}
+                      onClick={() => setLocalSettings(s => ({ ...s, enabledAssets: (s.enabledAssets ?? []).filter(x => x !== sym) }))}
+                      className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-white/30 transition-colors"
                     >
-                      {a.label}
+                      <X className="w-2.5 h-2.5" />
                     </button>
-                  );
-                })}
+                  </div>
+                ))}
+                {(localSettings.enabledAssets ?? []).length === 0 && (
+                  <p className="text-[11px] text-[#9598A1]">Search and add at least one asset above</p>
+                )}
               </div>
             </div>
 
@@ -561,7 +656,7 @@ export function AutoPilotBot() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {openTrades.map(t => <TradeCard key={t.id} trade={t} />)}
+                  {openTrades.map(t => <TradeCard key={t.id} trade={t} onViewChart={handleViewChart} />)}
                 </div>
               )
             ) : (
@@ -575,7 +670,7 @@ export function AutoPilotBot() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {closedTrades.map(t => <TradeCard key={t.id} trade={t} />)}
+                  {closedTrades.map(t => <TradeCard key={t.id} trade={t} onViewChart={handleViewChart} />)}
                 </div>
               )
             )}

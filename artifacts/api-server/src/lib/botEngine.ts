@@ -64,14 +64,21 @@ async function getSettings() {
   }
 }
 
+const QUOTE_URL_BASE = process.env.SELF_API_URL ?? "http://localhost:8080/api";
+
 async function getLivePrice(symbol: string): Promise<number | null> {
   try {
     const assets = await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.symbol, symbol)).limit(1);
     if (assets[0]?.price) return assets[0].price;
-    return null;
-  } catch {
-    return null;
-  }
+  } catch {}
+  try {
+    const r = await fetch(`${QUOTE_URL_BASE}/indicator/quote/${encodeURIComponent(symbol)}`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.price) return d.price;
+    }
+  } catch {}
+  return null;
 }
 
 async function getOpenTrades() {
@@ -222,7 +229,11 @@ async function runBotCycle() {
     }
 
     const activeSymbols = settings.enabledAssets ?? ["BTCUSD", "XAUUSD"];
-    const activeAssets = ASSETS.filter(a => activeSymbols.includes(a.symbol));
+    const knownLabels: Record<string,string> = Object.fromEntries(ASSETS.map(a=>[a.symbol,a.label]));
+    const activeAssets = activeSymbols.map(sym => ({
+      symbol: sym,
+      label: knownLabels[sym] ?? sym,
+    }));
 
     for (const asset of activeAssets) {
       const alreadyOpen = freshOpen.some(t => t.symbol === asset.symbol);
