@@ -48,10 +48,12 @@ router.get("/market-data/summary", async (_req, res): Promise<void> => {
   const gainers = (assets as any[]).filter((a: any) => a.changePercent > 0).length;
   const losers = (assets as any[]).filter((a: any) => a.changePercent < 0).length;
 
+  const avgGain = gainers > 0 ? (assets as any[]).filter((a: any) => a.changePercent > 0).reduce((s: number, a: any) => s + a.changePercent, 0) / gainers : 0;
+  const avgLoss = losers > 0 ? (assets as any[]).filter((a: any) => a.changePercent < 0).reduce((s: number, a: any) => s + Math.abs(a.changePercent), 0) / losers : 0;
   let sentiment: string = "neutral";
-  if (gainers > losers * 1.5) sentiment = "bullish";
-  else if (losers > gainers * 1.5) sentiment = "bearish";
-  else if ((assets as any[]).some((a: any) => Math.abs(a.changePercent) > 3)) sentiment = "volatile";
+  if ((assets as any[]).some((a: any) => Math.abs(a.changePercent) > 3)) sentiment = "volatile";
+  else if (gainers > losers * 1.2 || (gainers > losers && avgGain > avgLoss * 1.3)) sentiment = "bullish";
+  else if (losers > gainers * 1.2 || (losers > gainers && avgLoss > avgGain * 1.3)) sentiment = "bearish";
 
   const summary = {
     globalSentiment: sentiment,
