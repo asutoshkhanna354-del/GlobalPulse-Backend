@@ -18,12 +18,14 @@ import {
   Monitor,
   Bitcoin,
   Bell,
+  Bot,
 } from "lucide-react";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/bot", label: "AutoPilot Bot", icon: Bot, bot: true },
   { path: "/terminal", label: "Terminal", icon: Monitor, beta: true },
   { path: "/chart", label: "Chart", icon: CandlestickChart, premium: true },
   { path: "/nifty", label: "Nifty 50", icon: Zap, premium: true },
@@ -99,7 +101,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 px-2.5 py-4 space-y-0.5 overflow-y-auto">
-          {navItems.map(({ path, label, icon: Icon, premium, beta }) => {
+          {navItems.map(({ path, label, icon: Icon, premium, beta, bot }) => {
             const isActive = path === "/" ? location === "/" : location.startsWith(path);
             return (
               <Link key={path} href={path}>
@@ -113,6 +115,9 @@ export function Sidebar() {
                 >
                   <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#2962FF]" : "group-hover:text-[#131722]"}`} />
                   <span className="flex-1 font-medium">{label}</span>
+                  {bot && (
+                    <span className="text-[7px] bg-gradient-to-r from-[#EDE7F6] to-[#F3E5F5] text-[#7C3AED] border border-[#CE93D8]/40 px-1.5 py-0.5 rounded-full font-bold tracking-wider">AI</span>
+                  )}
                   {beta && (
                     <span className="text-[7px] bg-[#E8F5E9] text-[#2E7D32] border border-[#66BB6A]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">BETA</span>
                   )}

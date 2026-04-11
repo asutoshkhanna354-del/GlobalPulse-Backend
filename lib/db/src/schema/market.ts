@@ -284,6 +284,49 @@ export const insertWatchlistSchema = createInsertSchema(watchlistTable).omit({ i
 export type InsertWatchlist = z.infer<typeof insertWatchlistSchema>;
 export type Watchlist = typeof watchlistTable.$inferSelect;
 
+export const botTradesTable = pgTable("bot_trades", {
+  id: serial("id").primaryKey(),
+  symbol: text("symbol").notNull(),
+  symbolLabel: text("symbol_label").notNull(),
+  direction: text("direction").notNull(),
+  entryPrice: real("entry_price").notNull(),
+  targetPrice: real("target_price").notNull(),
+  stopLoss: real("stop_loss").notNull(),
+  currentPrice: real("current_price"),
+  pnl: real("pnl"),
+  pnlPercent: real("pnl_percent"),
+  status: text("status").notNull().default("open"),
+  tradeType: text("trade_type").notNull().default("SWING"),
+  confidence: integer("confidence").notNull(),
+  reasoning: text("reasoning").notNull(),
+  lotSize: real("lot_size").notNull().default(1),
+  riskPercent: real("risk_percent").notNull().default(1),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  closeReason: text("close_reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertBotTradeSchema = createInsertSchema(botTradesTable).omit({ id: true, createdAt: true });
+export type InsertBotTrade = z.infer<typeof insertBotTradeSchema>;
+export type BotTrade = typeof botTradesTable.$inferSelect;
+
+export const botSettingsTable = pgTable("bot_settings", {
+  id: serial("id").primaryKey(),
+  isRunning: boolean("is_running").notNull().default(true),
+  riskPercent: real("risk_percent").notNull().default(1),
+  maxOpenTrades: integer("max_open_trades").notNull().default(5),
+  enabledAssets: text("enabled_assets").array().notNull().default(["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"]),
+  enableScalp: boolean("enable_scalp").notNull().default(true),
+  enableIntraday: boolean("enable_intraday").notNull().default(true),
+  enableSwing: boolean("enable_swing").notNull().default(true),
+  virtualBalance: real("virtual_balance").notNull().default(10000),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertBotSettingsSchema = createInsertSchema(botSettingsTable).omit({ id: true, updatedAt: true });
+export type InsertBotSettings = z.infer<typeof insertBotSettingsSchema>;
+export type BotSettings = typeof botSettingsTable.$inferSelect;
+
 export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   id: serial("id").primaryKey(),
   endpoint: text("endpoint").notNull(),

@@ -4,6 +4,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { seedDatabase } from "./lib/seed";
+import { startBotEngine } from "./lib/botEngine";
 
 const app: Express = express();
 
@@ -33,5 +34,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", router);
 
 seedDatabase().catch((err) => logger.error({ err }, "Failed to seed database"));
+startBotEngine().catch((err) => logger.error({ err }, "Failed to start bot engine"));
 
 export default app;

@@ -19,6 +19,7 @@ import { ChartPage } from "@/pages/ChartPage";
 import { NiftyAnalysis } from "@/pages/NiftyAnalysis";
 import { BitcoinAnalysis } from "@/pages/BitcoinAnalysis";
 import { Terminal } from "@/pages/Terminal";
+import { AutoPilotBot } from "@/pages/AutoPilotBot";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -59,6 +60,7 @@ function AppLayout() {
             <Route path="/bitcoin" component={BitcoinAnalysis} />
             <Route path="/watchlist" component={Watchlist} />
             <Route path="/terminal" component={Terminal} />
+            <Route path="/bot" component={AutoPilotBot} />
             <Route component={NotFound} />
           </Switch>
         </main>
