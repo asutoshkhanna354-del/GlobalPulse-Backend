@@ -1,26 +1,32 @@
 services:
   - type: web
-    name: globalpulse-api
+    name: globalpulse-backend
     runtime: node
     region: singapore
     plan: free
     rootDir: .
-    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
-    startCommand: node artifacts/api-server/dist/index.mjs
+    buildCommand: echo "pre-built"
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 8080
       - key: DATABASE_URL
-        fromDatabase:
-          name: globalpulse-db
-          property: connectionString
+        sync: false
       - key: FINNHUB_API_KEY
         sync: false
       - key: TWELVE_DATA_API_KEY
         sync: false
       - key: OPENAI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY_NIFTY
+        sync: false
+      - key: GROQ_API_KEY_BTC
+        sync: false
+      - key: GROQ_API_KEY_BTC2
+        sync: false
+      - key: GROQ_API_KEY_USD
         sync: false
       - key: VAPID_PUBLIC_KEY
         sync: false
@@ -28,11 +34,6 @@ services:
         sync: false
       - key: VAPID_CONTACT_EMAIL
         sync: false
+      - key: SELF_API_URL
+        value: https://globalpulse-backend.onrender.com/api
     healthCheckPath: /api/health
-
-databases:
-  - name: globalpulse-db
-    region: singapore
-    plan: free
-    databaseName: globalpulse
-    user: globalpulse
