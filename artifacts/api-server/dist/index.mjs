@@ -66987,29 +66987,30 @@ async function refreshMarketDataIfStale(force = false) {
 
 // src/routes/market-data.ts
 var router2 = (0, import_express2.Router)();
+async function dbWithTimeout(promise2, fallback, ms = 2500) {
+  const timer = new Promise((resolve) => setTimeout(() => resolve(fallback), ms));
+  try {
+    return await Promise.race([promise2, timer]);
+  } catch {
+    return fallback;
+  }
+}
 router2.get("/market-data", async (req, res) => {
   refreshMarketDataIfStale().catch(() => {
   });
   const parsed = GetMarketDataQueryParams.safeParse(req.query);
   const category = parsed.success ? parsed.data.category : void 0;
-  let assets = [];
-  try {
-    assets = category ? await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.category, category)) : await db.select().from(marketAssetsTable);
-  } catch {
-    assets = [];
-  }
+  const assets = await dbWithTimeout(
+    category ? db.select().from(marketAssetsTable).where(eq(marketAssetsTable.category, category)) : db.select().from(marketAssetsTable),
+    []
+  );
   res.json(GetMarketDataResponse.parse(assets.map((a) => ({
     ...a,
     lastUpdated: a.lastUpdated.toISOString()
   }))));
 });
 router2.get("/market-data/summary", async (_req, res) => {
-  let assets = [];
-  try {
-    assets = await db.select().from(marketAssetsTable);
-  } catch {
-    assets = [];
-  }
+  const assets = await dbWithTimeout(db.select().from(marketAssetsTable), []);
   const fearGreedIndex = 42;
   const vixAsset = assets.find((a) => a.symbol === "VIX");
   const goldAsset = assets.find((a) => a.symbol === "XAUUSD");
@@ -67037,12 +67038,7 @@ router2.get("/market-data/summary", async (_req, res) => {
   res.json(GetMarketSummaryResponse.parse(summary));
 });
 router2.get("/market-data/movers", async (_req, res) => {
-  let assets = [];
-  try {
-    assets = await db.select().from(marketAssetsTable);
-  } catch {
-    assets = [];
-  }
+  const assets = await dbWithTimeout(db.select().from(marketAssetsTable), []);
   const sorted = [...assets].sort((a, b) => b.changePercent - a.changePercent);
   const gainers = sorted.slice(0, 5).map((a) => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
   const losers = sorted.slice(-5).reverse().map((a) => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
