@@ -90,3 +90,9 @@ id = "scYwS7nSOjGRF0mChGwUG"
 uri = "file://globalpulse-frontend-only.tar.gz"
 type = "unspecified"
 title = "GlobalPulse Frontend — Fixed Error Messages"
+
+[[outputs]]
+id = "54HQ2rhFi6ZXgktjSlwIN"
+uri = "file://globalpulse-frontend.tar.gz"
+type = "unspecified"
+title = "GlobalPulse Frontend Build (Netlify-ready)"

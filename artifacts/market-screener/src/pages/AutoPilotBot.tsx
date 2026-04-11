@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { usePremium } from "@/contexts/PremiumContext";
 import {
   Bot,
   TrendingUp,
@@ -27,6 +28,7 @@ import {
   X,
   CandlestickChart,
   Plus,
+  Crown,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
@@ -216,7 +218,58 @@ function getSymbolLabel(symbol: string): string {
   return found ? found.label : symbol;
 }
 
+function ProUpgradeScreen() {
+  const { setShowActivation } = usePremium();
+  return (
+    <div className="flex-1 flex items-center justify-center p-8 bg-[#F0F3FA]">
+      <div className="max-w-sm w-full bg-white rounded-3xl border border-[#E0E3EB] shadow-xl p-10 flex flex-col items-center text-center">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#7C3AED] to-[#2962FF] flex items-center justify-center mb-6 shadow-lg">
+          <Bot className="w-10 h-10 text-white" />
+        </div>
+        <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#EDE7F6] to-[#E3F2FD] border border-[#CE93D8]/40 rounded-full px-3 py-1 mb-4">
+          <Crown className="w-3.5 h-3.5 text-[#7C3AED]" />
+          <span className="text-[11px] font-bold text-[#7C3AED] tracking-wider">PRO FEATURE</span>
+        </div>
+        <h2 className="text-[22px] font-bold text-[#131722] mb-2 leading-tight">
+          AutoPilot Bot
+        </h2>
+        <p className="text-[13px] text-[#9598A1] leading-relaxed mb-6">
+          The AI-driven paper trading bot is exclusive to Pro subscribers. It autonomously scans markets, places trades, and manages risk — 24/7 without any input from you.
+        </p>
+        <ul className="text-left space-y-2.5 mb-8 w-full">
+          {[
+            "AI signals for crypto, forex & equities",
+            "Autonomous entry, target & stop-loss",
+            "Real-time P&L tracking dashboard",
+            "Search & trade any global symbol",
+            "View bot trades live on the chart",
+          ].map(f => (
+            <li key={f} className="flex items-center gap-2.5 text-[12px] text-[#131722]">
+              <CheckCircle className="w-4 h-4 text-[#26A69A] shrink-0" />
+              {f}
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() => setShowActivation(true)}
+          className="w-full bg-gradient-to-r from-[#7C3AED] to-[#2962FF] hover:opacity-90 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-[13px] transition-all shadow-md"
+        >
+          <Crown className="w-4 h-4" />
+          Unlock with Pro Key
+        </button>
+        <p className="text-[10px] text-[#9598A1] mt-3">Already have a key? Enter it above.</p>
+      </div>
+    </div>
+  );
+}
+
 export function AutoPilotBot() {
+  const { isPremium } = usePremium();
+  if (!isPremium) return <ProUpgradeScreen />;
+  return <AutoPilotBotInner />;
+}
+
+function AutoPilotBotInner() {
   const qc = useQueryClient();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<"live" | "history">("live");

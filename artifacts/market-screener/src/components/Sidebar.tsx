@@ -19,13 +19,14 @@ import {
   Bitcoin,
   Bell,
   Bot,
+  Lock,
 } from "lucide-react";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/bot", label: "AutoPilot Bot", icon: Bot, bot: true },
+  { path: "/bot", label: "AutoPilot Bot", icon: Bot, pro: true },
   { path: "/terminal", label: "Terminal", icon: Monitor, beta: true },
   { path: "/chart", label: "Chart", icon: CandlestickChart, premium: true },
   { path: "/nifty", label: "Nifty 50", icon: Zap, premium: true },
@@ -101,34 +102,50 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 px-2.5 py-4 space-y-0.5 overflow-y-auto">
-          {navItems.map(({ path, label, icon: Icon, premium, beta, bot }) => {
+          {navItems.map(({ path, label, icon: Icon, premium, beta, pro }) => {
             const isActive = path === "/" ? location === "/" : location.startsWith(path);
+            const locked = pro && !isPremium;
+            const inner = (
+              <div
+                data-testid={`nav-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all cursor-pointer group ${
+                  locked
+                    ? "text-[#9598A1] opacity-70 hover:bg-white/40 hover:opacity-90"
+                    : isActive
+                    ? "bg-white text-[#131722] shadow-sm border border-[#E0E3EB]"
+                    : "text-[#9598A1] hover:bg-white/60 hover:text-[#131722]"
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${isActive && !locked ? "text-[#2962FF]" : "group-hover:text-[#131722]"}`} />
+                <span className="flex-1 font-medium">{label}</span>
+                {pro && isPremium && (
+                  <span className="text-[7px] bg-gradient-to-r from-[#EDE7F6] to-[#F3E5F5] text-[#7C3AED] border border-[#CE93D8]/40 px-1.5 py-0.5 rounded-full font-bold tracking-wider">AI PRO</span>
+                )}
+                {locked && (
+                  <Lock className="w-3 h-3 text-[#FFB300]" />
+                )}
+                {beta && (
+                  <span className="text-[7px] bg-[#E8F5E9] text-[#2E7D32] border border-[#66BB6A]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">BETA</span>
+                )}
+                {premium && isPremium && (
+                  <Crown className="w-3 h-3 text-[#FF8F00]" />
+                )}
+                {premium && !isPremium && (
+                  <span className="text-[7px] bg-[#FFF8E1] text-[#FF8F00] border border-[#FFB300]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">PRO</span>
+                )}
+                {isActive && !locked && <div className="w-0.5 h-4 rounded-full bg-[#2962FF]" />}
+              </div>
+            );
+            if (locked) {
+              return (
+                <button key={path} className="w-full text-left" onClick={() => setShowActivation(true)}>
+                  {inner}
+                </button>
+              );
+            }
             return (
               <Link key={path} href={path}>
-                <div
-                  data-testid={`nav-${label.toLowerCase().replace(/\s+/g, "-")}`}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all cursor-pointer group ${
-                    isActive
-                      ? "bg-white text-[#131722] shadow-sm border border-[#E0E3EB]"
-                      : "text-[#9598A1] hover:bg-white/60 hover:text-[#131722]"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#2962FF]" : "group-hover:text-[#131722]"}`} />
-                  <span className="flex-1 font-medium">{label}</span>
-                  {bot && (
-                    <span className="text-[7px] bg-gradient-to-r from-[#EDE7F6] to-[#F3E5F5] text-[#7C3AED] border border-[#CE93D8]/40 px-1.5 py-0.5 rounded-full font-bold tracking-wider">AI</span>
-                  )}
-                  {beta && (
-                    <span className="text-[7px] bg-[#E8F5E9] text-[#2E7D32] border border-[#66BB6A]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">BETA</span>
-                  )}
-                  {premium && isPremium && (
-                    <Crown className="w-3 h-3 text-[#FF8F00]" />
-                  )}
-                  {premium && !isPremium && (
-                    <span className="text-[7px] bg-[#FFF8E1] text-[#FF8F00] border border-[#FFB300]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">PRO</span>
-                  )}
-                  {isActive && <div className="w-0.5 h-4 rounded-full bg-[#2962FF]" />}
-                </div>
+                {inner}
               </Link>
             );
           })}
