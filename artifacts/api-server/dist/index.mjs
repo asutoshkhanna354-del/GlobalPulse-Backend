@@ -79732,7 +79732,7 @@ async function startBotEngine() {
     logger.info("[bot] Tables ensured");
     await ensureSettingsRow();
   } catch (e) {
-    logger.warn(`[bot] Table ensure failed (may already exist): ${e}`);
+    logger.warn(`[bot] Table ensure failed: ${e?.message ?? e}${e?.cause ? ` | cause: ${e.cause}` : ""}`);
     try {
       await ensureSettingsRow();
     } catch {
