@@ -62,6 +62,17 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+      "/ws": {
+        target: "ws://localhost:3001",
+        changeOrigin: true,
+        ws: true,
+      },
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],

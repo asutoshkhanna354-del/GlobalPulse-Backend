@@ -52,8 +52,7 @@ function getWSUrl(): string {
     const base = apiBase.replace(/^https?:/, proto).replace(/\/$/, "");
     wsUrl = `${base}/ws/prices`;
   } else {
-    const host = window.location.host.replace(/:\d+$/, "") + ":8080";
-    wsUrl = `${proto}//${host}/ws/prices`;
+    wsUrl = `${proto}//${window.location.host}/ws/prices`;
   }
   return wsUrl;
 }

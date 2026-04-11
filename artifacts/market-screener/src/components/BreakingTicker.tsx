@@ -4,7 +4,7 @@ import { Zap } from "lucide-react";
 export function BreakingTicker() {
   const { data: news } = useGetBreakingNews();
 
-  if (!news?.length) return null;
+  if (!Array.isArray(news) || !news.length) return null;
 
   const tickerText = news.map(n => `  ///  ${n.headline}`).join("  ");
 

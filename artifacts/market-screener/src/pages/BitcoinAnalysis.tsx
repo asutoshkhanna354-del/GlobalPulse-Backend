@@ -294,7 +294,7 @@ export function BitcoinAnalysis() {
                   </div>
                 )}
 
-                {comp.candlePattern && (
+                {comp.candlePattern && !comp.candlePattern.includes("unavailable") && (
                   <div className="flex flex-wrap gap-3">
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg">
                       <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
@@ -381,7 +381,7 @@ export function BitcoinAnalysis() {
                   </div>
                 )}
 
-                {candle.candlePattern && (
+                {candle.candlePattern && !candle.candlePattern.includes("unavailable") && (
                   <div className="flex flex-wrap gap-3">
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg">
                       <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
