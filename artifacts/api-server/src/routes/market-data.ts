@@ -9,9 +9,17 @@ import {
   GetTopMoversResponse,
   GetAssetChartResponse,
 } from "@workspace/api-zod";
-import { refreshMarketDataIfStale } from "../lib/marketRefresh.js";
+import { refreshMarketDataIfStale, getMarketCache } from "../lib/marketRefresh.js";
 
 const router: IRouter = Router();
+
+async function getAssets(): Promise<any[]> {
+  const cached = getMarketCache();
+  if (cached.length > 0) return cached;
+  // Fallback to DB with timeout if cache not yet populated
+  const timer = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 2500));
+  try { return await Promise.race([db.select().from(marketAssetsTable), timer]); } catch { return []; }
+}
 
 router.get("/market-data", async (req, res): Promise<void> => {
   refreshMarketDataIfStale().catch(() => {});
@@ -19,32 +27,31 @@ router.get("/market-data", async (req, res): Promise<void> => {
   const parsed = GetMarketDataQueryParams.safeParse(req.query);
   const category = parsed.success ? parsed.data.category : undefined;
 
-  const assets = category
-    ? await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.category, category))
-    : await db.select().from(marketAssetsTable);
+  const allAssets = await getAssets();
+  const assets: any[] = category ? allAssets.filter((a: any) => a.category === category) : allAssets;
 
-  res.json(GetMarketDataResponse.parse(assets.map(a => ({
+  res.json(GetMarketDataResponse.parse(assets.map((a: any) => ({
     ...a,
     lastUpdated: a.lastUpdated.toISOString(),
   }))));
 });
 
 router.get("/market-data/summary", async (_req, res): Promise<void> => {
-  const assets = await db.select().from(marketAssetsTable);
+  const assets: any[] = await getAssets();
 
   const fearGreedIndex = 42;
-  const vixAsset = assets.find(a => a.symbol === "VIX");
-  const goldAsset = assets.find(a => a.symbol === "XAUUSD");
-  const oilAsset = assets.find(a => a.symbol === "USOIL");
-  const dxyAsset = assets.find(a => a.symbol === "DXY");
+  const vixAsset = (assets as any[]).find((a: any) => a.symbol === "VIX");
+  const goldAsset = (assets as any[]).find((a: any) => a.symbol === "XAUUSD");
+  const oilAsset = (assets as any[]).find((a: any) => a.symbol === "USOIL");
+  const dxyAsset = (assets as any[]).find((a: any) => a.symbol === "DXY");
 
-  const gainers = assets.filter(a => a.changePercent > 0).length;
-  const losers = assets.filter(a => a.changePercent < 0).length;
+  const gainers = (assets as any[]).filter((a: any) => a.changePercent > 0).length;
+  const losers = (assets as any[]).filter((a: any) => a.changePercent < 0).length;
 
   let sentiment: string = "neutral";
   if (gainers > losers * 1.5) sentiment = "bullish";
   else if (losers > gainers * 1.5) sentiment = "bearish";
-  else if (assets.some(a => Math.abs(a.changePercent) > 3)) sentiment = "volatile";
+  else if ((assets as any[]).some((a: any) => Math.abs(a.changePercent) > 3)) sentiment = "volatile";
 
   const summary = {
     globalSentiment: sentiment,
@@ -64,7 +71,7 @@ router.get("/market-data/summary", async (_req, res): Promise<void> => {
 });
 
 router.get("/market-data/movers", async (_req, res): Promise<void> => {
-  const assets = await db.select().from(marketAssetsTable);
+  const assets: any[] = await getAssets();
 
   const sorted = [...assets].sort((a, b) => b.changePercent - a.changePercent);
   const gainers = sorted.slice(0, 5).map(a => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
