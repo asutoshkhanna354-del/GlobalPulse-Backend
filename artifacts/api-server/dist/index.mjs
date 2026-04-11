@@ -66719,8 +66719,17 @@ var BACKUP_URL = process.env.DATABASE_BACKUP_URL;
 if (!PRIMARY_URL && !BACKUP_URL) {
   throw new Error("No database URL configured. Set DATABASE_URL and optionally DATABASE_BACKUP_URL.");
 }
-var primaryPool = PRIMARY_URL ? new Pool3({ connectionString: PRIMARY_URL, connectionTimeoutMillis: 8e3, idleTimeoutMillis: 3e4, max: 5 }) : null;
-var backupPool = BACKUP_URL ? new Pool3({ connectionString: BACKUP_URL, connectionTimeoutMillis: 12e3, idleTimeoutMillis: 3e4, max: 5 }) : null;
+function sanitizeUrl(url2) {
+  try {
+    const u = new URL(url2);
+    u.searchParams.delete("channel_binding");
+    return u.toString();
+  } catch {
+    return url2;
+  }
+}
+var primaryPool = PRIMARY_URL ? new Pool3({ connectionString: sanitizeUrl(PRIMARY_URL), connectionTimeoutMillis: 3e4, idleTimeoutMillis: 6e4, max: 5, allowExitOnIdle: true }) : null;
+var backupPool = BACKUP_URL ? new Pool3({ connectionString: sanitizeUrl(BACKUP_URL), connectionTimeoutMillis: 3e4, idleTimeoutMillis: 6e4, max: 5, allowExitOnIdle: true }) : null;
 var activePool = primaryPool ?? backupPool;
 var primaryHealthy = !!primaryPool;
 var lastPrimaryRetryAt = 0;
