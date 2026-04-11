@@ -89,6 +89,12 @@ async function getOpenTrades() {
   }
 }
 
+const TRADE_MAX_AGE_MS: Record<string, number> = {
+  SCALP:    2  * 60 * 60 * 1000,   // 2 hours
+  INTRADAY: 8  * 60 * 60 * 1000,   // 8 hours
+  SWING:    72 * 60 * 60 * 1000,   // 3 days
+};
+
 async function markTradesClosed(trades: typeof botTradesTable.$inferSelect[]) {
   for (const trade of trades) {
     const price = await getLivePrice(trade.symbol);
@@ -101,23 +107,33 @@ async function markTradesClosed(trades: typeof botTradesTable.$inferSelect[]) {
     let status = "open";
     let closeReason: string | null = null;
 
+    const ageMs = Date.now() - new Date(trade.createdAt).getTime();
+    const maxAge = TRADE_MAX_AGE_MS[trade.tradeType ?? "SWING"] ?? TRADE_MAX_AGE_MS.SWING;
+    const expired = ageMs > maxAge;
+
     if (trade.direction === "BUY") {
-      if (price >= trade.targetPrice) { status = "closed_profit"; closeReason = "Target hit"; }
-      else if (price <= trade.stopLoss) { status = "closed_loss"; closeReason = "Stop loss hit"; }
+      if (price >= trade.targetPrice)       { status = "closed_profit"; closeReason = "Target hit"; }
+      else if (price <= trade.stopLoss)     { status = "closed_loss";   closeReason = "Stop loss hit"; }
+      else if (expired)                     { status = pnl >= 0 ? "closed_profit" : "closed_loss"; closeReason = `Time expired (${trade.tradeType})`; }
     } else {
-      if (price <= trade.targetPrice) { status = "closed_profit"; closeReason = "Target hit"; }
-      else if (price >= trade.stopLoss) { status = "closed_loss"; closeReason = "Stop loss hit"; }
+      if (price <= trade.targetPrice)       { status = "closed_profit"; closeReason = "Target hit"; }
+      else if (price >= trade.stopLoss)     { status = "closed_loss";   closeReason = "Stop loss hit"; }
+      else if (expired)                     { status = pnl >= 0 ? "closed_profit" : "closed_loss"; closeReason = `Time expired (${trade.tradeType})`; }
     }
 
     await db.update(botTradesTable)
       .set({
-        currentPrice: price,
+        currentPrice: parseFloat(price.toFixed(4)),
         pnl: parseFloat(pnl.toFixed(2)),
         pnlPercent: parseFloat(pnlPct.toFixed(2)),
         status,
         ...(status !== "open" ? { closedAt: new Date(), closeReason } : {}),
       })
       .where(eq(botTradesTable.id, trade.id));
+
+    if (status !== "open") {
+      logger.info(`[bot] Trade closed: ${trade.direction} ${trade.symbol} → ${status} | P&L: $${pnl.toFixed(2)} | Reason: ${closeReason}`);
+    }
   }
 }
 
