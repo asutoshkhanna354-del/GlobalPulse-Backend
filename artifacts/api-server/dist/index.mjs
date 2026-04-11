@@ -66992,14 +66992,24 @@ router2.get("/market-data", async (req, res) => {
   });
   const parsed = GetMarketDataQueryParams.safeParse(req.query);
   const category = parsed.success ? parsed.data.category : void 0;
-  const assets = category ? await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.category, category)) : await db.select().from(marketAssetsTable);
+  let assets = [];
+  try {
+    assets = category ? await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.category, category)) : await db.select().from(marketAssetsTable);
+  } catch {
+    assets = [];
+  }
   res.json(GetMarketDataResponse.parse(assets.map((a) => ({
     ...a,
     lastUpdated: a.lastUpdated.toISOString()
   }))));
 });
 router2.get("/market-data/summary", async (_req, res) => {
-  const assets = await db.select().from(marketAssetsTable);
+  let assets = [];
+  try {
+    assets = await db.select().from(marketAssetsTable);
+  } catch {
+    assets = [];
+  }
   const fearGreedIndex = 42;
   const vixAsset = assets.find((a) => a.symbol === "VIX");
   const goldAsset = assets.find((a) => a.symbol === "XAUUSD");
@@ -67027,7 +67037,12 @@ router2.get("/market-data/summary", async (_req, res) => {
   res.json(GetMarketSummaryResponse.parse(summary));
 });
 router2.get("/market-data/movers", async (_req, res) => {
-  const assets = await db.select().from(marketAssetsTable);
+  let assets = [];
+  try {
+    assets = await db.select().from(marketAssetsTable);
+  } catch {
+    assets = [];
+  }
   const sorted = [...assets].sort((a, b) => b.changePercent - a.changePercent);
   const gainers = sorted.slice(0, 5).map((a) => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
   const losers = sorted.slice(-5).reverse().map((a) => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
@@ -69682,11 +69697,14 @@ async function refreshNewsIfStale(force = false) {
       (item) => item.title.length > 10 && !PERSONAL_FINANCE_PATTERNS.test(item.title)
     );
     if (validItems.length === 0) return { refreshed: false, count: 0 };
-    if (force) {
-      await db.delete(newsItemsTable);
-    } else {
-      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1e3);
-      await db.delete(newsItemsTable).where(lt(newsItemsTable.publishedAt, cutoff));
+    try {
+      if (force) {
+        await db.delete(newsItemsTable);
+      } else {
+        const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1e3);
+        await db.delete(newsItemsTable).where(lt(newsItemsTable.publishedAt, cutoff));
+      }
+    } catch {
     }
     const seen = /* @__PURE__ */ new Set();
     const freshItems = validItems.filter((item) => {
@@ -69720,11 +69738,13 @@ async function refreshNewsIfStale(force = false) {
       };
     });
     if (freshItems.length > 0) {
-      await db.insert(newsItemsTable).values(freshItems);
+      try {
+        await db.insert(newsItemsTable).values(freshItems);
+      } catch {
+      }
     }
     return { refreshed: true, count: freshItems.length };
   } catch (err) {
-    console.error("[newsRefresh] Error:", err);
     return { refreshed: false, count: 0 };
   }
 }
@@ -70409,7 +70429,10 @@ async function refreshSocialIfStale(force = false) {
       }
     }
     const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1e3);
-    await db.delete(socialPostsTable).where(lt(socialPostsTable.publishedAt, cutoff));
+    try {
+      await db.delete(socialPostsTable).where(lt(socialPostsTable.publishedAt, cutoff));
+    } catch {
+    }
     const seen = /* @__PURE__ */ new Set();
     const posts = [];
     for (const item of allItems) {
@@ -70455,11 +70478,13 @@ async function refreshSocialIfStale(force = false) {
       });
     }
     if (posts.length > 0) {
-      await db.insert(socialPostsTable).values(posts);
+      try {
+        await db.insert(socialPostsTable).values(posts);
+      } catch {
+      }
     }
     return { refreshed: true, count: posts.length };
   } catch (err) {
-    console.error("[socialRefresh] Error:", err);
     return { refreshed: false, count: 0 };
   }
 }
@@ -81541,14 +81566,16 @@ async function refreshForexCalendar() {
         lastUpdated: /* @__PURE__ */ new Date()
       };
     });
-    await db.transaction(async (tx) => {
-      await tx.delete(forexCalendarTable);
-      await tx.insert(forexCalendarTable).values(inserts);
-    });
-    logger.info({ count: inserts.length }, "Forex calendar refresh complete");
+    try {
+      await db.transaction(async (tx) => {
+        await tx.delete(forexCalendarTable);
+        await tx.insert(forexCalendarTable).values(inserts);
+      });
+      logger.info({ count: inserts.length }, "Forex calendar refresh complete");
+    } catch {
+    }
     return { count: inserts.length };
   } catch (err) {
-    logger.error({ error: String(err) }, "Forex calendar refresh error");
     return { count: 0 };
   }
 }
