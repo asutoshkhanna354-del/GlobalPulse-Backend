@@ -126,6 +126,28 @@ async function fetchYahooBatch(
   }
 }
 
+// ── In-memory cache — routes read this directly, no DB round-trip needed ──────
+let _marketCache: any[] = [];
+let _cacheLoaded = false;
+
+export function getMarketCache(): any[] { return _marketCache; }
+export function isMarketCacheLoaded(): boolean { return _cacheLoaded; }
+
+async function loadCacheFromDb(): Promise<void> {
+  if (_cacheLoaded) return;
+  try {
+    const timer = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 15_000));
+    const rows = await Promise.race([db.select().from(marketAssetsTable), timer]) as any[];
+    if (rows.length > 0) {
+      _marketCache = rows;
+      _cacheLoaded = true;
+      console.log(`[marketRefresh] In-memory cache loaded: ${rows.length} assets`);
+    }
+  } catch {
+    console.log("[marketRefresh] DB cache load skipped (DB unavailable) — will retry on next refresh");
+  }
+}
+
 let lastRefresh = 0;
 const REFRESH_INTERVAL_MS = 60 * 1000;
 
@@ -134,6 +156,9 @@ export async function refreshMarketDataIfStale(force = false): Promise<{ refresh
     return { refreshed: false };
   }
   lastRefresh = Date.now();
+
+  // Ensure cache is seeded from DB on first run
+  if (!_cacheLoaded) await loadCacheFromDb();
 
   try {
     // Build TradingView tickers list (batched into chunks of 40)
@@ -163,35 +188,37 @@ export async function refreshMarketDataIfStale(force = false): Promise<{ refresh
 
     const now = new Date();
 
+    // Update in-memory cache + DB (DB is fire-and-forget)
+    const applyUpdate = (dbSym: string, price: number, change: number, prevClose: number) => {
+      const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
+      // Update cache
+      const idx = _marketCache.findIndex((a: any) => a.symbol === dbSym);
+      if (idx >= 0) {
+        _marketCache[idx] = { ..._marketCache[idx], price, change, changePercent, lastUpdated: now };
+      }
+      // Fire-and-forget DB update
+      db.update(marketAssetsTable)
+        .set({ price, change, changePercent, lastUpdated: now })
+        .where(eq(marketAssetsTable.symbol, dbSym))
+        .catch(() => {});
+    };
+
     // Update all TV symbols
-    const tvUpdates = tvSymbols.map(async (dbSym) => {
-      try {
-        const tvSym = TV_SYMBOL_MAP[dbSym];
-        const q = tvQuotes[tvSym];
-        if (!q || !q.price) return;
-        const change = q.changeAbs;
-        const changePercent = q.prevClose > 0 ? (change / q.prevClose) * 100 : 0;
-        await db.update(marketAssetsTable)
-          .set({ price: q.price, change, changePercent, lastUpdated: now })
-          .where(eq(marketAssetsTable.symbol, dbSym));
-      } catch {}
-    });
+    for (const dbSym of tvSymbols) {
+      const tvSym = TV_SYMBOL_MAP[dbSym];
+      const q = tvQuotes[tvSym];
+      if (!q || !q.price) continue;
+      applyUpdate(dbSym, q.price, q.changeAbs, q.prevClose);
+    }
 
     // Update Indian / Yahoo symbols
-    const yahooUpdates = Object.keys(YAHOO_SYMBOL_MAP).map(async (dbSym) => {
-      try {
-        const yahoSym = YAHOO_SYMBOL_MAP[dbSym];
-        const q = yahooQuotes[yahoSym];
-        if (!q || !q.price) return;
-        const change = q.price - q.prevClose;
-        const changePercent = q.prevClose > 0 ? (change / q.prevClose) * 100 : 0;
-        await db.update(marketAssetsTable)
-          .set({ price: q.price, change, changePercent, lastUpdated: now })
-          .where(eq(marketAssetsTable.symbol, dbSym));
-      } catch {}
-    });
+    for (const dbSym of Object.keys(YAHOO_SYMBOL_MAP)) {
+      const yahoSym = YAHOO_SYMBOL_MAP[dbSym];
+      const q = yahooQuotes[yahoSym];
+      if (!q || !q.price) continue;
+      applyUpdate(dbSym, q.price, q.price - q.prevClose, q.prevClose);
+    }
 
-    await Promise.allSettled([...tvUpdates, ...yahooUpdates]);
     return { refreshed: true };
   } catch (err) {
     console.error("[marketRefresh] Error:", err);
