@@ -66928,23 +66928,67 @@ async function fetchYahooBatch(symbols) {
     return {};
   }
 }
-var _marketCache = [];
-var _cacheLoaded = false;
+var STATIC_SEED = [
+  // Indices
+  { id: 1, symbol: "SPX", name: "S&P 500", category: "indices", price: 5123.41, change: 28.4, changePercent: 0.56, volume: "3.2B", currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 2, symbol: "NDX", name: "NASDAQ 100", category: "indices", price: 18043.2, change: 124.6, changePercent: 0.7, volume: "1.8B", currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 3, symbol: "DJI", name: "Dow Jones", category: "indices", price: 38742.1, change: -45.2, changePercent: -0.12, volume: "420M", currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 4, symbol: "DAX", name: "DAX 40", category: "indices", price: 18281.4, change: -112.3, changePercent: -0.61, volume: "89M", currency: "EUR", country: "Germany", flag: "\u{1F1E9}\u{1F1EA}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 5, symbol: "FTSE", name: "FTSE 100", category: "indices", price: 8023.7, change: 34.2, changePercent: 0.43, volume: "760M", currency: "GBP", country: "United Kingdom", flag: "\u{1F1EC}\u{1F1E7}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 6, symbol: "N225", name: "Nikkei 225", category: "indices", price: 38947, change: 673.2, changePercent: 1.76, volume: "2.1B", currency: "JPY", country: "Japan", flag: "\u{1F1EF}\u{1F1F5}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 7, symbol: "HSI", name: "Hang Seng", category: "indices", price: 17284.5, change: -234.1, changePercent: -1.34, volume: "1.4B", currency: "HKD", country: "China", flag: "\u{1F1ED}\u{1F1F0}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 8, symbol: "SSEC", name: "Shanghai Composite", category: "indices", price: 3041.2, change: -18.7, changePercent: -0.61, volume: "980M", currency: "CNY", country: "China", flag: "\u{1F1E8}\u{1F1F3}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 9, symbol: "CAC40", name: "CAC 40", category: "indices", price: 7963.4, change: 45.8, changePercent: 0.58, volume: "110M", currency: "EUR", country: "France", flag: "\u{1F1EB}\u{1F1F7}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 10, symbol: "VIX", name: "CBOE Volatility Index", category: "indices", price: 18.42, change: -0.87, changePercent: -4.51, volume: null, currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  // Currencies
+  { id: 11, symbol: "EURUSD", name: "EUR/USD", category: "currencies", price: 1.0847, change: 12e-4, changePercent: 0.11, volume: "82B", currency: "USD", country: "Eurozone", flag: "\u{1F1EA}\u{1F1FA}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 12, symbol: "GBPUSD", name: "GBP/USD", category: "currencies", price: 1.2612, change: -34e-4, changePercent: -0.27, volume: "45B", currency: "USD", country: "United Kingdom", flag: "\u{1F1EC}\u{1F1E7}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 13, symbol: "USDJPY", name: "USD/JPY", category: "currencies", price: 152.87, change: 0.43, changePercent: 0.28, volume: "68B", currency: "JPY", country: "Japan", flag: "\u{1F1EF}\u{1F1F5}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 14, symbol: "DXY", name: "US Dollar Index", category: "currencies", price: 104.23, change: -0.18, changePercent: -0.17, volume: null, currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 15, symbol: "USDCNY", name: "USD/CNY", category: "currencies", price: 7.2381, change: 0.0156, changePercent: 0.22, volume: "32B", currency: "CNY", country: "China", flag: "\u{1F1E8}\u{1F1F3}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 16, symbol: "USDRUB", name: "USD/RUB", category: "currencies", price: 91.43, change: 1.23, changePercent: 1.36, volume: "8B", currency: "RUB", country: "Russia", flag: "\u{1F1F7}\u{1F1FA}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 17, symbol: "USDTRY", name: "USD/TRY", category: "currencies", price: 32.14, change: 0.22, changePercent: 0.69, volume: "12B", currency: "TRY", country: "Turkey", flag: "\u{1F1F9}\u{1F1F7}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  // Commodities
+  { id: 18, symbol: "XAUUSD", name: "Gold", category: "commodities", price: 2341.5, change: 12.3, changePercent: 0.53, volume: "180B", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 19, symbol: "XAGUSD", name: "Silver", category: "commodities", price: 27.42, change: -0.31, changePercent: -1.12, volume: "12B", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 20, symbol: "USOIL", name: "WTI Crude Oil", category: "commodities", price: 82.34, change: -1.23, changePercent: -1.47, volume: "980M", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 21, symbol: "BRENT", name: "Brent Crude Oil", category: "commodities", price: 87.12, change: -1.45, changePercent: -1.64, volume: "1.2B", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 22, symbol: "NATGAS", name: "Natural Gas", category: "commodities", price: 1.834, change: 0.043, changePercent: 2.4, volume: "420M", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 23, symbol: "COPPER", name: "Copper", category: "commodities", price: 4.432, change: 0.087, changePercent: 2, volume: "32B", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 24, symbol: "WHEAT", name: "Wheat", category: "commodities", price: 583.25, change: -8.75, changePercent: -1.48, volume: "320M", currency: "USD", country: null, flag: null, marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  // Crypto
+  { id: 25, symbol: "BTCUSD", name: "Bitcoin", category: "crypto", price: 67234, change: 1423, changePercent: 2.16, volume: "28B", currency: "USD", country: null, flag: null, marketCap: "1.32T", lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 26, symbol: "ETHUSD", name: "Ethereum", category: "crypto", price: 3512.4, change: -78.3, changePercent: -2.18, volume: "12B", currency: "USD", country: null, flag: null, marketCap: "421B", lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 27, symbol: "SOLUSD", name: "Solana", category: "crypto", price: 178.23, change: 8.42, changePercent: 4.96, volume: "3.2B", currency: "USD", country: null, flag: null, marketCap: "79B", lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 28, symbol: "BNBUSD", name: "BNB", category: "crypto", price: 582.1, change: -12.4, changePercent: -2.09, volume: "1.8B", currency: "USD", country: null, flag: null, marketCap: "86B", lastUpdated: /* @__PURE__ */ new Date() },
+  // Bonds
+  { id: 29, symbol: "US10Y", name: "US 10-Year Treasury", category: "bonds", price: 4.487, change: 0.043, changePercent: 0.97, volume: null, currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 30, symbol: "US2Y", name: "US 2-Year Treasury", category: "bonds", price: 4.823, change: 0.012, changePercent: 0.25, volume: null, currency: "USD", country: "United States", flag: "\u{1F1FA}\u{1F1F8}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 31, symbol: "DE10Y", name: "German 10-Year Bund", category: "bonds", price: 2.413, change: -0.021, changePercent: -0.86, volume: null, currency: "EUR", country: "Germany", flag: "\u{1F1E9}\u{1F1EA}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 32, symbol: "JP10Y", name: "Japan 10-Year JGB", category: "bonds", price: 0.743, change: 8e-3, changePercent: 1.09, volume: null, currency: "JPY", country: "Japan", flag: "\u{1F1EF}\u{1F1F5}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  // Indian (Yahoo only — not in original DB seed but needed for summary)
+  { id: 33, symbol: "NIFTY50", name: "Nifty 50", category: "indices", price: 22500, change: 120, changePercent: 0.54, volume: "3.1B", currency: "INR", country: "India", flag: "\u{1F1EE}\u{1F1F3}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 34, symbol: "SENSEX", name: "BSE Sensex", category: "indices", price: 74100, change: 350, changePercent: 0.47, volume: "2.3B", currency: "INR", country: "India", flag: "\u{1F1EE}\u{1F1F3}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() },
+  { id: 35, symbol: "USDINR", name: "USD/INR", category: "currencies", price: 83.45, change: 0.12, changePercent: 0.14, volume: "18B", currency: "INR", country: "India", flag: "\u{1F1EE}\u{1F1F3}", marketCap: null, lastUpdated: /* @__PURE__ */ new Date() }
+];
+var _marketCache = STATIC_SEED.map((a) => ({ ...a }));
 function getMarketCache() {
   return _marketCache;
 }
 async function loadCacheFromDb() {
-  if (_cacheLoaded) return;
   try {
     const timer = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 15e3));
     const rows = await Promise.race([db.select().from(marketAssetsTable), timer]);
     if (rows.length > 0) {
-      _marketCache = rows;
-      _cacheLoaded = true;
-      console.log(`[marketRefresh] In-memory cache loaded: ${rows.length} assets`);
+      for (const row of rows) {
+        const idx = _marketCache.findIndex((a) => a.symbol === row.symbol);
+        if (idx >= 0) _marketCache[idx] = { ..._marketCache[idx], ...row };
+        else _marketCache.push(row);
+      }
+      console.log(`[marketRefresh] In-memory cache merged with DB: ${rows.length} assets`);
     }
   } catch {
-    console.log("[marketRefresh] DB cache load skipped (DB unavailable) \u2014 will retry on next refresh");
+    console.log("[marketRefresh] DB cache load skipped (DB slow) \u2014 using static seed prices until first TV/Yahoo refresh");
   }
 }
 var lastRefresh = 0;
@@ -66954,7 +66998,6 @@ async function refreshMarketDataIfStale(force = false) {
     return { refreshed: false };
   }
   lastRefresh = Date.now();
-  if (!_cacheLoaded) await loadCacheFromDb();
   try {
     const tvSymbols = Object.keys(TV_SYMBOL_MAP);
     const tvTickers = tvSymbols.map((s) => TV_SYMBOL_MAP[s]);
@@ -67002,6 +67045,8 @@ async function refreshMarketDataIfStale(force = false) {
     return { refreshed: false };
   }
 }
+loadCacheFromDb().catch(() => {
+});
 
 // src/routes/market-data.ts
 var router2 = (0, import_express2.Router)();
