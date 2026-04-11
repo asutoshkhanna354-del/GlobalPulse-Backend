@@ -67081,10 +67081,12 @@ router2.get("/market-data/summary", async (_req, res) => {
   const dxyAsset = assets.find((a) => a.symbol === "DXY");
   const gainers = assets.filter((a) => a.changePercent > 0).length;
   const losers = assets.filter((a) => a.changePercent < 0).length;
+  const avgGain = gainers > 0 ? assets.filter((a) => a.changePercent > 0).reduce((s, a) => s + a.changePercent, 0) / gainers : 0;
+  const avgLoss = losers > 0 ? assets.filter((a) => a.changePercent < 0).reduce((s, a) => s + Math.abs(a.changePercent), 0) / losers : 0;
   let sentiment = "neutral";
-  if (gainers > losers * 1.5) sentiment = "bullish";
-  else if (losers > gainers * 1.5) sentiment = "bearish";
-  else if (assets.some((a) => Math.abs(a.changePercent) > 3)) sentiment = "volatile";
+  if (assets.some((a) => Math.abs(a.changePercent) > 3)) sentiment = "volatile";
+  else if (gainers > losers * 1.2 || gainers > losers && avgGain > avgLoss * 1.3) sentiment = "bullish";
+  else if (losers > gainers * 1.2 || losers > gainers && avgLoss > avgGain * 1.3) sentiment = "bearish";
   const summary = {
     globalSentiment: sentiment,
     riskLevel: fearGreedIndex < 25 ? "extreme" : fearGreedIndex < 40 ? "high" : fearGreedIndex < 55 ? "moderate" : "low",
