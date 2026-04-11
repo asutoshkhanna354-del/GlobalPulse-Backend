@@ -66928,6 +66928,25 @@ async function fetchYahooBatch(symbols) {
     return {};
   }
 }
+var _marketCache = [];
+var _cacheLoaded = false;
+function getMarketCache() {
+  return _marketCache;
+}
+async function loadCacheFromDb() {
+  if (_cacheLoaded) return;
+  try {
+    const timer = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 15e3));
+    const rows = await Promise.race([db.select().from(marketAssetsTable), timer]);
+    if (rows.length > 0) {
+      _marketCache = rows;
+      _cacheLoaded = true;
+      console.log(`[marketRefresh] In-memory cache loaded: ${rows.length} assets`);
+    }
+  } catch {
+    console.log("[marketRefresh] DB cache load skipped (DB unavailable) \u2014 will retry on next refresh");
+  }
+}
 var lastRefresh = 0;
 var REFRESH_INTERVAL_MS = 60 * 1e3;
 async function refreshMarketDataIfStale(force = false) {
@@ -66935,6 +66954,7 @@ async function refreshMarketDataIfStale(force = false) {
     return { refreshed: false };
   }
   lastRefresh = Date.now();
+  if (!_cacheLoaded) await loadCacheFromDb();
   try {
     const tvSymbols = Object.keys(TV_SYMBOL_MAP);
     const tvTickers = tvSymbols.map((s) => TV_SYMBOL_MAP[s]);
@@ -66955,29 +66975,27 @@ async function refreshMarketDataIfStale(force = false) {
     }
     const yahooQuotes = yahooData.status === "fulfilled" ? yahooData.value : {};
     const now = /* @__PURE__ */ new Date();
-    const tvUpdates = tvSymbols.map(async (dbSym) => {
-      try {
-        const tvSym = TV_SYMBOL_MAP[dbSym];
-        const q = tvQuotes[tvSym];
-        if (!q || !q.price) return;
-        const change = q.changeAbs;
-        const changePercent = q.prevClose > 0 ? change / q.prevClose * 100 : 0;
-        await db.update(marketAssetsTable).set({ price: q.price, change, changePercent, lastUpdated: now }).where(eq(marketAssetsTable.symbol, dbSym));
-      } catch {
+    const applyUpdate = (dbSym, price, change, prevClose) => {
+      const changePercent = prevClose > 0 ? change / prevClose * 100 : 0;
+      const idx = _marketCache.findIndex((a) => a.symbol === dbSym);
+      if (idx >= 0) {
+        _marketCache[idx] = { ..._marketCache[idx], price, change, changePercent, lastUpdated: now };
       }
-    });
-    const yahooUpdates = Object.keys(YAHOO_SYMBOL_MAP).map(async (dbSym) => {
-      try {
-        const yahoSym = YAHOO_SYMBOL_MAP[dbSym];
-        const q = yahooQuotes[yahoSym];
-        if (!q || !q.price) return;
-        const change = q.price - q.prevClose;
-        const changePercent = q.prevClose > 0 ? change / q.prevClose * 100 : 0;
-        await db.update(marketAssetsTable).set({ price: q.price, change, changePercent, lastUpdated: now }).where(eq(marketAssetsTable.symbol, dbSym));
-      } catch {
-      }
-    });
-    await Promise.allSettled([...tvUpdates, ...yahooUpdates]);
+      db.update(marketAssetsTable).set({ price, change, changePercent, lastUpdated: now }).where(eq(marketAssetsTable.symbol, dbSym)).catch(() => {
+      });
+    };
+    for (const dbSym of tvSymbols) {
+      const tvSym = TV_SYMBOL_MAP[dbSym];
+      const q = tvQuotes[tvSym];
+      if (!q || !q.price) continue;
+      applyUpdate(dbSym, q.price, q.changeAbs, q.prevClose);
+    }
+    for (const dbSym of Object.keys(YAHOO_SYMBOL_MAP)) {
+      const yahoSym = YAHOO_SYMBOL_MAP[dbSym];
+      const q = yahooQuotes[yahoSym];
+      if (!q || !q.price) continue;
+      applyUpdate(dbSym, q.price, q.price - q.prevClose, q.prevClose);
+    }
     return { refreshed: true };
   } catch (err) {
     console.error("[marketRefresh] Error:", err);
@@ -66987,12 +67005,14 @@ async function refreshMarketDataIfStale(force = false) {
 
 // src/routes/market-data.ts
 var router2 = (0, import_express2.Router)();
-async function dbWithTimeout(promise2, fallback, ms = 2500) {
-  const timer = new Promise((resolve) => setTimeout(() => resolve(fallback), ms));
+async function getAssets() {
+  const cached2 = getMarketCache();
+  if (cached2.length > 0) return cached2;
+  const timer = new Promise((resolve) => setTimeout(() => resolve([]), 2500));
   try {
-    return await Promise.race([promise2, timer]);
+    return await Promise.race([db.select().from(marketAssetsTable), timer]);
   } catch {
-    return fallback;
+    return [];
   }
 }
 router2.get("/market-data", async (req, res) => {
@@ -67000,17 +67020,15 @@ router2.get("/market-data", async (req, res) => {
   });
   const parsed = GetMarketDataQueryParams.safeParse(req.query);
   const category = parsed.success ? parsed.data.category : void 0;
-  const assets = await dbWithTimeout(
-    category ? db.select().from(marketAssetsTable).where(eq(marketAssetsTable.category, category)) : db.select().from(marketAssetsTable),
-    []
-  );
+  const allAssets = await getAssets();
+  const assets = category ? allAssets.filter((a) => a.category === category) : allAssets;
   res.json(GetMarketDataResponse.parse(assets.map((a) => ({
     ...a,
     lastUpdated: a.lastUpdated.toISOString()
   }))));
 });
 router2.get("/market-data/summary", async (_req, res) => {
-  const assets = await dbWithTimeout(db.select().from(marketAssetsTable), []);
+  const assets = await getAssets();
   const fearGreedIndex = 42;
   const vixAsset = assets.find((a) => a.symbol === "VIX");
   const goldAsset = assets.find((a) => a.symbol === "XAUUSD");
@@ -67038,7 +67056,7 @@ router2.get("/market-data/summary", async (_req, res) => {
   res.json(GetMarketSummaryResponse.parse(summary));
 });
 router2.get("/market-data/movers", async (_req, res) => {
-  const assets = await dbWithTimeout(db.select().from(marketAssetsTable), []);
+  const assets = await getAssets();
   const sorted = [...assets].sort((a, b) => b.changePercent - a.changePercent);
   const gainers = sorted.slice(0, 5).map((a) => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
   const losers = sorted.slice(-5).reverse().map((a) => ({ ...a, lastUpdated: a.lastUpdated.toISOString() }));
