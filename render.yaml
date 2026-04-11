@@ -1,41 +1,28 @@
 services:
   - type: web
-    name: globalpulse-backend
-    runtime: node
-    region: singapore
-    plan: free
-    rootDir: .
-    buildCommand: npm install -g pnpm@10 && pnpm install && pnpm --filter @workspace/api-server run build
-    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    name: globalpulse-api
+    env: node
+    buildCommand: npm install
+    startCommand: node dist/index.mjs
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: PORT
-        value: 8080
-      - key: DATABASE_URL
+        value: 3001
+      - key: SELF_API_URL
+        fromService:
+          type: web
+          name: globalpulse-api
+          property: host
+      - key: GROQ_API_KEY_BTC
         sync: false
-      - key: DATABASE_BACKUP_URL
+      - key: GROQ_API_KEY_BTC2
+        sync: false
+      - key: GROQ_API_KEY_NIFTY
+        sync: false
+      - key: GROQ_API_KEY_USD
         sync: false
       - key: FINNHUB_API_KEY
         sync: false
       - key: TWELVE_DATA_API_KEY
         sync: false
-      - key: OPENAI_API_KEY
+      - key: DATABASE_BACKUP_URL
         sync: false
-      - key: GROQ_API_KEY_NIFTY
-        sync: false
-      - key: GROQ_API_KEY_BTC
-        sync: false
-      - key: GROQ_API_KEY_BTC2
-        sync: false
-      - key: GROQ_API_KEY_USD
-        sync: false
-      - key: VAPID_PUBLIC_KEY
-        sync: false
-      - key: VAPID_PRIVATE_KEY
-        sync: false
-      - key: VAPID_CONTACT_EMAIL
-        sync: false
-      - key: SELF_API_URL
-        value: https://globalpulse-backend.onrender.com/api
-    healthCheckPath: /api/health
