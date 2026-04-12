@@ -31,6 +31,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/", (_req, res) => res.json({ status: "ok", service: "GlobalPulse API" }));
 app.use("/api", router);
 
 seedDatabase().catch((err) => logger.error({ err }, "Failed to seed database"));

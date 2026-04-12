@@ -20485,27 +20485,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router20;
+    module.exports = Router21;
     module.exports.Route = Route;
-    function Router20(options) {
-      if (!(this instanceof Router20)) {
-        return new Router20(options);
+    function Router21(options) {
+      if (!(this instanceof Router21)) {
+        return new Router21(options);
       }
       const opts = options || {};
-      function router20(req, res, next) {
-        router20.handle(req, res, next);
+      function router21(req, res, next) {
+        router21.handle(req, res, next);
       }
-      Object.setPrototypeOf(router20, this);
-      router20.caseSensitive = opts.caseSensitive;
-      router20.mergeParams = opts.mergeParams;
-      router20.params = {};
-      router20.strict = opts.strict;
-      router20.stack = [];
-      return router20;
+      Object.setPrototypeOf(router21, this);
+      router21.caseSensitive = opts.caseSensitive;
+      router21.mergeParams = opts.mergeParams;
+      router21.params = {};
+      router21.strict = opts.strict;
+      router21.stack = [];
+      return router21;
     }
-    Router20.prototype = function() {
+    Router21.prototype = function() {
     };
-    Router20.prototype.param = function param(name, fn) {
+    Router21.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -20525,7 +20525,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router20.prototype.handle = function handle(req, res, callback) {
+    Router21.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20652,7 +20652,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router20.prototype.use = function use(handler) {
+    Router21.prototype.use = function use(handler) {
       let offset = 0;
       let path2 = "/";
       if (typeof handler !== "function") {
@@ -20685,7 +20685,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router20.prototype.route = function route(path2) {
+    Router21.prototype.route = function route(path2) {
       const route2 = new Route(path2);
       const layer = new Layer(path2, {
         sensitive: this.caseSensitive,
@@ -20700,7 +20700,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router20.prototype[method] = function(path2) {
+      Router21.prototype[method] = function(path2) {
         const route = this.route(path2);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20883,13 +20883,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router20 = require_router();
+    var Router21 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports2 = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router20 = null;
+      var router21 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20898,13 +20898,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router20 === null) {
-            router20 = new Router20({
+          if (router21 === null) {
+            router21 = new Router21({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router20;
+          return router21;
         }
       });
     };
@@ -20975,15 +20975,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router20 = this.router;
+      var router21 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router20.use(path2, fn2);
+          return router21.use(path2, fn2);
         }
         debug(".use app under %s", path2);
         fn2.mountpath = path2;
         fn2.parent = this;
-        router20.use(path2, function mounted_app(req, res, next) {
+        router21.use(path2, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23510,7 +23510,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router20 = require_router();
+    var Router21 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module.exports = createApplication;
@@ -23532,8 +23532,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router20.Route;
-    exports2.Router = Router20;
+    exports2.Route = Router21.Route;
+    exports2.Router = Router21;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -43716,12 +43716,12 @@ var require_websocket_server = __commonJS({
 import http from "http";
 
 // src/app.ts
-var import_express20 = __toESM(require_express2(), 1);
+var import_express21 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express19 = __toESM(require_express2(), 1);
+var import_express20 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -55022,6 +55022,7 @@ __export(schema_exports, {
   bitcoinAnalysisTable: () => bitcoinAnalysisTable,
   botSettingsTable: () => botSettingsTable,
   botTradesTable: () => botTradesTable,
+  brokerConnectionsTable: () => brokerConnectionsTable,
   economicEventsTable: () => economicEventsTable,
   economicIndicatorsTable: () => economicIndicatorsTable,
   forexCalendarTable: () => forexCalendarTable,
@@ -55029,6 +55030,7 @@ __export(schema_exports, {
   insertBitcoinAnalysisSchema: () => insertBitcoinAnalysisSchema,
   insertBotSettingsSchema: () => insertBotSettingsSchema,
   insertBotTradeSchema: () => insertBotTradeSchema,
+  insertBrokerConnectionSchema: () => insertBrokerConnectionSchema,
   insertEconomicEventSchema: () => insertEconomicEventSchema,
   insertEconomicIndicatorSchema: () => insertEconomicIndicatorSchema,
   insertForexCalendarSchema: () => insertForexCalendarSchema,
@@ -66711,6 +66713,19 @@ var pushSubscriptionsTable = pgTable("push_subscriptions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 var insertPushSubscriptionSchema = createInsertSchema(pushSubscriptionsTable).omit({ id: true, createdAt: true });
+var brokerConnectionsTable = pgTable("broker_connections", {
+  id: serial("id").primaryKey(),
+  broker: text("broker").notNull(),
+  label: text("label").notNull(),
+  apiKey: text("api_key").notNull(),
+  apiSecret: text("api_secret"),
+  accessToken: text("access_token"),
+  accountId: text("account_id"),
+  environment: text("environment").notNull().default("paper"),
+  isActive: boolean("is_active").notNull().default(true),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow()
+});
+var insertBrokerConnectionSchema = createInsertSchema(brokerConnectionsTable).omit({ id: true, connectedAt: true });
 
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
@@ -66719,17 +66734,8 @@ var BACKUP_URL = process.env.DATABASE_BACKUP_URL;
 if (!PRIMARY_URL && !BACKUP_URL) {
   throw new Error("No database URL configured. Set DATABASE_URL and optionally DATABASE_BACKUP_URL.");
 }
-function sanitizeUrl(url2) {
-  try {
-    const u = new URL(url2);
-    u.searchParams.delete("channel_binding");
-    return u.toString();
-  } catch {
-    return url2;
-  }
-}
-var primaryPool = PRIMARY_URL ? new Pool3({ connectionString: sanitizeUrl(PRIMARY_URL), connectionTimeoutMillis: 3e4, idleTimeoutMillis: 6e4, max: 5, allowExitOnIdle: true }) : null;
-var backupPool = BACKUP_URL ? new Pool3({ connectionString: sanitizeUrl(BACKUP_URL), connectionTimeoutMillis: 3e4, idleTimeoutMillis: 6e4, max: 5, allowExitOnIdle: true }) : null;
+var primaryPool = PRIMARY_URL ? new Pool3({ connectionString: PRIMARY_URL, connectionTimeoutMillis: 8e3, idleTimeoutMillis: 3e4, max: 5 }) : null;
+var backupPool = BACKUP_URL ? new Pool3({ connectionString: BACKUP_URL, connectionTimeoutMillis: 12e3, idleTimeoutMillis: 3e4, max: 5 }) : null;
 var activePool = primaryPool ?? backupPool;
 var primaryHealthy = !!primaryPool;
 var lastPrimaryRetryAt = 0;
@@ -69758,14 +69764,11 @@ async function refreshNewsIfStale(force = false) {
       (item) => item.title.length > 10 && !PERSONAL_FINANCE_PATTERNS.test(item.title)
     );
     if (validItems.length === 0) return { refreshed: false, count: 0 };
-    try {
-      if (force) {
-        await db.delete(newsItemsTable);
-      } else {
-        const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1e3);
-        await db.delete(newsItemsTable).where(lt(newsItemsTable.publishedAt, cutoff));
-      }
-    } catch {
+    if (force) {
+      await db.delete(newsItemsTable);
+    } else {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1e3);
+      await db.delete(newsItemsTable).where(lt(newsItemsTable.publishedAt, cutoff));
     }
     const seen = /* @__PURE__ */ new Set();
     const freshItems = validItems.filter((item) => {
@@ -69799,13 +69802,11 @@ async function refreshNewsIfStale(force = false) {
       };
     });
     if (freshItems.length > 0) {
-      try {
-        await db.insert(newsItemsTable).values(freshItems);
-      } catch {
-      }
+      await db.insert(newsItemsTable).values(freshItems);
     }
     return { refreshed: true, count: freshItems.length };
   } catch (err) {
+    console.error("[newsRefresh] Error:", err);
     return { refreshed: false, count: 0 };
   }
 }
@@ -70490,10 +70491,7 @@ async function refreshSocialIfStale(force = false) {
       }
     }
     const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1e3);
-    try {
-      await db.delete(socialPostsTable).where(lt(socialPostsTable.publishedAt, cutoff));
-    } catch {
-    }
+    await db.delete(socialPostsTable).where(lt(socialPostsTable.publishedAt, cutoff));
     const seen = /* @__PURE__ */ new Set();
     const posts = [];
     for (const item of allItems) {
@@ -70539,13 +70537,11 @@ async function refreshSocialIfStale(force = false) {
       });
     }
     if (posts.length > 0) {
-      try {
-        await db.insert(socialPostsTable).values(posts);
-      } catch {
-      }
+      await db.insert(socialPostsTable).values(posts);
     }
     return { refreshed: true, count: posts.length };
   } catch (err) {
+    console.error("[socialRefresh] Error:", err);
     return { refreshed: false, count: 0 };
   }
 }
@@ -79155,7 +79151,7 @@ router18.get("/bot/settings", async (_req, res) => {
     if (!rows[0]) return res.json({
       isRunning: true,
       riskPercent: 1,
-      maxOpenTrades: 5,
+      maxOpenTrades: 1e4,
       enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
       enableScalp: true,
       enableIntraday: true,
@@ -79205,29 +79201,336 @@ router18.delete("/bot/trades", async (_req, res) => {
     res.status(500).json({ error: "Failed to clear history" });
   }
 });
+router18.patch("/bot/trades/:id/close", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid trade id" });
+    const [trade] = await db.select().from(botTradesTable).where(eq(botTradesTable.id, id));
+    if (!trade) return res.status(404).json({ error: "Trade not found" });
+    if (trade.status !== "open") return res.status(400).json({ error: "Trade is already closed" });
+    const currentPrice = typeof req.body.currentPrice === "number" ? req.body.currentPrice : trade.currentPrice ?? trade.entryPrice;
+    const pnl = trade.direction === "BUY" ? (currentPrice - trade.entryPrice) * (trade.lotSize ?? 1) : (trade.entryPrice - currentPrice) * (trade.lotSize ?? 1);
+    const pnlPercent = (currentPrice - trade.entryPrice) / trade.entryPrice * 100 * (trade.direction === "BUY" ? 1 : -1);
+    const status = pnl >= 0 ? "closed_profit" : "closed_loss";
+    const [updated] = await db.update(botTradesTable).set({
+      status,
+      pnl: parseFloat(pnl.toFixed(2)),
+      pnlPercent: parseFloat(pnlPercent.toFixed(2)),
+      currentPrice: parseFloat(currentPrice.toFixed(4)),
+      closedAt: /* @__PURE__ */ new Date(),
+      closeReason: req.body.reason || "Manual close from chart"
+    }).where(eq(botTradesTable.id, id)).returning();
+    res.json({ success: true, trade: updated });
+  } catch (err) {
+    logger.error(`[bot/trades CLOSE] ${err}`);
+    res.status(500).json({ error: "Failed to close trade" });
+  }
+});
 var bot_default = router18;
 
-// src/routes/index.ts
+// src/routes/broker.ts
+var import_express19 = __toESM(require_express2(), 1);
+
+// src/lib/brokerEngine.ts
+async function placeZerodhaOrder(conn, params) {
+  try {
+    const headers = {
+      "X-Kite-Version": "3",
+      "Authorization": `token ${conn.apiKey}:${conn.accessToken}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    };
+    const exchange = params.symbol.endsWith(".NS") || params.symbol.endsWith(".BO") ? "NSE" : "NSE";
+    const tradingsymbol = params.symbol.replace(/\.(NS|BO)$/, "").toUpperCase();
+    const body = new URLSearchParams({
+      exchange,
+      tradingsymbol,
+      transaction_type: params.direction,
+      quantity: String(params.quantity),
+      product: "MIS",
+      order_type: params.orderType ?? "MARKET",
+      validity: "DAY"
+    });
+    const res = await fetch("https://api.kite.trade/orders/regular", {
+      method: "POST",
+      headers,
+      body: body.toString(),
+      signal: AbortSignal.timeout(1e4)
+    });
+    const data = await res.json();
+    if (res.ok && data.status === "success") {
+      return { success: true, orderId: data.data?.order_id, message: `Order placed via Zerodha Kite`, broker: "zerodha" };
+    }
+    return { success: false, message: data.message ?? "Zerodha order failed", broker: "zerodha" };
+  } catch (err) {
+    logger.error({ err }, "Zerodha order error");
+    return { success: false, message: String(err), broker: "zerodha" };
+  }
+}
+async function placeBinanceOrder(conn, params) {
+  try {
+    const crypto2 = await import("crypto");
+    const timestamp2 = Date.now();
+    const qs = new URLSearchParams({
+      symbol: params.symbol.replace("/", "").toUpperCase(),
+      side: params.direction,
+      type: params.orderType ?? "MARKET",
+      quantity: String(params.quantity),
+      timestamp: String(timestamp2)
+    });
+    const signature = crypto2.createHmac("sha256", conn.apiSecret ?? "").update(qs.toString()).digest("hex");
+    qs.append("signature", signature);
+    const baseUrl = conn.environment === "live" ? "https://api.binance.com" : "https://testnet.binance.vision";
+    const res = await fetch(`${baseUrl}/api/v3/order?${qs.toString()}`, {
+      method: "POST",
+      headers: { "X-MBX-APIKEY": conn.apiKey },
+      signal: AbortSignal.timeout(1e4)
+    });
+    const data = await res.json();
+    if (res.ok && data.orderId) {
+      return { success: true, orderId: String(data.orderId), message: `Order placed via Binance`, broker: "binance" };
+    }
+    return { success: false, message: data.msg ?? "Binance order failed", broker: "binance" };
+  } catch (err) {
+    logger.error({ err }, "Binance order error");
+    return { success: false, message: String(err), broker: "binance" };
+  }
+}
+async function placeOandaOrder(conn, params) {
+  try {
+    const baseUrl = conn.environment === "live" ? "https://api-fxtrade.oanda.com" : "https://api-fxpractice.oanda.com";
+    const accountId = conn.accountId;
+    if (!accountId) return { success: false, message: "OANDA account ID not configured", broker: "oanda" };
+    const instrument = params.symbol.replace("/", "_").toUpperCase();
+    const units = params.direction === "BUY" ? params.quantity : -params.quantity;
+    const res = await fetch(`${baseUrl}/v3/accounts/${accountId}/orders`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${conn.apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        order: {
+          type: "MARKET",
+          instrument,
+          units: String(units),
+          timeInForce: "FOK",
+          positionFill: "DEFAULT"
+        }
+      }),
+      signal: AbortSignal.timeout(1e4)
+    });
+    const data = await res.json();
+    if (res.ok && data.orderCreateTransaction) {
+      return { success: true, orderId: data.orderCreateTransaction.id, message: `Order placed via OANDA`, broker: "oanda" };
+    }
+    return { success: false, message: data.errorMessage ?? "OANDA order failed", broker: "oanda" };
+  } catch (err) {
+    logger.error({ err }, "OANDA order error");
+    return { success: false, message: String(err), broker: "oanda" };
+  }
+}
+async function placeOrder(params) {
+  const [conn] = await db.select().from(brokerConnectionsTable).where(eq(brokerConnectionsTable.id, params.brokerId));
+  if (!conn) return { success: false, message: "Broker connection not found", broker: "unknown" };
+  if (!conn.isActive) return { success: false, message: "Broker connection is inactive", broker: conn.broker };
+  switch (conn.broker) {
+    case "zerodha":
+      return placeZerodhaOrder(conn, params);
+    case "binance":
+      return placeBinanceOrder(conn, params);
+    case "oanda":
+      return placeOandaOrder(conn, params);
+    default:
+      return { success: false, message: `Unsupported broker: ${conn.broker}`, broker: conn.broker };
+  }
+}
+async function verifyBrokerConnection(conn) {
+  try {
+    switch (conn.broker) {
+      case "zerodha": {
+        const res = await fetch("https://api.kite.trade/user/profile", {
+          headers: { "X-Kite-Version": "3", "Authorization": `token ${conn.apiKey}:${conn.accessToken}` },
+          signal: AbortSignal.timeout(8e3)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return { valid: true, message: "Zerodha connection verified", accountInfo: data.data };
+        }
+        return { valid: false, message: "Invalid Zerodha credentials" };
+      }
+      case "binance": {
+        const crypto2 = await import("crypto");
+        const timestamp2 = Date.now();
+        const qs = `timestamp=${timestamp2}`;
+        const sig = crypto2.createHmac("sha256", conn.apiSecret ?? "").update(qs).digest("hex");
+        const base = conn.environment === "live" ? "https://api.binance.com" : "https://testnet.binance.vision";
+        const res = await fetch(`${base}/api/v3/account?${qs}&signature=${sig}`, {
+          headers: { "X-MBX-APIKEY": conn.apiKey },
+          signal: AbortSignal.timeout(8e3)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return { valid: true, message: "Binance connection verified", accountInfo: { balances: data.balances?.slice(0, 5) } };
+        }
+        return { valid: false, message: "Invalid Binance credentials" };
+      }
+      case "oanda": {
+        const base = conn.environment === "live" ? "https://api-fxtrade.oanda.com" : "https://api-fxpractice.oanda.com";
+        const res = await fetch(`${base}/v3/accounts`, {
+          headers: { "Authorization": `Bearer ${conn.apiKey}` },
+          signal: AbortSignal.timeout(8e3)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return { valid: true, message: "OANDA connection verified", accountInfo: data.accounts?.[0] };
+        }
+        return { valid: false, message: "Invalid OANDA credentials" };
+      }
+      default:
+        return { valid: false, message: `Unknown broker: ${conn.broker}` };
+    }
+  } catch (err) {
+    return { valid: false, message: String(err) };
+  }
+}
+
+// src/routes/broker.ts
 var router19 = (0, import_express19.Router)();
-router19.use(health_default);
-router19.use(market_data_default);
-router19.use(economic_default);
-router19.use(geopolitical_default);
-router19.use(news_default);
-router19.use(dashboard_default);
-router19.use(watchlist_default);
-router19.use(stocks_default);
-router19.use(social_default);
-router19.use(ipo_default);
-router19.use(usd_signal_default);
-router19.use(forex_calendar_default);
-router19.use("/indicator", indicator_default);
-router19.use(nifty_analysis_default);
-router19.use(bitcoin_analysis_default);
-router19.use("/push", push_default);
-router19.use(nse_candles_default);
-router19.use(bot_default);
-var routes_default = router19;
+router19.get("/broker/connections", async (_req, res) => {
+  try {
+    const rows = await db.select().from(brokerConnectionsTable).orderBy(brokerConnectionsTable.connectedAt);
+    const safe = rows.map((r) => ({
+      id: r.id,
+      broker: r.broker,
+      label: r.label,
+      environment: r.environment,
+      isActive: r.isActive,
+      connectedAt: r.connectedAt,
+      apiKeyHint: r.apiKey.slice(0, 6) + "****"
+    }));
+    res.json({ connections: safe });
+  } catch (err) {
+    logger.error({ err }, "Failed to list broker connections");
+    res.status(500).json({ error: "Failed to list connections" });
+  }
+});
+router19.post("/broker/connect", async (req, res) => {
+  try {
+    const { broker, label, apiKey, apiSecret, accessToken, accountId, environment } = req.body;
+    if (!broker || !apiKey) return res.status(400).json({ error: "broker and apiKey are required" });
+    const [conn] = await db.insert(brokerConnectionsTable).values({
+      broker,
+      label: label || broker,
+      apiKey,
+      apiSecret: apiSecret || null,
+      accessToken: accessToken || null,
+      accountId: accountId || null,
+      environment: environment || "paper",
+      isActive: true
+    }).returning();
+    const verify = await verifyBrokerConnection(conn);
+    if (!verify.valid) {
+      await db.delete(brokerConnectionsTable).where(eq(brokerConnectionsTable.id, conn.id));
+      return res.status(400).json({ error: verify.message });
+    }
+    res.json({
+      success: true,
+      connection: { id: conn.id, broker: conn.broker, label: conn.label, environment: conn.environment },
+      accountInfo: verify.accountInfo
+    });
+  } catch (err) {
+    logger.error({ err }, "Failed to connect broker");
+    res.status(500).json({ error: "Failed to connect broker" });
+  }
+});
+router19.delete("/broker/connections/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await db.delete(brokerConnectionsTable).where(eq(brokerConnectionsTable.id, id));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to remove connection" });
+  }
+});
+router19.get("/broker/connections/order-list", async (_req, res) => {
+  try {
+    const rows = await db.select({
+      id: brokerConnectionsTable.id,
+      broker: brokerConnectionsTable.broker,
+      label: brokerConnectionsTable.label,
+      environment: brokerConnectionsTable.environment
+    }).from(brokerConnectionsTable).where(eq(brokerConnectionsTable.isActive, true));
+    res.json({ connections: rows });
+  } catch {
+    res.json({ connections: [] });
+  }
+});
+router19.post("/broker/order", async (req, res) => {
+  try {
+    const { brokerId, symbol: symbol2, symbolLabel, direction, quantity, price, orderType, tradeType, stopLossPercent, targetPercent } = req.body;
+    const slPct = parseFloat(stopLossPercent ?? 2);
+    const tpPct = parseFloat(targetPercent ?? 4);
+    const qty = parseFloat(quantity ?? 1);
+    const sl = direction === "BUY" ? price * (1 - slPct / 100) : price * (1 + slPct / 100);
+    const tp = direction === "BUY" ? price * (1 + tpPct / 100) : price * (1 - tpPct / 100);
+    if (!brokerId || brokerId === "paper") {
+      const [trade] = await db.insert(botTradesTable).values({
+        symbol: symbol2,
+        symbolLabel: symbolLabel || symbol2,
+        direction,
+        entryPrice: parseFloat(price.toFixed(4)),
+        targetPrice: parseFloat(tp.toFixed(4)),
+        stopLoss: parseFloat(sl.toFixed(4)),
+        currentPrice: parseFloat(price.toFixed(4)),
+        pnl: 0,
+        pnlPercent: 0,
+        status: "open",
+        tradeType: tradeType || "INTRADAY",
+        confidence: 80,
+        reasoning: `Manual ${direction} trade via chart button`,
+        lotSize: qty,
+        riskPercent: slPct
+      }).returning();
+      return res.json({ success: true, mode: "paper", trade, message: `Paper ${direction} trade placed for ${symbol2}` });
+    }
+    const result = await placeOrder({
+      brokerId: parseInt(brokerId),
+      symbol: symbol2,
+      direction,
+      quantity: qty,
+      price,
+      orderType: orderType || "MARKET"
+    });
+    res.json({ ...result, mode: "live" });
+  } catch (err) {
+    logger.error({ err }, "Order placement failed");
+    res.status(500).json({ error: "Order placement failed" });
+  }
+});
+var broker_default = router19;
+
+// src/routes/index.ts
+var router20 = (0, import_express20.Router)();
+router20.use(health_default);
+router20.use(market_data_default);
+router20.use(economic_default);
+router20.use(geopolitical_default);
+router20.use(news_default);
+router20.use(dashboard_default);
+router20.use(watchlist_default);
+router20.use(stocks_default);
+router20.use(social_default);
+router20.use(ipo_default);
+router20.use(usd_signal_default);
+router20.use(forex_calendar_default);
+router20.use("/indicator", indicator_default);
+router20.use(nifty_analysis_default);
+router20.use(bitcoin_analysis_default);
+router20.use("/push", push_default);
+router20.use(nse_candles_default);
+router20.use(bot_default);
+router20.use(broker_default);
+var routes_default = router20;
 
 // src/lib/seed.ts
 async function seedDatabase() {
@@ -79555,7 +79858,7 @@ async function ensureSettingsRow() {
       await db.insert(botSettingsTable).values({
         isRunning: true,
         riskPercent: 1,
-        maxOpenTrades: 5,
+        maxOpenTrades: 1e4,
         enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
         enableScalp: true,
         enableIntraday: true,
@@ -79572,7 +79875,7 @@ var DEFAULT_SETTINGS = {
   id: 1,
   isRunning: true,
   riskPercent: 1,
-  maxOpenTrades: 5,
+  maxOpenTrades: 1e4,
   enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
   enableScalp: true,
   enableIntraday: true,
@@ -79612,6 +79915,14 @@ async function getOpenTrades() {
     return [];
   }
 }
+var TRADE_MAX_AGE_MS = {
+  SCALP: 2 * 60 * 60 * 1e3,
+  // 2 hours
+  INTRADAY: 8 * 60 * 60 * 1e3,
+  // 8 hours
+  SWING: 72 * 60 * 60 * 1e3
+  // 3 days
+};
 async function markTradesClosed(trades) {
   for (const trade of trades) {
     const price = await getLivePrice(trade.symbol);
@@ -79621,6 +79932,9 @@ async function markTradesClosed(trades) {
     const pnl = pnlPct / 100 * trade.entryPrice * trade.lotSize;
     let status = "open";
     let closeReason = null;
+    const ageMs = Date.now() - new Date(trade.createdAt).getTime();
+    const maxAge = TRADE_MAX_AGE_MS[trade.tradeType ?? "SWING"] ?? TRADE_MAX_AGE_MS.SWING;
+    const expired = ageMs > maxAge;
     if (trade.direction === "BUY") {
       if (price >= trade.targetPrice) {
         status = "closed_profit";
@@ -79628,6 +79942,9 @@ async function markTradesClosed(trades) {
       } else if (price <= trade.stopLoss) {
         status = "closed_loss";
         closeReason = "Stop loss hit";
+      } else if (expired) {
+        status = pnl >= 0 ? "closed_profit" : "closed_loss";
+        closeReason = `Time expired (${trade.tradeType})`;
       }
     } else {
       if (price <= trade.targetPrice) {
@@ -79636,15 +79953,21 @@ async function markTradesClosed(trades) {
       } else if (price >= trade.stopLoss) {
         status = "closed_loss";
         closeReason = "Stop loss hit";
+      } else if (expired) {
+        status = pnl >= 0 ? "closed_profit" : "closed_loss";
+        closeReason = `Time expired (${trade.tradeType})`;
       }
     }
     await db.update(botTradesTable).set({
-      currentPrice: price,
+      currentPrice: parseFloat(price.toFixed(4)),
       pnl: parseFloat(pnl.toFixed(2)),
       pnlPercent: parseFloat(pnlPct.toFixed(2)),
       status,
       ...status !== "open" ? { closedAt: /* @__PURE__ */ new Date(), closeReason } : {}
     }).where(eq(botTradesTable.id, trade.id));
+    if (status !== "open") {
+      logger.info(`[bot] Trade closed: ${trade.direction} ${trade.symbol} \u2192 ${status} | P&L: $${pnl.toFixed(2)} | Reason: ${closeReason}`);
+    }
   }
 }
 async function generateBotSignalForAsset(symbol2, label, settings) {
@@ -79777,7 +80100,7 @@ async function runBotCycle() {
 async function startBotEngine() {
   if (initialized) return;
   initialized = true;
-  try {
+  const createTables = async () => {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS bot_trades (
         id SERIAL PRIMARY KEY,
@@ -79806,7 +80129,7 @@ async function startBotEngine() {
         id SERIAL PRIMARY KEY,
         is_running BOOLEAN NOT NULL DEFAULT true,
         risk_percent REAL NOT NULL DEFAULT 1,
-        max_open_trades INTEGER NOT NULL DEFAULT 5,
+        max_open_trades INTEGER NOT NULL DEFAULT 10000,
         enabled_assets TEXT[] NOT NULL DEFAULT ARRAY['BTCUSD','XAUUSD','XAGUSD','EURUSD','NIFTY50'],
         enable_scalp BOOLEAN NOT NULL DEFAULT true,
         enable_intraday BOOLEAN NOT NULL DEFAULT true,
@@ -79815,13 +80138,24 @@ async function startBotEngine() {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+  };
+  try {
+    await createTables();
     logger.info("[bot] Tables ensured");
     await ensureSettingsRow();
   } catch (e) {
-    logger.warn(`[bot] Table ensure failed: ${e?.message ?? e}${e?.cause ? ` | cause: ${e.cause}` : ""}`);
+    logger.warn(`[bot] Table ensure failed: ${e}`);
+    await new Promise((r) => setTimeout(r, 2e3));
     try {
+      await createTables();
+      logger.info("[bot] Tables ensured on retry (backup DB)");
       await ensureSettingsRow();
-    } catch {
+    } catch (e2) {
+      logger.warn(`[bot] Table ensure retry also failed: ${e2}`);
+      try {
+        await ensureSettingsRow();
+      } catch {
+      }
     }
   }
   logger.info("[bot] AutoPilot engine starting");
@@ -79832,7 +80166,7 @@ async function startBotEngine() {
 }
 
 // src/app.ts
-var app = (0, import_express20.default)();
+var app = (0, import_express21.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -79853,8 +80187,9 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express20.default.json());
-app.use(import_express20.default.urlencoded({ extended: true }));
+app.use(import_express21.default.json());
+app.use(import_express21.default.urlencoded({ extended: true }));
+app.get("/", (_req, res) => res.json({ status: "ok", service: "GlobalPulse API" }));
 app.use("/api", routes_default);
 seedDatabase().catch((err) => logger.error({ err }, "Failed to seed database"));
 startBotEngine().catch((err) => logger.error({ err }, "Failed to start bot engine"));
@@ -80147,6 +80482,8 @@ function normaliseFinnhubSymbol(raw) {
 }
 var finnhubWS = null;
 var finnhubReconnectTimer = null;
+var finnhubRetryCount = 0;
+var FINNHUB_MAX_DELAY = 5 * 60 * 1e3;
 function connectFinnhub() {
   const key = process.env["FINNHUB_API_KEY"];
   if (!key) {
@@ -80157,6 +80494,7 @@ function connectFinnhub() {
   const ws = new import_websocket.default(`wss://ws.finnhub.io?token=${key}`);
   finnhubWS = ws;
   ws.on("open", () => {
+    finnhubRetryCount = 0;
     console.info("[priceStream] Finnhub WS connected");
     for (const sym of FINNHUB_SYMBOLS) {
       ws.send(JSON.stringify({ type: "subscribe", symbol: sym }));
@@ -80177,9 +80515,11 @@ function connectFinnhub() {
     }
   });
   ws.on("close", (code) => {
-    console.warn(`[priceStream] Finnhub WS closed (${code}), reconnecting in 5s\u2026`);
     finnhubWS = null;
-    finnhubReconnectTimer = setTimeout(connectFinnhub, 5e3);
+    finnhubRetryCount++;
+    const delay = Math.min(5e3 * Math.pow(2, finnhubRetryCount - 1), FINNHUB_MAX_DELAY);
+    console.warn(`[priceStream] Finnhub WS closed (${code}), reconnecting in ${Math.round(delay / 1e3)}s\u2026 (attempt ${finnhubRetryCount})`);
+    finnhubReconnectTimer = setTimeout(connectFinnhub, delay);
   });
   ws.on("error", (err) => {
     console.error("[priceStream] Finnhub WS error:", err.message);
@@ -80192,6 +80532,8 @@ function connectFinnhub() {
 var twelveWS = null;
 var twelveReconnectTimer = null;
 var twelvePingInterval = null;
+var twelveRetryCount = 0;
+var TWELVE_MAX_DELAY = 5 * 60 * 1e3;
 function connectTwelveData() {
   const key = process.env["TWELVE_DATA_API_KEY"];
   if (!key) {
@@ -80203,6 +80545,7 @@ function connectTwelveData() {
   const ws = new import_websocket.default("wss://ws.twelvedata.com/v1/quotes/price?apikey=" + key);
   twelveWS = ws;
   ws.on("open", () => {
+    twelveRetryCount = 0;
     console.info("[priceStream] Twelve Data WS connected");
     const symbols = [...TWELVEDATA_SYMBOLS].join(",");
     ws.send(JSON.stringify({ action: "subscribe", params: { symbols } }));
@@ -80229,10 +80572,12 @@ function connectTwelveData() {
     }
   });
   ws.on("close", (code) => {
-    console.warn(`[priceStream] Twelve Data WS closed (${code}), reconnecting in 5s\u2026`);
     twelveWS = null;
     if (twelvePingInterval) clearInterval(twelvePingInterval);
-    twelveReconnectTimer = setTimeout(connectTwelveData, 5e3);
+    twelveRetryCount++;
+    const delay = Math.min(5e3 * Math.pow(2, twelveRetryCount - 1), TWELVE_MAX_DELAY);
+    console.warn(`[priceStream] Twelve Data WS closed (${code}), reconnecting in ${Math.round(delay / 1e3)}s\u2026 (attempt ${twelveRetryCount})`);
+    twelveReconnectTimer = setTimeout(connectTwelveData, delay);
   });
   ws.on("error", (err) => {
     console.error("[priceStream] Twelve Data WS error:", err.message);
@@ -81271,10 +81616,9 @@ async function refreshUsdSignal() {
 
 // src/lib/forexCalendarRefresh.ts
 var HEADERS2 = {
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-  "Accept-Language": "en-US,en;q=0.9",
-  "Referer": "https://www.forexfactory.com/"
+  "Accept-Language": "en-US,en;q=0.9"
 };
 var MAJOR_PAIRS = {
   USD: ["EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD", "DXY"],
@@ -81301,166 +81645,48 @@ var HIGH_IMPACT_EVENTS = {
   "employment change": { bias: "moderate", description: "Higher employment = economic strength = currency bullish" },
   "retail sales": { bias: "moderate", description: "Higher retail sales = consumer strength = currency bullish" },
   "pmi": { bias: "moderate", description: "PMI > 50 = expansion = currency bullish. Above forecast = bullish" },
-  "purchasing managers": { bias: "moderate", description: "PMI > 50 = expansion = currency bullish" },
   "manufacturing pmi": { bias: "moderate", description: "Higher manufacturing PMI = industrial strength = currency bullish" },
   "services pmi": { bias: "moderate", description: "Higher services PMI = service sector strength = currency bullish" },
   "trade balance": { bias: "moderate", description: "Surplus = currency bullish, deficit = bearish" },
-  "current account": { bias: "moderate", description: "Surplus = currency bullish" },
   "federal funds rate": { bias: "strong", description: "Rate hike = USD bullish, cut = bearish" },
   "fomc": { bias: "strong", description: "Hawkish FOMC = USD bullish, dovish = bearish" },
   "ecb": { bias: "strong", description: "Hawkish ECB = EUR bullish, dovish = bearish" },
   "boe": { bias: "strong", description: "Hawkish BOE = GBP bullish, dovish = bearish" },
   "boj": { bias: "strong", description: "Hawkish BOJ = JPY bullish, dovish = bearish" },
-  "rba": { bias: "strong", description: "Hawkish RBA = AUD bullish, dovish = bearish" },
-  "rbnz": { bias: "moderate", description: "Hawkish RBNZ = NZD bullish, dovish = bearish" },
-  "snb": { bias: "moderate", description: "Hawkish SNB = CHF bullish, dovish = bearish" },
-  "bank of canada": { bias: "strong", description: "Hawkish BOC = CAD bullish, dovish = bearish" },
-  "crude oil inventories": { bias: "moderate", description: "Draw = oil bullish = CAD bullish / USD mixed" },
-  "housing": { bias: "low", description: "Housing data reflects economic health" },
-  "consumer confidence": { bias: "moderate", description: "Higher confidence = consumer spending strength = currency bullish" },
-  "industrial production": { bias: "moderate", description: "Higher production = economic growth = currency bullish" },
-  "producer price": { bias: "moderate", description: "Higher PPI = upstream inflation = hawkish expectations" },
-  "ppi": { bias: "moderate", description: "Higher PPI = upstream inflation = currency bullish" },
-  "core": { bias: "moderate", description: "Core measures exclude food/energy volatility \u2014 watched closely by central banks" },
-  "average hourly earnings": { bias: "moderate", description: "Higher wages = inflationary pressure = currency bullish" },
-  "claims": { bias: "moderate", description: "Lower claims = stronger labor market = currency bullish" },
-  "ism": { bias: "moderate", description: "ISM above 50 = expansion = USD bullish" }
+  "rba": { bias: "strong", description: "Hawkish RBA = AUD bullish, dovish = bearish" }
 };
 function generateConclusion(event) {
-  const currency = event.currency.toUpperCase();
-  const pairs = MAJOR_PAIRS[currency] ?? [`${currency}/USD`];
   const titleLower = event.title.toLowerCase();
-  let eventType = null;
-  for (const [key, val] of Object.entries(HIGH_IMPACT_EVENTS)) {
+  const affectedPairs = MAJOR_PAIRS[event.currency] ?? [];
+  let matchedEvent = null;
+  for (const [key, value] of Object.entries(HIGH_IMPACT_EVENTS)) {
     if (titleLower.includes(key)) {
-      eventType = val;
+      matchedEvent = value;
       break;
     }
   }
-  const hasActual = event.actual && event.actual.trim() !== "";
-  const hasForecast = event.forecast && event.forecast.trim() !== "";
-  const hasPrevious = event.previous && event.previous.trim() !== "";
-  let directionSignal = "watch";
+  const hasActual = event.actual && event.actual !== "";
+  const hasForecast = event.forecast && event.forecast !== "";
+  let directionSignal = "neutral";
   let conclusion = "";
   if (hasActual && hasForecast) {
-    const actualNum = parseFloat(event.actual.replace(/[%KMB,]/g, ""));
-    const forecastNum = parseFloat(event.forecast.replace(/[%KMB,]/g, ""));
-    if (!isNaN(actualNum) && !isNaN(forecastNum)) {
-      const isInverse = titleLower.includes("unemployment") || titleLower.includes("claims") || titleLower.includes("deficit");
-      const beat = isInverse ? actualNum < forecastNum : actualNum > forecastNum;
-      const miss = isInverse ? actualNum > forecastNum : actualNum < forecastNum;
-      if (beat) {
-        directionSignal = "strengthen";
-        conclusion = `Actual ${event.actual} beat forecast ${event.forecast}. ${currency} likely to STRENGTHEN. `;
-        conclusion += `Expect ${pairs.slice(0, 3).join(", ")} to move in ${currency} favor. `;
-      } else if (miss) {
-        directionSignal = "weaken";
-        conclusion = `Actual ${event.actual} missed forecast ${event.forecast}. ${currency} likely to WEAKEN. `;
-        conclusion += `Expect selling pressure on ${currency} pairs: ${pairs.slice(0, 3).join(", ")}. `;
-      } else {
-        directionSignal = "neutral";
-        conclusion = `Actual matched forecast at ${event.actual}. Limited ${currency} impact expected. `;
-      }
+    const actual = parseFloat(event.actual.replace(/[^0-9.-]/g, ""));
+    const forecast = parseFloat(event.forecast.replace(/[^0-9.-]/g, ""));
+    if (!isNaN(actual) && !isNaN(forecast)) {
+      const isPositiveEvent = matchedEvent?.bias === "strong" || matchedEvent?.bias === "moderate";
+      const beatForecast = actual > forecast;
+      directionSignal = isPositiveEvent && beatForecast || !isPositiveEvent && !beatForecast ? "bullish" : "bearish";
+      conclusion = `${event.currency} ${directionSignal === "bullish" ? "bullish" : "bearish"}: Actual ${event.actual} vs Forecast ${event.forecast}. ${matchedEvent?.description ?? ""}`;
     }
+  } else {
+    conclusion = matchedEvent?.description ?? `Watch ${event.currency} pairs for volatility around this ${event.impact}-impact event.`;
   }
-  if (!conclusion) {
-    if (event.impact === "high") {
-      if (eventType) {
-        conclusion = `HIGH IMPACT: ${event.title}. ${eventType.description}. `;
-        if (hasForecast && hasPrevious) {
-          const fNum = parseFloat(event.forecast.replace(/[%KMB,]/g, ""));
-          const pNum = parseFloat(event.previous.replace(/[%KMB,]/g, ""));
-          const isInverse = titleLower.includes("unemployment") || titleLower.includes("claims");
-          if (!isNaN(fNum) && !isNaN(pNum)) {
-            if (isInverse ? fNum < pNum : fNum > pNum) {
-              directionSignal = "strengthen";
-              conclusion += `Forecast ${event.forecast} vs previous ${event.previous} suggests ${currency} STRENGTH if met. `;
-            } else if (isInverse ? fNum > pNum : fNum < pNum) {
-              directionSignal = "weaken";
-              conclusion += `Forecast ${event.forecast} vs previous ${event.previous} suggests ${currency} WEAKNESS if met. `;
-            }
-          }
-        }
-        conclusion += `Watch ${pairs.slice(0, 4).join(", ")} for volatility.`;
-        if (directionSignal === "watch") directionSignal = "volatile";
-      } else {
-        directionSignal = "volatile";
-        conclusion = `HIGH IMPACT event for ${currency}. Expect significant volatility on ${pairs.slice(0, 3).join(", ")}. Trade with caution.`;
-      }
-    } else if (event.impact === "medium") {
-      conclusion = `Medium impact on ${currency}. May cause moderate moves on ${pairs.slice(0, 2).join(", ")}.`;
-      if (eventType) {
-        conclusion += ` ${eventType.description}`;
-      }
-      directionSignal = "watch";
-    } else {
-      conclusion = `Low impact event for ${currency}. Minimal expected movement on major pairs.`;
-      directionSignal = "neutral";
-    }
-  }
-  return { conclusion: conclusion.trim(), directionSignal, affectedPairs: pairs.slice(0, 5) };
+  return { conclusion, directionSignal, affectedPairs };
 }
-async function fetchForexFactoryCalendar() {
+async function fetchRssCalendar() {
   const events = [];
   try {
-    const url2 = "https://www.forexfactory.com/calendar?week=this";
-    const res = await fetch(url2, { headers: HEADERS2, signal: AbortSignal.timeout(15e3) });
-    if (!res.ok) {
-      logger.warn({ status: res.status }, "ForexFactory returned non-OK status");
-      throw new Error(`ForexFactory HTTP ${res.status}`);
-    }
-    const html = await res.text();
-    const rows = html.match(/<tr[^>]*class="calendar__row[^"]*"[^>]*>[\s\S]*?<\/tr>/g) ?? [];
-    let currentDate = /* @__PURE__ */ new Date();
-    let currentTime = "";
-    for (const row of rows) {
-      const dateMatch = row.match(/<td[^>]*class="[^"]*calendar__date[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/);
-      if (dateMatch) {
-        const dateStr = dateMatch[1].trim();
-        const parsed = parseForexFactoryDate(dateStr);
-        if (parsed) currentDate = parsed;
-      }
-      const timeMatch = row.match(/<td[^>]*class="[^"]*calendar__time[^"]*"[^>]*>([^<]*)<\/td>/);
-      if (timeMatch) {
-        const t = timeMatch[1].trim();
-        if (t && t !== "&nbsp;") currentTime = t;
-      }
-      const currencyMatch = row.match(/<td[^>]*class="[^"]*calendar__currency[^"]*"[^>]*>([^<]*)<\/td>/);
-      const currency = currencyMatch ? currencyMatch[1].trim() : "";
-      const impactMatch = row.match(/class="[^"]*icon--ff-impact-(red|ora|yel|gra)[^"]*"/);
-      const impactMap = { red: "high", ora: "medium", yel: "low", gra: "holiday" };
-      const impact = impactMatch ? impactMap[impactMatch[1]] ?? "low" : "low";
-      const titleMatch = row.match(/<td[^>]*class="[^"]*calendar__event[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/);
-      const title = titleMatch ? titleMatch[1].trim() : "";
-      const actualMatch = row.match(/<td[^>]*class="[^"]*calendar__actual[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]*)<\/span>/);
-      const forecastMatch = row.match(/<td[^>]*class="[^"]*calendar__forecast[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]*)<\/span>/);
-      const previousMatch = row.match(/<td[^>]*class="[^"]*calendar__previous[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]*)<\/span>/);
-      if (!title || !currency || impact === "holiday") continue;
-      const eventDate = parseEventDateTime(currentDate, currentTime);
-      events.push({
-        title,
-        currency,
-        impact,
-        eventDate,
-        actual: actualMatch?.[1]?.trim() || void 0,
-        forecast: forecastMatch?.[1]?.trim() || void 0,
-        previous: previousMatch?.[1]?.trim() || void 0
-      });
-    }
-    logger.info({ count: events.length }, "ForexFactory calendar parsed");
-  } catch (err) {
-    logger.warn({ error: String(err) }, "ForexFactory fetch failed, trying backup RSS");
-  }
-  const rssEvents = await fetchInvestingComCalendar();
-  events.push(...rssEvents);
-  const scheduledEvents = generateScheduledEvents();
-  events.push(...scheduledEvents);
-  return events;
-}
-async function fetchInvestingComCalendar() {
-  const events = [];
-  try {
-    const rssUrl = "https://news.google.com/rss/search?q=forex+economic+calendar+this+week+NFP+CPI+FOMC+GDP+interest+rate&hl=en&gl=US&ceid=US:en";
+    const rssUrl = "https://news.google.com/rss/search?q=forex+economic+calendar+NFP+CPI+FOMC+GDP+interest+rate&hl=en&gl=US&ceid=US:en";
     const res = await fetch(rssUrl, { headers: HEADERS2, signal: AbortSignal.timeout(1e4) });
     if (!res.ok) return events;
     const xml = await res.text();
@@ -81472,15 +81698,15 @@ async function fetchInvestingComCalendar() {
       if (!titleMatch) continue;
       const title = titleMatch[1].replace(/<[^>]+>/g, "").trim();
       const titleLower = title.toLowerCase();
+      const isForexRelated = /(nfp|cpi|gdp|pmi|fomc|ecb|boe|boj|rate decision|inflation|unemployment|retail sales|payroll|employment|fed |interest rate|trade balance)/i.test(titleLower);
+      if (!isForexRelated) continue;
       let detectedCurrency = "";
       for (const c of currencies) {
-        if (title.includes(c) || title.includes(c.toLowerCase())) {
+        if (title.includes(c)) {
           detectedCurrency = c;
           break;
         }
       }
-      const isForexRelated = /(nfp|cpi|gdp|pmi|fomc|ecb|boe|boj|rate decision|inflation|unemployment|retail sales|payroll|employment|fed |interest rate|trade balance)/i.test(titleLower);
-      if (!isForexRelated) continue;
       if (!detectedCurrency) {
         if (/fed |fomc|nfp|us |american|payroll/i.test(titleLower)) detectedCurrency = "USD";
         else if (/ecb|euro|eurozone/i.test(titleLower)) detectedCurrency = "EUR";
@@ -81490,13 +81716,12 @@ async function fetchInvestingComCalendar() {
         else if (/boc|canada/i.test(titleLower)) detectedCurrency = "CAD";
         else detectedCurrency = "USD";
       }
-      const impact = /(nfp|cpi|gdp|rate decision|fomc|ecb interest|boe interest|fed fund)/i.test(titleLower) ? "high" : /(pmi|retail sales|employment|unemployment|trade balance|consumer confidence)/i.test(titleLower) ? "medium" : "low";
-      const pubDate = pubDateMatch ? new Date(pubDateMatch[1]) : /* @__PURE__ */ new Date();
+      const impact = /(nfp|cpi|gdp|rate decision|fomc|ecb interest|boe interest|fed fund)/i.test(titleLower) ? "high" : /(pmi|retail sales|employment|unemployment|trade balance)/i.test(titleLower) ? "medium" : "low";
       events.push({
         title: cleanTitle(title),
         currency: detectedCurrency,
         impact,
-        eventDate: pubDate
+        eventDate: pubDateMatch ? new Date(pubDateMatch[1]) : /* @__PURE__ */ new Date()
       });
     }
     logger.info({ count: events.length }, "Google News forex calendar parsed");
@@ -81508,89 +81733,45 @@ async function fetchInvestingComCalendar() {
 function generateScheduledEvents() {
   const now = /* @__PURE__ */ new Date();
   const events = [];
-  const scheduledEvents = [
-    { title: "US Non-Farm Payrolls", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(5) },
-    { title: "US CPI (YoY)", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(2) },
-    { title: "FOMC Meeting Minutes", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(3) },
-    { title: "ECB Interest Rate Decision", currency: "EUR", impact: "high", dayOffset: getNextWeekdayOffset(4) },
-    { title: "UK GDP (QoQ)", currency: "GBP", impact: "high", dayOffset: getNextWeekdayOffset(1) },
-    { title: "BOJ Interest Rate Decision", currency: "JPY", impact: "high", dayOffset: getNextWeekdayOffset(5) },
-    { title: "US Retail Sales (MoM)", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(2) },
-    { title: "US ISM Manufacturing PMI", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(1) },
-    { title: "US ISM Services PMI", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(3) },
-    { title: "Eurozone CPI (YoY)", currency: "EUR", impact: "high", dayOffset: getNextWeekdayOffset(1) },
-    { title: "UK CPI (YoY)", currency: "GBP", impact: "high", dayOffset: getNextWeekdayOffset(3) },
-    { title: "RBA Interest Rate Decision", currency: "AUD", impact: "high", dayOffset: getNextWeekdayOffset(2) },
-    { title: "BOC Interest Rate Decision", currency: "CAD", impact: "high", dayOffset: getNextWeekdayOffset(3) },
-    { title: "US Unemployment Rate", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(5) },
-    { title: "US Average Hourly Earnings (MoM)", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(5) },
-    { title: "US Core CPI (MoM)", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(2) },
-    { title: "US PPI (MoM)", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(4) },
-    { title: "US Initial Jobless Claims", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(4) },
-    { title: "Eurozone GDP (QoQ)", currency: "EUR", impact: "medium", dayOffset: getNextWeekdayOffset(1) },
-    { title: "US Consumer Confidence", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(2) },
-    { title: "Australia Employment Change", currency: "AUD", impact: "high", dayOffset: getNextWeekdayOffset(4) },
-    { title: "US Crude Oil Inventories", currency: "USD", impact: "medium", dayOffset: getNextWeekdayOffset(3) },
-    { title: "Canada CPI (MoM)", currency: "CAD", impact: "high", dayOffset: getNextWeekdayOffset(2) },
-    { title: "NZ GDP (QoQ)", currency: "NZD", impact: "high", dayOffset: getNextWeekdayOffset(3) },
-    { title: "Swiss CPI (MoM)", currency: "CHF", impact: "medium", dayOffset: getNextWeekdayOffset(1) },
-    { title: "UK Employment Change", currency: "GBP", impact: "medium", dayOffset: getNextWeekdayOffset(2) },
-    { title: "FOMC Press Conference", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(3) },
-    { title: "Fed Chair Powell Speaks", currency: "USD", impact: "high", dayOffset: getNextWeekdayOffset(4) },
-    { title: "ECB Press Conference", currency: "EUR", impact: "high", dayOffset: getNextWeekdayOffset(4) },
-    { title: "BOE Interest Rate Decision", currency: "GBP", impact: "high", dayOffset: getNextWeekdayOffset(4) }
+  const schedule = [
+    { title: "US Non-Farm Payrolls", currency: "USD", impact: "high", day: 5 },
+    { title: "US CPI (YoY)", currency: "USD", impact: "high", day: 2 },
+    { title: "FOMC Meeting Minutes", currency: "USD", impact: "high", day: 3 },
+    { title: "ECB Interest Rate Decision", currency: "EUR", impact: "high", day: 4 },
+    { title: "UK GDP (QoQ)", currency: "GBP", impact: "high", day: 1 },
+    { title: "BOJ Interest Rate Decision", currency: "JPY", impact: "high", day: 5 },
+    { title: "US Retail Sales (MoM)", currency: "USD", impact: "medium", day: 2 },
+    { title: "US ISM Manufacturing PMI", currency: "USD", impact: "medium", day: 1 },
+    { title: "US ISM Services PMI", currency: "USD", impact: "medium", day: 3 },
+    { title: "Eurozone CPI (YoY)", currency: "EUR", impact: "high", day: 1 },
+    { title: "UK CPI (YoY)", currency: "GBP", impact: "high", day: 3 },
+    { title: "RBA Interest Rate Decision", currency: "AUD", impact: "high", day: 2 },
+    { title: "BOC Interest Rate Decision", currency: "CAD", impact: "high", day: 3 },
+    { title: "US Unemployment Rate", currency: "USD", impact: "high", day: 5 },
+    { title: "US Core CPI (MoM)", currency: "USD", impact: "high", day: 2 },
+    { title: "US Initial Jobless Claims", currency: "USD", impact: "medium", day: 4 },
+    { title: "BOE Interest Rate Decision", currency: "GBP", impact: "high", day: 4 },
+    { title: "FOMC Press Conference", currency: "USD", impact: "high", day: 3 },
+    { title: "Fed Chair Powell Speaks", currency: "USD", impact: "high", day: 4 },
+    { title: "ECB Press Conference", currency: "EUR", impact: "high", day: 4 },
+    { title: "Australia Employment Change", currency: "AUD", impact: "high", day: 4 },
+    { title: "Canada CPI (MoM)", currency: "CAD", impact: "high", day: 2 },
+    { title: "US PPI (MoM)", currency: "USD", impact: "medium", day: 4 },
+    { title: "US Consumer Confidence", currency: "USD", impact: "medium", day: 2 }
   ];
-  for (const evt of scheduledEvents) {
+  for (const evt of schedule) {
+    const today = now.getDay();
+    let offset = evt.day - today;
+    if (offset <= 0) offset += 7;
     const eventDate = new Date(now);
-    eventDate.setDate(eventDate.getDate() + evt.dayOffset);
+    eventDate.setDate(eventDate.getDate() + offset);
     eventDate.setHours(8 + Math.floor(Math.random() * 8), Math.random() > 0.5 ? 30 : 0, 0, 0);
-    events.push({
-      title: evt.title,
-      currency: evt.currency,
-      impact: evt.impact,
-      eventDate
-    });
+    events.push({ title: evt.title, currency: evt.currency, impact: evt.impact, eventDate });
   }
   return events;
 }
-function getNextWeekdayOffset(targetDay) {
-  const today = (/* @__PURE__ */ new Date()).getDay();
-  let offset = targetDay - today;
-  if (offset <= 0) offset += 7;
-  return offset;
-}
-function parseForexFactoryDate(dateStr) {
-  try {
-    const months = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-    const match = dateStr.match(/(\w{3})\s+(\d{1,2})/);
-    if (match) {
-      const month = months[match[1]];
-      if (month !== void 0) {
-        const d = /* @__PURE__ */ new Date();
-        d.setMonth(month, parseInt(match[2]));
-        d.setHours(0, 0, 0, 0);
-        return d;
-      }
-    }
-  } catch {
-  }
-  return null;
-}
-function parseEventDateTime(baseDate, timeStr) {
-  const d = new Date(baseDate);
-  const match = timeStr.match(/(\d{1,2}):(\d{2})(am|pm)/i);
-  if (match) {
-    let hour = parseInt(match[1]);
-    const min = parseInt(match[2]);
-    const ampm = match[3].toLowerCase();
-    if (ampm === "pm" && hour < 12) hour += 12;
-    if (ampm === "am" && hour === 12) hour = 0;
-    d.setHours(hour, min, 0, 0);
-  }
-  return d;
-}
 function cleanTitle(title) {
-  return title.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim().slice(0, 120);
+  return title.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim().slice(0, 120);
 }
 function deduplicateEvents(events) {
   const seen = /* @__PURE__ */ new Set();
@@ -81604,7 +81785,9 @@ function deduplicateEvents(events) {
 async function refreshForexCalendar() {
   try {
     logger.info("Starting forex calendar refresh...");
-    const rawEvents = await fetchForexFactoryCalendar();
+    const rssEvents = await fetchRssCalendar();
+    const scheduledEvents = generateScheduledEvents();
+    const rawEvents = [...rssEvents, ...scheduledEvents];
     const events = deduplicateEvents(rawEvents);
     if (events.length === 0) {
       logger.warn("No forex calendar events fetched");
@@ -81623,20 +81806,18 @@ async function refreshForexCalendar() {
         affectedPairs: analysis.affectedPairs,
         conclusion: analysis.conclusion,
         directionSignal: analysis.directionSignal,
-        sourceUrl: "https://www.forexfactory.com/calendar",
+        sourceUrl: "https://news.google.com/rss",
         lastUpdated: /* @__PURE__ */ new Date()
       };
     });
-    try {
-      await db.transaction(async (tx) => {
-        await tx.delete(forexCalendarTable);
-        await tx.insert(forexCalendarTable).values(inserts);
-      });
-      logger.info({ count: inserts.length }, "Forex calendar refresh complete");
-    } catch {
-    }
+    await db.transaction(async (tx) => {
+      await tx.delete(forexCalendarTable);
+      await tx.insert(forexCalendarTable).values(inserts);
+    });
+    logger.info({ count: inserts.length }, "Forex calendar refresh complete");
     return { count: inserts.length };
   } catch (err) {
+    logger.error({ error: String(err) }, "Forex calendar refresh error");
     return { count: 0 };
   }
 }

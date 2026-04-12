@@ -28,7 +28,7 @@ async function ensureSettingsRow() {
       await db.insert(botSettingsTable).values({
         isRunning: true,
         riskPercent: 1,
-        maxOpenTrades: 5,
+        maxOpenTrades: 10000,
         enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
         enableScalp: true,
         enableIntraday: true,
@@ -46,7 +46,7 @@ const DEFAULT_SETTINGS = {
   id: 1,
   isRunning: true,
   riskPercent: 1,
-  maxOpenTrades: 5,
+  maxOpenTrades: 10000,
   enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
   enableScalp: true,
   enableIntraday: true,
@@ -299,7 +299,7 @@ export async function startBotEngine() {
   if (initialized) return;
   initialized = true;
 
-  try {
+  const createTables = async () => {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS bot_trades (
         id SERIAL PRIMARY KEY,
@@ -323,13 +323,12 @@ export async function startBotEngine() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-
     await db.execute(`
       CREATE TABLE IF NOT EXISTS bot_settings (
         id SERIAL PRIMARY KEY,
         is_running BOOLEAN NOT NULL DEFAULT true,
         risk_percent REAL NOT NULL DEFAULT 1,
-        max_open_trades INTEGER NOT NULL DEFAULT 5,
+        max_open_trades INTEGER NOT NULL DEFAULT 10000,
         enabled_assets TEXT[] NOT NULL DEFAULT ARRAY['BTCUSD','XAUUSD','XAGUSD','EURUSD','NIFTY50'],
         enable_scalp BOOLEAN NOT NULL DEFAULT true,
         enable_intraday BOOLEAN NOT NULL DEFAULT true,
@@ -338,12 +337,24 @@ export async function startBotEngine() {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+  };
 
+  try {
+    await createTables();
     logger.info("[bot] Tables ensured");
     await ensureSettingsRow();
   } catch (e) {
-    logger.warn(`[bot] Table ensure failed (may already exist): ${e}`);
-    try { await ensureSettingsRow(); } catch {}
+    logger.warn(`[bot] Table ensure failed: ${e}`);
+    // Primary DB may have just failed over to backup — wait briefly then retry
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      await createTables();
+      logger.info("[bot] Tables ensured on retry (backup DB)");
+      await ensureSettingsRow();
+    } catch (e2) {
+      logger.warn(`[bot] Table ensure retry also failed: ${e2}`);
+      try { await ensureSettingsRow(); } catch {}
+    }
   }
 
   logger.info("[bot] AutoPilot engine starting");
