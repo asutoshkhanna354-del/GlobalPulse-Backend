@@ -20,13 +20,18 @@ import {
   Bell,
   Bot,
   Lock,
+  Link2,
+  User,
+  LogIn,
 } from "lucide-react";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/bot", label: "AutoPilot Bot", icon: Bot, pro: true },
+  { path: "/brokers", label: "Connect Broker", icon: Link2, pro: true },
   { path: "/terminal", label: "Terminal", icon: Monitor, beta: true },
   { path: "/chart", label: "Chart", icon: CandlestickChart, premium: true },
   { path: "/nifty", label: "Nifty 50", icon: Zap, premium: true },
@@ -45,17 +50,12 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isPremium, setShowActivation, deactivate } = usePremium();
   const { subscribedSymbols, setShowManager, isSupported: notifSupported } = useNotifications();
+  const { user, logout, setShowAuthModal } = useAuth();
+
+  useEffect(() => { setMobileOpen(false); }, [location]);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location]);
-
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
@@ -121,15 +121,11 @@ export function Sidebar() {
                 {pro && isPremium && (
                   <span className="text-[7px] bg-gradient-to-r from-[#EDE7F6] to-[#F3E5F5] text-[#7C3AED] border border-[#CE93D8]/40 px-1.5 py-0.5 rounded-full font-bold tracking-wider">AI PRO</span>
                 )}
-                {locked && (
-                  <Lock className="w-3 h-3 text-[#FFB300]" />
-                )}
+                {locked && <Lock className="w-3 h-3 text-[#FFB300]" />}
                 {beta && (
                   <span className="text-[7px] bg-[#E8F5E9] text-[#2E7D32] border border-[#66BB6A]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">BETA</span>
                 )}
-                {premium && isPremium && (
-                  <Crown className="w-3 h-3 text-[#FF8F00]" />
-                )}
+                {premium && isPremium && <Crown className="w-3 h-3 text-[#FF8F00]" />}
                 {premium && !isPremium && (
                   <span className="text-[7px] bg-[#FFF8E1] text-[#FF8F00] border border-[#FFB300]/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider">PRO</span>
                 )}
@@ -143,15 +139,39 @@ export function Sidebar() {
                 </button>
               );
             }
-            return (
-              <Link key={path} href={path}>
-                {inner}
-              </Link>
-            );
+            return <Link key={path} href={path}>{inner}</Link>;
           })}
         </nav>
 
         <div className="px-3 py-4 border-t border-[#E0E3EB] space-y-3">
+
+          {/* User account panel */}
+          {user ? (
+            <div className="bg-white border border-[#E0E3EB] rounded-xl p-3 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#2962FF] flex items-center justify-center shrink-0">
+                <span className="text-[11px] font-bold text-white">
+                  {user.username[0].toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] font-bold text-[#131722] truncate">{user.username}</div>
+                <div className="text-[9px] text-[#9598A1] truncate">{user.email}</div>
+              </div>
+              <button onClick={logout} title="Sign out"
+                className="w-6 h-6 flex items-center justify-center rounded-lg text-[#9598A1] hover:text-[#EF5350] hover:bg-red-50 transition-all shrink-0">
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="w-full flex items-center justify-center gap-1.5 bg-white border border-[#E0E3EB] hover:border-[#2962FF] hover:bg-[#EEF2FF] text-[#131722] text-[11px] font-bold py-2.5 rounded-xl transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5 text-[#2962FF]" />
+              Sign In
+            </button>
+          )}
+
           {isPremium ? (
             <div className="bg-[#FFF8E1] border border-[#FFB300]/30 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1.5">

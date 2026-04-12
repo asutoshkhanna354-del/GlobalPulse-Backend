@@ -21,11 +21,13 @@ const ASSETS = [
 let botLoopTimer: NodeJS.Timeout | null = null;
 let initialized = false;
 
-async function ensureSettingsRow() {
+export async function ensureUserBotSettings(userId: number): Promise<void> {
   try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    if (rows.length === 0) {
+    const existing = await db.select().from(botSettingsTable)
+      .where(eq(botSettingsTable.userId, userId)).limit(1);
+    if (existing.length === 0) {
       await db.insert(botSettingsTable).values({
+        userId,
         isRunning: true,
         riskPercent: 1,
         maxOpenTrades: 10000,
@@ -35,32 +37,10 @@ async function ensureSettingsRow() {
         enableSwing: true,
         virtualBalance: 10000,
       });
-      logger.info("[bot] Default settings created");
+      logger.info(`[bot] Default settings created for user ${userId}`);
     }
   } catch (e) {
-    logger.warn(`[bot] ensureSettingsRow: ${e}`);
-  }
-}
-
-const DEFAULT_SETTINGS = {
-  id: 1,
-  isRunning: true,
-  riskPercent: 1,
-  maxOpenTrades: 10000,
-  enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
-  enableScalp: true,
-  enableIntraday: true,
-  enableSwing: true,
-  virtualBalance: 10000,
-  updatedAt: new Date(),
-};
-
-async function getSettings() {
-  try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    return rows[0] ?? DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
+    logger.warn(`[bot] ensureUserBotSettings(${userId}): ${e}`);
   }
 }
 
@@ -68,7 +48,8 @@ const QUOTE_URL_BASE = process.env.SELF_API_URL ?? "http://localhost:8080/api";
 
 async function getLivePrice(symbol: string): Promise<number | null> {
   try {
-    const assets = await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.symbol, symbol)).limit(1);
+    const assets = await db.select().from(marketAssetsTable)
+      .where(eq(marketAssetsTable.symbol, symbol)).limit(1);
     if (assets[0]?.price) return assets[0].price;
   } catch {}
   try {
@@ -81,59 +62,60 @@ async function getLivePrice(symbol: string): Promise<number | null> {
   return null;
 }
 
-async function getOpenTrades() {
-  try {
-    return await db.select().from(botTradesTable).where(eq(botTradesTable.status, "open"));
-  } catch {
-    return [];
-  }
-}
-
 const TRADE_MAX_AGE_MS: Record<string, number> = {
-  SCALP:    2  * 60 * 60 * 1000,   // 2 hours
-  INTRADAY: 8  * 60 * 60 * 1000,   // 8 hours
-  SWING:    72 * 60 * 60 * 1000,   // 3 days
+  SCALP:    2  * 60 * 60 * 1000,
+  INTRADAY: 8  * 60 * 60 * 1000,
+  SWING:    72 * 60 * 60 * 1000,
 };
 
-async function markTradesClosed(trades: typeof botTradesTable.$inferSelect[]) {
-  for (const trade of trades) {
-    const price = await getLivePrice(trade.symbol);
-    if (!price) continue;
+async function markUserTradesClosed(userId: number) {
+  try {
+    const trades = await db.select().from(botTradesTable)
+      .where(and(eq(botTradesTable.status, "open"), eq(botTradesTable.userId, userId)));
 
-    const dir = trade.direction === "BUY" ? 1 : -1;
-    const pnlPct = dir * ((price - trade.entryPrice) / trade.entryPrice) * 100;
-    const pnl = (pnlPct / 100) * trade.entryPrice * trade.lotSize;
+    for (const trade of trades) {
+      const price = await getLivePrice(trade.symbol);
+      if (!price) continue;
 
-    let status = "open";
-    let closeReason: string | null = null;
+      const dir = trade.direction === "BUY" ? 1 : -1;
+      const pnlPct = dir * ((price - trade.entryPrice) / trade.entryPrice) * 100;
+      const pnl = (pnlPct / 100) * trade.entryPrice * trade.lotSize;
 
-    const ageMs = Date.now() - new Date(trade.createdAt).getTime();
-    const maxAge = TRADE_MAX_AGE_MS[trade.tradeType ?? "SWING"] ?? TRADE_MAX_AGE_MS.SWING;
-    const expired = ageMs > maxAge;
+      let status = "open";
+      let closeReason: string | null = null;
 
-    if (trade.direction === "BUY") {
-      if (price >= trade.targetPrice)       { status = "closed_profit"; closeReason = "Target hit"; }
-      else if (price <= trade.stopLoss)     { status = "closed_loss";   closeReason = "Stop loss hit"; }
-      else if (expired)                     { status = pnl >= 0 ? "closed_profit" : "closed_loss"; closeReason = `Time expired (${trade.tradeType})`; }
-    } else {
-      if (price <= trade.targetPrice)       { status = "closed_profit"; closeReason = "Target hit"; }
-      else if (price >= trade.stopLoss)     { status = "closed_loss";   closeReason = "Stop loss hit"; }
-      else if (expired)                     { status = pnl >= 0 ? "closed_profit" : "closed_loss"; closeReason = `Time expired (${trade.tradeType})`; }
-    }
+      const ageMs = Date.now() - new Date(trade.createdAt).getTime();
+      const maxAge = TRADE_MAX_AGE_MS[trade.tradeType ?? "SWING"] ?? TRADE_MAX_AGE_MS.SWING;
+      const expired = ageMs > maxAge;
 
-    await db.update(botTradesTable)
-      .set({
+      if (trade.direction === "BUY") {
+        if (price >= trade.targetPrice)   { status = "closed_profit"; closeReason = "Target hit"; }
+        else if (price <= trade.stopLoss) { status = "closed_loss";   closeReason = "Stop loss hit"; }
+        else if (expired)                 { status = pnl >= 0 ? "closed_profit" : "closed_loss"; closeReason = `Expired (${trade.tradeType})`; }
+      } else {
+        if (price <= trade.targetPrice)   { status = "closed_profit"; closeReason = "Target hit"; }
+        else if (price >= trade.stopLoss) { status = "closed_loss";   closeReason = "Stop loss hit"; }
+        else if (expired)                 { status = pnl >= 0 ? "closed_profit" : "closed_loss"; closeReason = `Expired (${trade.tradeType})`; }
+      }
+
+      await db.update(botTradesTable).set({
         currentPrice: parseFloat(price.toFixed(4)),
         pnl: parseFloat(pnl.toFixed(2)),
         pnlPercent: parseFloat(pnlPct.toFixed(2)),
         status,
         ...(status !== "open" ? { closedAt: new Date(), closeReason } : {}),
-      })
-      .where(eq(botTradesTable.id, trade.id));
+      }).where(eq(botTradesTable.id, trade.id));
 
-    if (status !== "open") {
-      logger.info(`[bot] Trade closed: ${trade.direction} ${trade.symbol} → ${status} | P&L: $${pnl.toFixed(2)} | Reason: ${closeReason}`);
+      if (status !== "open") {
+        // Update user's virtual balance
+        await db.execute(
+          `UPDATE bot_settings SET virtual_balance = virtual_balance + ${parseFloat(pnl.toFixed(2))}, updated_at = NOW() WHERE user_id = ${userId}`
+        );
+        logger.info(`[bot] user=${userId} Trade closed: ${trade.direction} ${trade.symbol} → ${status} P&L: $${pnl.toFixed(2)}`);
+      }
     }
+  } catch (err) {
+    logger.warn(`[bot] markUserTradesClosed(${userId}): ${err}`);
   }
 }
 
@@ -153,7 +135,7 @@ async function generateBotSignalForAsset(
   let ohlcBars: any[] = [];
   try {
     ohlcBars = await fetchOHLC(symbol.replace("USD", "/USD").replace("XAUUSD", "GC=F").replace("XAGUSD", "SI=F").replace("NIFTY50", "^NSEI"), "1d", 14);
-  } catch { /* ignore */ }
+  } catch { }
 
   const priceStr = price ? `$${price.toFixed(2)}` : "unknown";
   const ohlcStr = ohlcBars.length > 0
@@ -171,7 +153,7 @@ Current price: ${priceStr}
 Recent OHLC (last 5 bars): ${ohlcStr}
 Recent market news: ${newsText}
 
-Your task: Generate a precise paper trading signal.
+Task: Generate a precise paper trading signal.
 Available trade types: ${allowedTypes}
 Risk per trade: ${settings.riskPercent}%
 
@@ -182,7 +164,7 @@ Respond ONLY with this JSON (no markdown):
   "tradeType": "SCALP" | "INTRADAY" | "SWING",
   "targetPct": <target % from entry, e.g. 1.5>,
   "slPct": <stop loss % from entry, e.g. 0.7>,
-  "reasoning": "<2-3 concise sentences explaining why>"
+  "reasoning": "<2-3 concise sentences>"
 }`;
 
   try {
@@ -217,49 +199,37 @@ function generateRuleBasedSignal(symbol: string, label: string) {
   return {
     direction: direction as "BUY" | "SELL",
     confidence: Math.floor(55 + Math.random() * 25),
-    reasoning: `Rule-based signal for ${label}: momentum and volatility analysis suggest ${direction} opportunity.`,
+    reasoning: `Rule-based signal for ${label}: momentum analysis suggests ${direction} opportunity.`,
     tradeType: ["SCALP", "INTRADAY", "SWING"][Math.floor(Math.random() * 3)],
     targetPct: 0.8 + Math.random() * 1.5,
     slPct: 0.4 + Math.random() * 0.6,
   };
 }
 
-async function runBotCycle() {
+async function runBotCycleForUser(userId: number) {
   try {
-    const settings = await getSettings();
-    if (!settings?.isRunning) {
-      logger.info("[bot] Bot is paused — skipping cycle");
-      return;
-    }
+    const [settings] = await db.select().from(botSettingsTable)
+      .where(eq(botSettingsTable.userId, userId)).limit(1);
+    if (!settings?.isRunning) return;
 
-    const openTrades = await getOpenTrades();
+    await markUserTradesClosed(userId);
 
-    await markTradesClosed(openTrades);
+    const openTrades = await db.select().from(botTradesTable)
+      .where(and(eq(botTradesTable.status, "open"), eq(botTradesTable.userId, userId)));
 
-    const freshOpen = await getOpenTrades();
-    const openCount = freshOpen.length;
-
-    if (openCount >= settings.maxOpenTrades) {
-      logger.info(`[bot] Max open trades (${settings.maxOpenTrades}) reached — skipping new signals`);
-      return;
-    }
+    if (openTrades.length >= settings.maxOpenTrades) return;
 
     const activeSymbols = settings.enabledAssets ?? ["BTCUSD", "XAUUSD"];
-    const knownLabels: Record<string,string> = Object.fromEntries(ASSETS.map(a=>[a.symbol,a.label]));
-    const activeAssets = activeSymbols.map(sym => ({
-      symbol: sym,
-      label: knownLabels[sym] ?? sym,
-    }));
+    const knownLabels: Record<string, string> = Object.fromEntries(ASSETS.map(a => [a.symbol, a.label]));
 
-    for (const asset of activeAssets) {
-      const alreadyOpen = freshOpen.some(t => t.symbol === asset.symbol);
+    for (const sym of activeSymbols) {
+      const alreadyOpen = openTrades.some(t => t.symbol === sym);
       if (alreadyOpen) continue;
 
-      const signal = await generateBotSignalForAsset(asset.symbol, asset.label, settings);
-      if (!signal || signal.direction === "NEUTRAL") continue;
-      if (signal.confidence < 60) continue;
+      const signal = await generateBotSignalForAsset(sym, knownLabels[sym] ?? sym, settings);
+      if (!signal || signal.direction === "NEUTRAL" || signal.confidence < 60) continue;
 
-      const price = await getLivePrice(asset.symbol);
+      const price = await getLivePrice(sym);
       if (!price) continue;
 
       const targetPrice = signal.direction === "BUY"
@@ -271,8 +241,9 @@ async function runBotCycle() {
         : price * (1 + signal.slPct / 100);
 
       await db.insert(botTradesTable).values({
-        symbol: asset.symbol,
-        symbolLabel: asset.label,
+        userId,
+        symbol: sym,
+        symbolLabel: knownLabels[sym] ?? sym,
         direction: signal.direction,
         entryPrice: parseFloat(price.toFixed(4)),
         targetPrice: parseFloat(targetPrice.toFixed(4)),
@@ -288,80 +259,36 @@ async function runBotCycle() {
         riskPercent: settings.riskPercent,
       });
 
-      logger.info(`[bot] New trade: ${signal.direction} ${asset.symbol} @ ${price}`);
+      logger.info(`[bot] user=${userId} New trade: ${signal.direction} ${sym} @ ${price}`);
     }
   } catch (err) {
-    logger.error(`[bot] Cycle error: ${err}`);
+    logger.error(`[bot] runBotCycleForUser(${userId}): ${err}`);
+  }
+}
+
+async function runBotCycleForAllUsers() {
+  try {
+    const rows = await db.execute(
+      `SELECT DISTINCT user_id FROM bot_settings WHERE is_running = true AND user_id IS NOT NULL`
+    );
+    const userIds: number[] = (rows as any).rows?.map((r: any) => Number(r.user_id)) ?? [];
+    if (userIds.length === 0) return;
+    logger.info(`[bot] Running cycles for ${userIds.length} user(s)`);
+    for (const uid of userIds) {
+      await runBotCycleForUser(uid);
+    }
+  } catch (err) {
+    logger.error(`[bot] runBotCycleForAllUsers: ${err}`);
   }
 }
 
 export async function startBotEngine() {
   if (initialized) return;
   initialized = true;
-
-  const createTables = async () => {
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS bot_trades (
-        id SERIAL PRIMARY KEY,
-        symbol TEXT NOT NULL,
-        symbol_label TEXT NOT NULL,
-        direction TEXT NOT NULL,
-        entry_price REAL NOT NULL,
-        target_price REAL NOT NULL,
-        stop_loss REAL NOT NULL,
-        current_price REAL,
-        pnl REAL,
-        pnl_percent REAL,
-        status TEXT NOT NULL DEFAULT 'open',
-        trade_type TEXT NOT NULL DEFAULT 'SWING',
-        confidence INTEGER NOT NULL,
-        reasoning TEXT NOT NULL,
-        lot_size REAL NOT NULL DEFAULT 1,
-        risk_percent REAL NOT NULL DEFAULT 1,
-        closed_at TIMESTAMPTZ,
-        close_reason TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS bot_settings (
-        id SERIAL PRIMARY KEY,
-        is_running BOOLEAN NOT NULL DEFAULT true,
-        risk_percent REAL NOT NULL DEFAULT 1,
-        max_open_trades INTEGER NOT NULL DEFAULT 10000,
-        enabled_assets TEXT[] NOT NULL DEFAULT ARRAY['BTCUSD','XAUUSD','XAGUSD','EURUSD','NIFTY50'],
-        enable_scalp BOOLEAN NOT NULL DEFAULT true,
-        enable_intraday BOOLEAN NOT NULL DEFAULT true,
-        enable_swing BOOLEAN NOT NULL DEFAULT true,
-        virtual_balance REAL NOT NULL DEFAULT 10000,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-  };
-
-  try {
-    await createTables();
-    logger.info("[bot] Tables ensured");
-    await ensureSettingsRow();
-  } catch (e) {
-    logger.warn(`[bot] Table ensure failed: ${e}`);
-    // Primary DB may have just failed over to backup — wait briefly then retry
-    await new Promise(r => setTimeout(r, 2000));
-    try {
-      await createTables();
-      logger.info("[bot] Tables ensured on retry (backup DB)");
-      await ensureSettingsRow();
-    } catch (e2) {
-      logger.warn(`[bot] Table ensure retry also failed: ${e2}`);
-      try { await ensureSettingsRow(); } catch {}
-    }
-  }
-
-  logger.info("[bot] AutoPilot engine starting");
-  await runBotCycle();
-
+  logger.info("[bot] AutoPilot engine starting (per-user mode)");
+  await runBotCycleForAllUsers();
   botLoopTimer = setInterval(async () => {
-    await runBotCycle();
+    await runBotCycleForAllUsers();
   }, 5 * 60 * 1000);
 }
 

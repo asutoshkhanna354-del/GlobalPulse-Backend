@@ -17,10 +17,13 @@ import bitcoinAnalysisRouter from "./bitcoin-analysis";
 import pushRouter from "./push";
 import nseCandlesRouter from "./nse-candles";
 import botRouter from "./bot";
+import brokerRouter from "./broker";
+import authRouter from "./auth";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(authRouter);
 router.use(marketDataRouter);
 router.use(economicRouter);
 router.use(geopoliticalRouter);
@@ -38,5 +41,6 @@ router.use(bitcoinAnalysisRouter);
 router.use("/push", pushRouter);
 router.use(nseCandlesRouter);
 router.use(botRouter);
+router.use(brokerRouter);
 
 export default router;

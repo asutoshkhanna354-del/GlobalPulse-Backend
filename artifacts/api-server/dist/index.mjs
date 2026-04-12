@@ -20485,27 +20485,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router21;
+    module.exports = Router22;
     module.exports.Route = Route;
-    function Router21(options) {
-      if (!(this instanceof Router21)) {
-        return new Router21(options);
+    function Router22(options) {
+      if (!(this instanceof Router22)) {
+        return new Router22(options);
       }
       const opts = options || {};
-      function router21(req, res, next) {
-        router21.handle(req, res, next);
+      function router22(req, res, next) {
+        router22.handle(req, res, next);
       }
-      Object.setPrototypeOf(router21, this);
-      router21.caseSensitive = opts.caseSensitive;
-      router21.mergeParams = opts.mergeParams;
-      router21.params = {};
-      router21.strict = opts.strict;
-      router21.stack = [];
-      return router21;
+      Object.setPrototypeOf(router22, this);
+      router22.caseSensitive = opts.caseSensitive;
+      router22.mergeParams = opts.mergeParams;
+      router22.params = {};
+      router22.strict = opts.strict;
+      router22.stack = [];
+      return router22;
     }
-    Router21.prototype = function() {
+    Router22.prototype = function() {
     };
-    Router21.prototype.param = function param(name, fn) {
+    Router22.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -20525,7 +20525,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router21.prototype.handle = function handle(req, res, callback) {
+    Router22.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20652,7 +20652,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router21.prototype.use = function use(handler) {
+    Router22.prototype.use = function use(handler) {
       let offset = 0;
       let path2 = "/";
       if (typeof handler !== "function") {
@@ -20685,7 +20685,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router21.prototype.route = function route(path2) {
+    Router22.prototype.route = function route(path2) {
       const route2 = new Route(path2);
       const layer = new Layer(path2, {
         sensitive: this.caseSensitive,
@@ -20700,7 +20700,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router21.prototype[method] = function(path2) {
+      Router22.prototype[method] = function(path2) {
         const route = this.route(path2);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20883,13 +20883,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router21 = require_router();
+    var Router22 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports2 = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router21 = null;
+      var router22 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20898,13 +20898,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router21 === null) {
-            router21 = new Router21({
+          if (router22 === null) {
+            router22 = new Router22({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router21;
+          return router22;
         }
       });
     };
@@ -20975,15 +20975,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router21 = this.router;
+      var router22 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router21.use(path2, fn2);
+          return router22.use(path2, fn2);
         }
         debug(".use app under %s", path2);
         fn2.mountpath = path2;
         fn2.parent = this;
-        router21.use(path2, function mounted_app(req, res, next) {
+        router22.use(path2, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23510,7 +23510,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router21 = require_router();
+    var Router22 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module.exports = createApplication;
@@ -23532,8 +23532,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router21.Route;
-    exports2.Router = Router21;
+    exports2.Route = Router22.Route;
+    exports2.Router = Router22;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -29592,7 +29592,7 @@ var require_utils_webcrypto = __commonJS({
     var nodeCrypto = __require("crypto");
     module.exports = {
       postgresMd5PasswordHash,
-      randomBytes,
+      randomBytes: randomBytes2,
       deriveKey,
       sha256,
       hashByName,
@@ -29602,7 +29602,7 @@ var require_utils_webcrypto = __commonJS({
     var webCrypto = nodeCrypto.webcrypto || globalThis.crypto;
     var subtleCrypto = webCrypto.subtle;
     var textEncoder = new TextEncoder();
-    function randomBytes(length) {
+    function randomBytes2(length) {
       return webCrypto.getRandomValues(Buffer.alloc(length));
     }
     async function md5(string4) {
@@ -34152,7 +34152,7 @@ var require_bn = __commonJS({
         assert2((this.negative | num.negative) === 0);
         return this.iuand(num);
       };
-      BN.prototype.and = function and5(num) {
+      BN.prototype.and = function and3(num) {
         if (this.length > num.length) return this.clone().iand(num);
         return num.clone().iand(this);
       };
@@ -38228,12 +38228,12 @@ var require_jwa = __commonJS({
       };
     }
     var bufferEqual;
-    var timingSafeEqual = "timingSafeEqual" in crypto2 ? function timingSafeEqual2(a, b) {
+    var timingSafeEqual2 = "timingSafeEqual" in crypto2 ? function timingSafeEqual3(a, b) {
       if (a.byteLength !== b.byteLength) {
         return false;
       }
       return crypto2.timingSafeEqual(a, b);
-    } : function timingSafeEqual2(a, b) {
+    } : function timingSafeEqual3(a, b) {
       if (!bufferEqual) {
         bufferEqual = require_buffer_equal_constant_time();
       }
@@ -38242,7 +38242,7 @@ var require_jwa = __commonJS({
     function createHmacVerifier(bits) {
       return function verify(thing, signature, secret) {
         var computedSig = createHmacSigner(bits)(thing, secret);
-        return timingSafeEqual(Buffer2.from(signature), Buffer2.from(computedSig));
+        return timingSafeEqual2(Buffer2.from(signature), Buffer2.from(computedSig));
       };
     }
     function createKeySigner(bits) {
@@ -42299,7 +42299,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes, createHash } = __require("crypto");
+    var { randomBytes: randomBytes2, createHash } = __require("crypto");
     var { Duplex, Readable } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -42829,7 +42829,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes(16).toString("base64");
+      const key = randomBytes2(16).toString("base64");
       const request2 = isSecure ? https2.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -43716,12 +43716,12 @@ var require_websocket_server = __commonJS({
 import http from "http";
 
 // src/app.ts
-var import_express21 = __toESM(require_express2(), 1);
+var import_express22 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express20 = __toESM(require_express2(), 1);
+var import_express21 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -55042,6 +55042,7 @@ __export(schema_exports, {
   insertPushSubscriptionSchema: () => insertPushSubscriptionSchema,
   insertSocialPostSchema: () => insertSocialPostSchema,
   insertUsdSignalSchema: () => insertUsdSignalSchema,
+  insertUserSchema: () => insertUserSchema,
   insertWatchlistSchema: () => insertWatchlistSchema,
   ipoListingsTable: () => ipoListingsTable,
   marketAssetsTable: () => marketAssetsTable,
@@ -55050,6 +55051,8 @@ __export(schema_exports, {
   pushSubscriptionsTable: () => pushSubscriptionsTable,
   socialPostsTable: () => socialPostsTable,
   usdSignalsTable: () => usdSignalsTable,
+  userSessionsTable: () => userSessionsTable,
+  usersTable: () => usersTable,
   watchlistTable: () => watchlistTable
 });
 
@@ -66668,6 +66671,7 @@ var watchlistTable = pgTable("watchlist", {
 var insertWatchlistSchema = createInsertSchema(watchlistTable).omit({ id: true, addedAt: true });
 var botTradesTable = pgTable("bot_trades", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   symbol: text("symbol").notNull(),
   symbolLabel: text("symbol_label").notNull(),
   direction: text("direction").notNull(),
@@ -66690,6 +66694,7 @@ var botTradesTable = pgTable("bot_trades", {
 var insertBotTradeSchema = createInsertSchema(botTradesTable).omit({ id: true, createdAt: true });
 var botSettingsTable = pgTable("bot_settings", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   isRunning: boolean("is_running").notNull().default(true),
   riskPercent: real("risk_percent").notNull().default(1),
   maxOpenTrades: integer("max_open_trades").notNull().default(5),
@@ -66715,6 +66720,7 @@ var pushSubscriptionsTable = pgTable("push_subscriptions", {
 var insertPushSubscriptionSchema = createInsertSchema(pushSubscriptionsTable).omit({ id: true, createdAt: true });
 var brokerConnectionsTable = pgTable("broker_connections", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   broker: text("broker").notNull(),
   label: text("label").notNull(),
   apiKey: text("api_key").notNull(),
@@ -66726,6 +66732,21 @@ var brokerConnectionsTable = pgTable("broker_connections", {
   connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow()
 });
 var insertBrokerConnectionSchema = createInsertSchema(brokerConnectionsTable).omit({ id: true, connectedAt: true });
+var usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+});
+var insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
+var userSessionsTable = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  token: text("token").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull()
+});
 
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
@@ -79111,19 +79132,306 @@ var nse_candles_default = router17;
 
 // src/routes/bot.ts
 var import_express18 = __toESM(require_express2(), 1);
-var router18 = (0, import_express18.Router)();
-router18.get("/bot/trades", async (_req, res) => {
+
+// src/lib/authMiddleware.ts
+async function requireAuth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  const token = header.slice(7);
   try {
-    const trades = await db.select().from(botTradesTable).orderBy(desc(botTradesTable.createdAt)).limit(100);
+    const now = /* @__PURE__ */ new Date();
+    const [session] = await db.select({ userId: userSessionsTable.userId }).from(userSessionsTable).where(and(eq(userSessionsTable.token, token), gt(userSessionsTable.expiresAt, now))).limit(1);
+    if (!session) return res.status(401).json({ error: "Session expired or invalid" });
+    const [user] = await db.select({ id: usersTable.id, username: usersTable.username, email: usersTable.email }).from(usersTable).where(eq(usersTable.id, session.userId)).limit(1);
+    if (!user) return res.status(401).json({ error: "User not found" });
+    req.userId = user.id;
+    req.authUser = user;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Auth check failed" });
+  }
+}
+async function optionalAuth(req, _res, next) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return next();
+  const token = header.slice(7);
+  try {
+    const now = /* @__PURE__ */ new Date();
+    const [session] = await db.select({ userId: userSessionsTable.userId }).from(userSessionsTable).where(and(eq(userSessionsTable.token, token), gt(userSessionsTable.expiresAt, now))).limit(1);
+    if (session) {
+      req.userId = session.userId;
+    }
+  } catch {
+  }
+  next();
+}
+
+// src/lib/botEngine.ts
+var ASSETS = [
+  { symbol: "BTCUSD", label: "Bitcoin", category: "crypto" },
+  { symbol: "XAUUSD", label: "Gold", category: "commodity" },
+  { symbol: "XAGUSD", label: "Silver", category: "commodity" },
+  { symbol: "EURUSD", label: "EUR/USD", category: "forex" },
+  { symbol: "NIFTY50", label: "Nifty 50", category: "index" }
+];
+var botLoopTimer = null;
+var initialized = false;
+async function ensureUserBotSettings(userId) {
+  try {
+    const existing = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
+    if (existing.length === 0) {
+      await db.insert(botSettingsTable).values({
+        userId,
+        isRunning: true,
+        riskPercent: 1,
+        maxOpenTrades: 1e4,
+        enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
+        enableScalp: true,
+        enableIntraday: true,
+        enableSwing: true,
+        virtualBalance: 1e4
+      });
+      logger.info(`[bot] Default settings created for user ${userId}`);
+    }
+  } catch (e) {
+    logger.warn(`[bot] ensureUserBotSettings(${userId}): ${e}`);
+  }
+}
+var QUOTE_URL_BASE = process.env.SELF_API_URL ?? "http://localhost:8080/api";
+async function getLivePrice(symbol2) {
+  try {
+    const assets = await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.symbol, symbol2)).limit(1);
+    if (assets[0]?.price) return assets[0].price;
+  } catch {
+  }
+  try {
+    const r = await fetch(`${QUOTE_URL_BASE}/indicator/quote/${encodeURIComponent(symbol2)}`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.price) return d.price;
+    }
+  } catch {
+  }
+  return null;
+}
+var TRADE_MAX_AGE_MS = {
+  SCALP: 2 * 60 * 60 * 1e3,
+  INTRADAY: 8 * 60 * 60 * 1e3,
+  SWING: 72 * 60 * 60 * 1e3
+};
+async function markUserTradesClosed(userId) {
+  try {
+    const trades = await db.select().from(botTradesTable).where(and(eq(botTradesTable.status, "open"), eq(botTradesTable.userId, userId)));
+    for (const trade of trades) {
+      const price = await getLivePrice(trade.symbol);
+      if (!price) continue;
+      const dir = trade.direction === "BUY" ? 1 : -1;
+      const pnlPct = dir * ((price - trade.entryPrice) / trade.entryPrice) * 100;
+      const pnl = pnlPct / 100 * trade.entryPrice * trade.lotSize;
+      let status = "open";
+      let closeReason = null;
+      const ageMs = Date.now() - new Date(trade.createdAt).getTime();
+      const maxAge = TRADE_MAX_AGE_MS[trade.tradeType ?? "SWING"] ?? TRADE_MAX_AGE_MS.SWING;
+      const expired = ageMs > maxAge;
+      if (trade.direction === "BUY") {
+        if (price >= trade.targetPrice) {
+          status = "closed_profit";
+          closeReason = "Target hit";
+        } else if (price <= trade.stopLoss) {
+          status = "closed_loss";
+          closeReason = "Stop loss hit";
+        } else if (expired) {
+          status = pnl >= 0 ? "closed_profit" : "closed_loss";
+          closeReason = `Expired (${trade.tradeType})`;
+        }
+      } else {
+        if (price <= trade.targetPrice) {
+          status = "closed_profit";
+          closeReason = "Target hit";
+        } else if (price >= trade.stopLoss) {
+          status = "closed_loss";
+          closeReason = "Stop loss hit";
+        } else if (expired) {
+          status = pnl >= 0 ? "closed_profit" : "closed_loss";
+          closeReason = `Expired (${trade.tradeType})`;
+        }
+      }
+      await db.update(botTradesTable).set({
+        currentPrice: parseFloat(price.toFixed(4)),
+        pnl: parseFloat(pnl.toFixed(2)),
+        pnlPercent: parseFloat(pnlPct.toFixed(2)),
+        status,
+        ...status !== "open" ? { closedAt: /* @__PURE__ */ new Date(), closeReason } : {}
+      }).where(eq(botTradesTable.id, trade.id));
+      if (status !== "open") {
+        await db.execute(
+          `UPDATE bot_settings SET virtual_balance = virtual_balance + ${parseFloat(pnl.toFixed(2))}, updated_at = NOW() WHERE user_id = ${userId}`
+        );
+        logger.info(`[bot] user=${userId} Trade closed: ${trade.direction} ${trade.symbol} \u2192 ${status} P&L: $${pnl.toFixed(2)}`);
+      }
+    }
+  } catch (err) {
+    logger.warn(`[bot] markUserTradesClosed(${userId}): ${err}`);
+  }
+}
+async function generateBotSignalForAsset(symbol2, label, settings) {
+  const ai = getOpenAiBtc();
+  if (!ai) return generateRuleBasedSignal(symbol2, label);
+  const price = await getLivePrice(symbol2);
+  const news = await db.select().from(newsItemsTable).limit(5);
+  const newsText = news.map((n) => `${n.headline}: ${n.summary}`).join("; ").slice(0, 600);
+  let ohlcBars = [];
+  try {
+    ohlcBars = await fetchOHLC(symbol2.replace("USD", "/USD").replace("XAUUSD", "GC=F").replace("XAGUSD", "SI=F").replace("NIFTY50", "^NSEI"), "1d", 14);
+  } catch {
+  }
+  const priceStr = price ? `$${price.toFixed(2)}` : "unknown";
+  const ohlcStr = ohlcBars.length > 0 ? ohlcBars.slice(-5).map((b) => `O:${b.open?.toFixed(2)} H:${b.high?.toFixed(2)} L:${b.low?.toFixed(2)} C:${b.close?.toFixed(2)}`).join(" | ") : "No OHLC";
+  const allowedTypes = [
+    settings.enableScalp && "SCALP",
+    settings.enableIntraday && "INTRADAY",
+    settings.enableSwing && "SWING"
+  ].filter(Boolean).join(", ");
+  const prompt = `You are an expert algorithmic trader. Analyze ${label} (${symbol2}).
+Current price: ${priceStr}
+Recent OHLC (last 5 bars): ${ohlcStr}
+Recent market news: ${newsText}
+
+Task: Generate a precise paper trading signal.
+Available trade types: ${allowedTypes}
+Risk per trade: ${settings.riskPercent}%
+
+Respond ONLY with this JSON (no markdown):
+{
+  "direction": "BUY" | "SELL" | "NEUTRAL",
+  "confidence": 55-95,
+  "tradeType": "SCALP" | "INTRADAY" | "SWING",
+  "targetPct": <target % from entry, e.g. 1.5>,
+  "slPct": <stop loss % from entry, e.g. 0.7>,
+  "reasoning": "<2-3 concise sentences>"
+}`;
+  try {
+    const resp = await ai.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 300,
+      temperature: 0.3
+    });
+    const raw = resp.choices[0]?.message?.content?.trim() ?? "";
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    const json3 = JSON.parse(cleaned);
+    if (!json3.direction || !json3.confidence) return null;
+    return {
+      direction: json3.direction,
+      confidence: Math.min(95, Math.max(50, Number(json3.confidence))),
+      reasoning: json3.reasoning ?? "AI signal",
+      tradeType: json3.tradeType ?? "SWING",
+      targetPct: Math.max(0.3, Math.min(5, Number(json3.targetPct) || 1.5)),
+      slPct: Math.max(0.2, Math.min(3, Number(json3.slPct) || 0.8))
+    };
+  } catch (e) {
+    logger.warn(`[bot] AI parse failed for ${symbol2}: ${e}`);
+    return generateRuleBasedSignal(symbol2, label);
+  }
+}
+function generateRuleBasedSignal(symbol2, label) {
+  const r = Math.random();
+  const direction = r < 0.45 ? "BUY" : r < 0.9 ? "SELL" : "NEUTRAL";
+  if (direction === "NEUTRAL") return null;
+  return {
+    direction,
+    confidence: Math.floor(55 + Math.random() * 25),
+    reasoning: `Rule-based signal for ${label}: momentum analysis suggests ${direction} opportunity.`,
+    tradeType: ["SCALP", "INTRADAY", "SWING"][Math.floor(Math.random() * 3)],
+    targetPct: 0.8 + Math.random() * 1.5,
+    slPct: 0.4 + Math.random() * 0.6
+  };
+}
+async function runBotCycleForUser(userId) {
+  try {
+    const [settings] = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
+    if (!settings?.isRunning) return;
+    await markUserTradesClosed(userId);
+    const openTrades = await db.select().from(botTradesTable).where(and(eq(botTradesTable.status, "open"), eq(botTradesTable.userId, userId)));
+    if (openTrades.length >= settings.maxOpenTrades) return;
+    const activeSymbols = settings.enabledAssets ?? ["BTCUSD", "XAUUSD"];
+    const knownLabels = Object.fromEntries(ASSETS.map((a) => [a.symbol, a.label]));
+    for (const sym of activeSymbols) {
+      const alreadyOpen = openTrades.some((t) => t.symbol === sym);
+      if (alreadyOpen) continue;
+      const signal = await generateBotSignalForAsset(sym, knownLabels[sym] ?? sym, settings);
+      if (!signal || signal.direction === "NEUTRAL" || signal.confidence < 60) continue;
+      const price = await getLivePrice(sym);
+      if (!price) continue;
+      const targetPrice = signal.direction === "BUY" ? price * (1 + signal.targetPct / 100) : price * (1 - signal.targetPct / 100);
+      const stopLoss = signal.direction === "BUY" ? price * (1 - signal.slPct / 100) : price * (1 + signal.slPct / 100);
+      await db.insert(botTradesTable).values({
+        userId,
+        symbol: sym,
+        symbolLabel: knownLabels[sym] ?? sym,
+        direction: signal.direction,
+        entryPrice: parseFloat(price.toFixed(4)),
+        targetPrice: parseFloat(targetPrice.toFixed(4)),
+        stopLoss: parseFloat(stopLoss.toFixed(4)),
+        currentPrice: parseFloat(price.toFixed(4)),
+        pnl: 0,
+        pnlPercent: 0,
+        status: "open",
+        tradeType: signal.tradeType,
+        confidence: signal.confidence,
+        reasoning: signal.reasoning,
+        lotSize: 1,
+        riskPercent: settings.riskPercent
+      });
+      logger.info(`[bot] user=${userId} New trade: ${signal.direction} ${sym} @ ${price}`);
+    }
+  } catch (err) {
+    logger.error(`[bot] runBotCycleForUser(${userId}): ${err}`);
+  }
+}
+async function runBotCycleForAllUsers() {
+  try {
+    const rows = await db.execute(
+      `SELECT DISTINCT user_id FROM bot_settings WHERE is_running = true AND user_id IS NOT NULL`
+    );
+    const userIds = rows.rows?.map((r) => Number(r.user_id)) ?? [];
+    if (userIds.length === 0) return;
+    logger.info(`[bot] Running cycles for ${userIds.length} user(s)`);
+    for (const uid of userIds) {
+      await runBotCycleForUser(uid);
+    }
+  } catch (err) {
+    logger.error(`[bot] runBotCycleForAllUsers: ${err}`);
+  }
+}
+async function startBotEngine() {
+  if (initialized) return;
+  initialized = true;
+  logger.info("[bot] AutoPilot engine starting (per-user mode)");
+  await runBotCycleForAllUsers();
+  botLoopTimer = setInterval(async () => {
+    await runBotCycleForAllUsers();
+  }, 5 * 60 * 1e3);
+}
+
+// src/routes/bot.ts
+var router18 = (0, import_express18.Router)();
+router18.get("/bot/trades", requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const trades = await db.select().from(botTradesTable).where(eq(botTradesTable.userId, userId)).orderBy(desc(botTradesTable.createdAt)).limit(100);
     res.json({ trades });
   } catch (err) {
     logger.error(`[bot/trades] ${err}`);
     res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
-router18.get("/bot/stats", async (_req, res) => {
+router18.get("/bot/stats", requireAuth, async (req, res) => {
   try {
-    const allTrades = await db.select().from(botTradesTable).orderBy(desc(botTradesTable.createdAt)).limit(200);
+    const userId = req.userId;
+    const allTrades = await db.select().from(botTradesTable).where(eq(botTradesTable.userId, userId)).orderBy(desc(botTradesTable.createdAt)).limit(200);
     const closed = allTrades.filter((t) => t.status !== "open");
     const open = allTrades.filter((t) => t.status === "open");
     const wins = closed.filter((t) => t.status === "closed_profit");
@@ -79132,7 +79440,7 @@ router18.get("/bot/stats", async (_req, res) => {
     const unrealizedPnl = open.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
     const winRate = closed.length > 0 ? Math.round(wins.length / closed.length * 100) : 0;
     const avgConfidence = allTrades.length > 0 ? Math.round(allTrades.reduce((s, t) => s + t.confidence, 0) / allTrades.length) : 0;
-    const settings = await db.select().from(botSettingsTable).limit(1);
+    const [settings] = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
     res.json({
       openTrades: open.length,
       closedTrades: closed.length,
@@ -79142,18 +79450,20 @@ router18.get("/bot/stats", async (_req, res) => {
       wins: wins.length,
       losses: losses.length,
       avgConfidence,
-      isRunning: settings[0]?.isRunning ?? true,
-      virtualBalance: settings[0]?.virtualBalance ?? 1e4
+      isRunning: settings?.isRunning ?? true,
+      virtualBalance: settings?.virtualBalance ?? 1e4
     });
   } catch (err) {
     logger.error(`[bot/stats] ${err}`);
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
-router18.get("/bot/settings", async (_req, res) => {
+router18.get("/bot/settings", requireAuth, async (req, res) => {
   try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    if (!rows[0]) return res.json({
+    const userId = req.userId;
+    await ensureUserBotSettings(userId);
+    const [row] = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
+    res.json(row ?? {
       isRunning: true,
       riskPercent: 1,
       maxOpenTrades: 1e4,
@@ -79163,31 +79473,34 @@ router18.get("/bot/settings", async (_req, res) => {
       enableSwing: true,
       virtualBalance: 1e4
     });
-    res.json(rows[0]);
   } catch (err) {
     logger.error(`[bot/settings] ${err}`);
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
-router18.patch("/bot/settings", async (req, res) => {
+router18.patch("/bot/settings", requireAuth, async (req, res) => {
   try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    if (!rows[0]) {
-      await db.insert(botSettingsTable).values({ ...req.body, updatedAt: /* @__PURE__ */ new Date() });
+    const userId = req.userId;
+    await ensureUserBotSettings(userId);
+    const [existing] = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
+    const { userId: _u, id: _i, ...safeBody } = req.body;
+    if (existing) {
+      await db.update(botSettingsTable).set({ ...safeBody, updatedAt: /* @__PURE__ */ new Date() }).where(eq(botSettingsTable.id, existing.id));
     } else {
-      await db.update(botSettingsTable).set({ ...req.body, updatedAt: /* @__PURE__ */ new Date() }).where(eq(botSettingsTable.id, rows[0].id));
+      await db.insert(botSettingsTable).values({ ...safeBody, userId, updatedAt: /* @__PURE__ */ new Date() });
     }
-    const updated = await db.select().from(botSettingsTable).limit(1);
-    res.json(updated[0]);
+    const [updated] = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
+    res.json(updated);
   } catch (err) {
     logger.error(`[bot/settings PATCH] ${err}`);
     res.status(500).json({ error: "Failed to update settings" });
   }
 });
-router18.post("/bot/toggle", async (_req, res) => {
+router18.post("/bot/toggle", requireAuth, async (req, res) => {
   try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    const current = rows[0];
+    const userId = req.userId;
+    await ensureUserBotSettings(userId);
+    const [current] = await db.select().from(botSettingsTable).where(eq(botSettingsTable.userId, userId)).limit(1);
     if (!current) return res.status(404).json({ error: "Settings not found" });
     const newState = !current.isRunning;
     await db.update(botSettingsTable).set({ isRunning: newState, updatedAt: /* @__PURE__ */ new Date() }).where(eq(botSettingsTable.id, current.id));
@@ -79197,22 +79510,24 @@ router18.post("/bot/toggle", async (_req, res) => {
     res.status(500).json({ error: "Failed to toggle bot" });
   }
 });
-router18.delete("/bot/trades", async (_req, res) => {
+router18.delete("/bot/trades", requireAuth, async (req, res) => {
   try {
-    await db.delete(botTradesTable).where(ne(botTradesTable.status, "open"));
+    const userId = req.userId;
+    await db.delete(botTradesTable).where(and(eq(botTradesTable.userId, userId), ne(botTradesTable.status, "open")));
     res.json({ success: true });
   } catch (err) {
     logger.error(`[bot/trades DELETE] ${err}`);
     res.status(500).json({ error: "Failed to clear history" });
   }
 });
-router18.patch("/bot/trades/:id/close", async (req, res) => {
+router18.patch("/bot/trades/:id/close", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId;
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "Invalid trade id" });
-    const [trade] = await db.select().from(botTradesTable).where(eq(botTradesTable.id, id));
+    const [trade] = await db.select().from(botTradesTable).where(and(eq(botTradesTable.id, id), eq(botTradesTable.userId, userId)));
     if (!trade) return res.status(404).json({ error: "Trade not found" });
-    if (trade.status !== "open") return res.status(400).json({ error: "Trade is already closed" });
+    if (trade.status !== "open") return res.status(400).json({ error: "Trade already closed" });
     const currentPrice = typeof req.body.currentPrice === "number" ? req.body.currentPrice : trade.currentPrice ?? trade.entryPrice;
     const pnl = trade.direction === "BUY" ? (currentPrice - trade.entryPrice) * (trade.lotSize ?? 1) : (trade.entryPrice - currentPrice) * (trade.lotSize ?? 1);
     const pnlPercent = (currentPrice - trade.entryPrice) / trade.entryPrice * 100 * (trade.direction === "BUY" ? 1 : -1);
@@ -79223,8 +79538,11 @@ router18.patch("/bot/trades/:id/close", async (req, res) => {
       pnlPercent: parseFloat(pnlPercent.toFixed(2)),
       currentPrice: parseFloat(currentPrice.toFixed(4)),
       closedAt: /* @__PURE__ */ new Date(),
-      closeReason: req.body.reason || "Manual close from chart"
+      closeReason: req.body.reason || "Manual close"
     }).where(eq(botTradesTable.id, id)).returning();
+    await db.execute(
+      `UPDATE bot_settings SET virtual_balance = virtual_balance + ${parseFloat(pnl.toFixed(2))}, updated_at = NOW() WHERE user_id = ${userId}`
+    );
     res.json({ success: true, trade: updated });
   } catch (err) {
     logger.error(`[bot/trades CLOSE] ${err}`);
@@ -79401,9 +79719,10 @@ async function verifyBrokerConnection(conn) {
 
 // src/routes/broker.ts
 var router19 = (0, import_express19.Router)();
-router19.get("/broker/connections", async (_req, res) => {
+router19.get("/broker/connections", requireAuth, async (req, res) => {
   try {
-    const rows = await db.select().from(brokerConnectionsTable).orderBy(brokerConnectionsTable.connectedAt);
+    const userId = req.userId;
+    const rows = await db.select().from(brokerConnectionsTable).where(eq(brokerConnectionsTable.userId, userId)).orderBy(brokerConnectionsTable.connectedAt);
     const safe = rows.map((r) => ({
       id: r.id,
       broker: r.broker,
@@ -79419,11 +79738,13 @@ router19.get("/broker/connections", async (_req, res) => {
     res.status(500).json({ error: "Failed to list connections" });
   }
 });
-router19.post("/broker/connect", async (req, res) => {
+router19.post("/broker/connect", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId;
     const { broker, label, apiKey, apiSecret, accessToken, accountId, environment } = req.body;
     if (!broker || !apiKey) return res.status(400).json({ error: "broker and apiKey are required" });
     const [conn] = await db.insert(brokerConnectionsTable).values({
+      userId,
       broker,
       label: label || broker,
       apiKey,
@@ -79448,30 +79769,33 @@ router19.post("/broker/connect", async (req, res) => {
     res.status(500).json({ error: "Failed to connect broker" });
   }
 });
-router19.delete("/broker/connections/:id", async (req, res) => {
+router19.delete("/broker/connections/:id", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId;
     const id = parseInt(req.params.id);
-    await db.delete(brokerConnectionsTable).where(eq(brokerConnectionsTable.id, id));
+    await db.delete(brokerConnectionsTable).where(and(eq(brokerConnectionsTable.id, id), eq(brokerConnectionsTable.userId, userId)));
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to remove connection" });
   }
 });
-router19.get("/broker/connections/order-list", async (_req, res) => {
+router19.get("/broker/connections/order-list", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId;
     const rows = await db.select({
       id: brokerConnectionsTable.id,
       broker: brokerConnectionsTable.broker,
       label: brokerConnectionsTable.label,
       environment: brokerConnectionsTable.environment
-    }).from(brokerConnectionsTable).where(eq(brokerConnectionsTable.isActive, true));
+    }).from(brokerConnectionsTable).where(and(eq(brokerConnectionsTable.isActive, true), eq(brokerConnectionsTable.userId, userId)));
     res.json({ connections: rows });
   } catch {
     res.json({ connections: [] });
   }
 });
-router19.post("/broker/order", async (req, res) => {
+router19.post("/broker/order", optionalAuth, async (req, res) => {
   try {
+    const userId = req.userId ?? null;
     const { brokerId, symbol: symbol2, symbolLabel, direction, quantity, price, orderType, tradeType, stopLossPercent, targetPercent } = req.body;
     const slPct = parseFloat(stopLossPercent ?? 2);
     const tpPct = parseFloat(targetPercent ?? 4);
@@ -79480,6 +79804,7 @@ router19.post("/broker/order", async (req, res) => {
     const tp = direction === "BUY" ? price * (1 + tpPct / 100) : price * (1 - tpPct / 100);
     if (!brokerId || brokerId === "paper") {
       const [trade] = await db.insert(botTradesTable).values({
+        userId,
         symbol: symbol2,
         symbolLabel: symbolLabel || symbol2,
         direction,
@@ -79514,28 +79839,131 @@ router19.post("/broker/order", async (req, res) => {
 });
 var broker_default = router19;
 
-// src/routes/index.ts
+// src/routes/auth.ts
+var import_express20 = __toESM(require_express2(), 1);
+import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 var router20 = (0, import_express20.Router)();
-router20.use(health_default);
-router20.use(market_data_default);
-router20.use(economic_default);
-router20.use(geopolitical_default);
-router20.use(news_default);
-router20.use(dashboard_default);
-router20.use(watchlist_default);
-router20.use(stocks_default);
-router20.use(social_default);
-router20.use(ipo_default);
-router20.use(usd_signal_default);
-router20.use(forex_calendar_default);
-router20.use("/indicator", indicator_default);
-router20.use(nifty_analysis_default);
-router20.use(bitcoin_analysis_default);
-router20.use("/push", push_default);
-router20.use(nse_candles_default);
-router20.use(bot_default);
-router20.use(broker_default);
-var routes_default = router20;
+function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+function verifyPassword(password, stored) {
+  const [salt, hash] = stored.split(":");
+  try {
+    const newHash = scryptSync(password, salt, 64);
+    const storedBuf = Buffer.from(hash, "hex");
+    return timingSafeEqual(newHash, storedBuf);
+  } catch {
+    return false;
+  }
+}
+function generateToken() {
+  return randomBytes(32).toString("hex");
+}
+function sessionExpiry() {
+  const d = /* @__PURE__ */ new Date();
+  d.setDate(d.getDate() + 30);
+  return d;
+}
+router20.post("/auth/register", async (req, res) => {
+  try {
+    const { username, email: email3, password } = req.body;
+    if (!username || !email3 || !password) {
+      return res.status(400).json({ error: "username, email and password are required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+    if (username.length < 3) {
+      return res.status(400).json({ error: "Username must be at least 3 characters" });
+    }
+    const existing = await db.select({ id: usersTable.id }).from(usersTable).where(or(eq(usersTable.email, email3.toLowerCase()), eq(usersTable.username, username))).limit(1);
+    if (existing.length > 0) {
+      return res.status(409).json({ error: "Email or username already in use" });
+    }
+    const [user] = await db.insert(usersTable).values({
+      username,
+      email: email3.toLowerCase(),
+      passwordHash: hashPassword(password)
+    }).returning({ id: usersTable.id, username: usersTable.username, email: usersTable.email });
+    const token = generateToken();
+    await db.insert(userSessionsTable).values({
+      userId: user.id,
+      token,
+      expiresAt: sessionExpiry()
+    });
+    await ensureUserBotSettings(user.id).catch(() => {
+    });
+    logger.info(`[auth] New user registered: ${username} (id=${user.id})`);
+    res.json({ success: true, token, user: { id: user.id, username: user.username, email: user.email } });
+  } catch (err) {
+    logger.error({ err }, "[auth] Register failed");
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+router20.post("/auth/login", async (req, res) => {
+  try {
+    const { email: email3, password } = req.body;
+    if (!email3 || !password) {
+      return res.status(400).json({ error: "email and password are required" });
+    }
+    const [user] = await db.select().from(usersTable).where(or(eq(usersTable.email, email3.toLowerCase()), eq(usersTable.username, email3))).limit(1);
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+    const token = generateToken();
+    await db.insert(userSessionsTable).values({
+      userId: user.id,
+      token,
+      expiresAt: sessionExpiry()
+    });
+    await ensureUserBotSettings(user.id).catch(() => {
+    });
+    logger.info(`[auth] User logged in: ${user.username} (id=${user.id})`);
+    res.json({ success: true, token, user: { id: user.id, username: user.username, email: user.email } });
+  } catch (err) {
+    logger.error({ err }, "[auth] Login failed");
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+router20.get("/auth/me", requireAuth, (req, res) => {
+  res.json({ user: req.authUser });
+});
+router20.post("/auth/logout", requireAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization.slice(7);
+    await db.delete(userSessionsTable).where(eq(userSessionsTable.token, token));
+    res.json({ success: true });
+  } catch {
+    res.json({ success: true });
+  }
+});
+var auth_default = router20;
+
+// src/routes/index.ts
+var router21 = (0, import_express21.Router)();
+router21.use(health_default);
+router21.use(auth_default);
+router21.use(market_data_default);
+router21.use(economic_default);
+router21.use(geopolitical_default);
+router21.use(news_default);
+router21.use(dashboard_default);
+router21.use(watchlist_default);
+router21.use(stocks_default);
+router21.use(social_default);
+router21.use(ipo_default);
+router21.use(usd_signal_default);
+router21.use(forex_calendar_default);
+router21.use("/indicator", indicator_default);
+router21.use(nifty_analysis_default);
+router21.use(bitcoin_analysis_default);
+router21.use("/push", push_default);
+router21.use(nse_candles_default);
+router21.use(bot_default);
+router21.use(broker_default);
+var routes_default = router21;
 
 // src/lib/seed.ts
 async function seedDatabase() {
@@ -79846,608 +80274,135 @@ async function seedDatabase() {
   logger.info("Database seeded successfully.");
 }
 
-// src/lib/botEngine.ts
-var ASSETS = [
-  { symbol: "BTCUSD", label: "Bitcoin", category: "crypto" },
-  { symbol: "XAUUSD", label: "Gold", category: "commodity" },
-  { symbol: "XAGUSD", label: "Silver", category: "commodity" },
-  { symbol: "EURUSD", label: "EUR/USD", category: "forex" },
-  { symbol: "NIFTY50", label: "Nifty 50", category: "index" }
-];
-var botLoopTimer = null;
-var initialized = false;
-async function ensureSettingsRow() {
-  try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    if (rows.length === 0) {
-      await db.insert(botSettingsTable).values({
-        isRunning: true,
-        riskPercent: 1,
-        maxOpenTrades: 1e4,
-        enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
-        enableScalp: true,
-        enableIntraday: true,
-        enableSwing: true,
-        virtualBalance: 1e4
-      });
-      logger.info("[bot] Default settings created");
-    }
-  } catch (e) {
-    logger.warn(`[bot] ensureSettingsRow: ${e}`);
-  }
-}
-var DEFAULT_SETTINGS = {
-  id: 1,
-  isRunning: true,
-  riskPercent: 1,
-  maxOpenTrades: 1e4,
-  enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
-  enableScalp: true,
-  enableIntraday: true,
-  enableSwing: true,
-  virtualBalance: 1e4,
-  updatedAt: /* @__PURE__ */ new Date()
-};
-async function getSettings() {
-  try {
-    const rows = await db.select().from(botSettingsTable).limit(1);
-    return rows[0] ?? DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
-var QUOTE_URL_BASE = process.env.SELF_API_URL ?? "http://localhost:8080/api";
-async function getLivePrice(symbol2) {
-  try {
-    const assets = await db.select().from(marketAssetsTable).where(eq(marketAssetsTable.symbol, symbol2)).limit(1);
-    if (assets[0]?.price) return assets[0].price;
-  } catch {
-  }
-  try {
-    const r = await fetch(`${QUOTE_URL_BASE}/indicator/quote/${encodeURIComponent(symbol2)}`);
-    if (r.ok) {
-      const d = await r.json();
-      if (d?.price) return d.price;
-    }
-  } catch {
-  }
-  return null;
-}
-async function getOpenTrades() {
-  try {
-    return await db.select().from(botTradesTable).where(eq(botTradesTable.status, "open"));
-  } catch {
-    return [];
-  }
-}
-var TRADE_MAX_AGE_MS = {
-  SCALP: 2 * 60 * 60 * 1e3,
-  // 2 hours
-  INTRADAY: 8 * 60 * 60 * 1e3,
-  // 8 hours
-  SWING: 72 * 60 * 60 * 1e3
-  // 3 days
-};
-async function markTradesClosed(trades) {
-  for (const trade of trades) {
-    const price = await getLivePrice(trade.symbol);
-    if (!price) continue;
-    const dir = trade.direction === "BUY" ? 1 : -1;
-    const pnlPct = dir * ((price - trade.entryPrice) / trade.entryPrice) * 100;
-    const pnl = pnlPct / 100 * trade.entryPrice * trade.lotSize;
-    let status = "open";
-    let closeReason = null;
-    const ageMs = Date.now() - new Date(trade.createdAt).getTime();
-    const maxAge = TRADE_MAX_AGE_MS[trade.tradeType ?? "SWING"] ?? TRADE_MAX_AGE_MS.SWING;
-    const expired = ageMs > maxAge;
-    if (trade.direction === "BUY") {
-      if (price >= trade.targetPrice) {
-        status = "closed_profit";
-        closeReason = "Target hit";
-      } else if (price <= trade.stopLoss) {
-        status = "closed_loss";
-        closeReason = "Stop loss hit";
-      } else if (expired) {
-        status = pnl >= 0 ? "closed_profit" : "closed_loss";
-        closeReason = `Time expired (${trade.tradeType})`;
-      }
-    } else {
-      if (price <= trade.targetPrice) {
-        status = "closed_profit";
-        closeReason = "Target hit";
-      } else if (price >= trade.stopLoss) {
-        status = "closed_loss";
-        closeReason = "Stop loss hit";
-      } else if (expired) {
-        status = pnl >= 0 ? "closed_profit" : "closed_loss";
-        closeReason = `Time expired (${trade.tradeType})`;
-      }
-    }
-    await db.update(botTradesTable).set({
-      currentPrice: parseFloat(price.toFixed(4)),
-      pnl: parseFloat(pnl.toFixed(2)),
-      pnlPercent: parseFloat(pnlPct.toFixed(2)),
-      status,
-      ...status !== "open" ? { closedAt: /* @__PURE__ */ new Date(), closeReason } : {}
-    }).where(eq(botTradesTable.id, trade.id));
-    if (status !== "open") {
-      logger.info(`[bot] Trade closed: ${trade.direction} ${trade.symbol} \u2192 ${status} | P&L: $${pnl.toFixed(2)} | Reason: ${closeReason}`);
-    }
-  }
-}
-async function generateBotSignalForAsset(symbol2, label, settings) {
-  const ai = getOpenAiBtc();
-  if (!ai) return generateRuleBasedSignal(symbol2, label);
-  const price = await getLivePrice(symbol2);
-  const news = await db.select().from(newsItemsTable).limit(5);
-  const newsText = news.map((n) => `${n.headline}: ${n.summary}`).join("; ").slice(0, 600);
-  let ohlcBars = [];
-  try {
-    ohlcBars = await fetchOHLC(symbol2.replace("USD", "/USD").replace("XAUUSD", "GC=F").replace("XAGUSD", "SI=F").replace("NIFTY50", "^NSEI"), "1d", 14);
-  } catch {
-  }
-  const priceStr = price ? `$${price.toFixed(2)}` : "unknown";
-  const ohlcStr = ohlcBars.length > 0 ? ohlcBars.slice(-5).map((b) => `O:${b.open?.toFixed(2)} H:${b.high?.toFixed(2)} L:${b.low?.toFixed(2)} C:${b.close?.toFixed(2)}`).join(" | ") : "No OHLC";
-  const allowedTypes = [
-    settings.enableScalp && "SCALP",
-    settings.enableIntraday && "INTRADAY",
-    settings.enableSwing && "SWING"
-  ].filter(Boolean).join(", ");
-  const prompt = `You are an expert algorithmic trader. Analyze ${label} (${symbol2}).
-Current price: ${priceStr}
-Recent OHLC (last 5 bars): ${ohlcStr}
-Recent market news: ${newsText}
-
-Your task: Generate a precise paper trading signal.
-Available trade types: ${allowedTypes}
-Risk per trade: ${settings.riskPercent}%
-
-Respond ONLY with this JSON (no markdown):
-{
-  "direction": "BUY" | "SELL" | "NEUTRAL",
-  "confidence": 55-95,
-  "tradeType": "SCALP" | "INTRADAY" | "SWING",
-  "targetPct": <target % from entry, e.g. 1.5>,
-  "slPct": <stop loss % from entry, e.g. 0.7>,
-  "reasoning": "<2-3 concise sentences explaining why>"
-}`;
-  try {
-    const resp = await ai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 300,
-      temperature: 0.3
-    });
-    const raw = resp.choices[0]?.message?.content?.trim() ?? "";
-    const cleaned = raw.replace(/```json|```/g, "").trim();
-    const json3 = JSON.parse(cleaned);
-    if (!json3.direction || !json3.confidence) return null;
-    return {
-      direction: json3.direction,
-      confidence: Math.min(95, Math.max(50, Number(json3.confidence))),
-      reasoning: json3.reasoning ?? "AI signal",
-      tradeType: json3.tradeType ?? "SWING",
-      targetPct: Math.max(0.3, Math.min(5, Number(json3.targetPct) || 1.5)),
-      slPct: Math.max(0.2, Math.min(3, Number(json3.slPct) || 0.8))
-    };
-  } catch (e) {
-    logger.warn(`[bot] AI parse failed for ${symbol2}: ${e}`);
-    return generateRuleBasedSignal(symbol2, label);
-  }
-}
-function generateRuleBasedSignal(symbol2, label) {
-  const r = Math.random();
-  const direction = r < 0.45 ? "BUY" : r < 0.9 ? "SELL" : "NEUTRAL";
-  if (direction === "NEUTRAL") return null;
-  return {
-    direction,
-    confidence: Math.floor(55 + Math.random() * 25),
-    reasoning: `Rule-based signal for ${label}: momentum and volatility analysis suggest ${direction} opportunity.`,
-    tradeType: ["SCALP", "INTRADAY", "SWING"][Math.floor(Math.random() * 3)],
-    targetPct: 0.8 + Math.random() * 1.5,
-    slPct: 0.4 + Math.random() * 0.6
-  };
-}
-async function runBotCycle() {
-  try {
-    const settings = await getSettings();
-    if (!settings?.isRunning) {
-      logger.info("[bot] Bot is paused \u2014 skipping cycle");
-      return;
-    }
-    const openTrades = await getOpenTrades();
-    await markTradesClosed(openTrades);
-    const freshOpen = await getOpenTrades();
-    const openCount = freshOpen.length;
-    if (openCount >= settings.maxOpenTrades) {
-      logger.info(`[bot] Max open trades (${settings.maxOpenTrades}) reached \u2014 skipping new signals`);
-      return;
-    }
-    const activeSymbols = settings.enabledAssets ?? ["BTCUSD", "XAUUSD"];
-    const knownLabels = Object.fromEntries(ASSETS.map((a) => [a.symbol, a.label]));
-    const activeAssets = activeSymbols.map((sym) => ({
-      symbol: sym,
-      label: knownLabels[sym] ?? sym
-    }));
-    for (const asset of activeAssets) {
-      const alreadyOpen = freshOpen.some((t) => t.symbol === asset.symbol);
-      if (alreadyOpen) continue;
-      const signal = await generateBotSignalForAsset(asset.symbol, asset.label, settings);
-      if (!signal || signal.direction === "NEUTRAL") continue;
-      if (signal.confidence < 60) continue;
-      const price = await getLivePrice(asset.symbol);
-      if (!price) continue;
-      const targetPrice = signal.direction === "BUY" ? price * (1 + signal.targetPct / 100) : price * (1 - signal.targetPct / 100);
-      const stopLoss = signal.direction === "BUY" ? price * (1 - signal.slPct / 100) : price * (1 + signal.slPct / 100);
-      await db.insert(botTradesTable).values({
-        symbol: asset.symbol,
-        symbolLabel: asset.label,
-        direction: signal.direction,
-        entryPrice: parseFloat(price.toFixed(4)),
-        targetPrice: parseFloat(targetPrice.toFixed(4)),
-        stopLoss: parseFloat(stopLoss.toFixed(4)),
-        currentPrice: parseFloat(price.toFixed(4)),
-        pnl: 0,
-        pnlPercent: 0,
-        status: "open",
-        tradeType: signal.tradeType,
-        confidence: signal.confidence,
-        reasoning: signal.reasoning,
-        lotSize: 1,
-        riskPercent: settings.riskPercent
-      });
-      logger.info(`[bot] New trade: ${signal.direction} ${asset.symbol} @ ${price}`);
-    }
-  } catch (err) {
-    logger.error(`[bot] Cycle error: ${err}`);
-  }
-}
-async function startBotEngine() {
-  if (initialized) return;
-  initialized = true;
-  const createTables = async () => {
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS bot_trades (
-        id SERIAL PRIMARY KEY,
-        symbol TEXT NOT NULL,
-        symbol_label TEXT NOT NULL,
-        direction TEXT NOT NULL,
-        entry_price REAL NOT NULL,
-        target_price REAL NOT NULL,
-        stop_loss REAL NOT NULL,
-        current_price REAL,
-        pnl REAL,
-        pnl_percent REAL,
-        status TEXT NOT NULL DEFAULT 'open',
-        trade_type TEXT NOT NULL DEFAULT 'SWING',
-        confidence INTEGER NOT NULL,
-        reasoning TEXT NOT NULL,
-        lot_size REAL NOT NULL DEFAULT 1,
-        risk_percent REAL NOT NULL DEFAULT 1,
-        closed_at TIMESTAMPTZ,
-        close_reason TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS bot_settings (
-        id SERIAL PRIMARY KEY,
-        is_running BOOLEAN NOT NULL DEFAULT true,
-        risk_percent REAL NOT NULL DEFAULT 1,
-        max_open_trades INTEGER NOT NULL DEFAULT 10000,
-        enabled_assets TEXT[] NOT NULL DEFAULT ARRAY['BTCUSD','XAUUSD','XAGUSD','EURUSD','NIFTY50'],
-        enable_scalp BOOLEAN NOT NULL DEFAULT true,
-        enable_intraday BOOLEAN NOT NULL DEFAULT true,
-        enable_swing BOOLEAN NOT NULL DEFAULT true,
-        virtual_balance REAL NOT NULL DEFAULT 10000,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-  };
-  try {
-    await createTables();
-    logger.info("[bot] Tables ensured");
-    await ensureSettingsRow();
-  } catch (e) {
-    logger.warn(`[bot] Table ensure failed: ${e}`);
-    await new Promise((r) => setTimeout(r, 2e3));
-    try {
-      await createTables();
-      logger.info("[bot] Tables ensured on retry (backup DB)");
-      await ensureSettingsRow();
-    } catch (e2) {
-      logger.warn(`[bot] Table ensure retry also failed: ${e2}`);
-      try {
-        await ensureSettingsRow();
-      } catch {
-      }
-    }
-  }
-  logger.info("[bot] AutoPilot engine starting");
-  await runBotCycle();
-  botLoopTimer = setInterval(async () => {
-    await runBotCycle();
-  }, 5 * 60 * 1e3);
-}
-
 // src/lib/startupMigrations.ts
-var MIGRATIONS = [
+var CREATE_TABLES = [
   `CREATE TABLE IF NOT EXISTS market_assets (
-    id SERIAL PRIMARY KEY,
-    symbol TEXT NOT NULL,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    price REAL NOT NULL,
-    change REAL NOT NULL,
-    change_percent REAL NOT NULL,
-    volume TEXT,
-    market_cap TEXT,
-    currency TEXT NOT NULL DEFAULT 'USD',
-    country TEXT,
-    flag TEXT,
-    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, symbol TEXT NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL,
+    price REAL NOT NULL, change REAL NOT NULL, change_percent REAL NOT NULL,
+    volume TEXT, market_cap TEXT, currency TEXT NOT NULL DEFAULT 'USD',
+    country TEXT, flag TEXT, last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS economic_indicators (
-    id SERIAL PRIMARY KEY,
-    country TEXT NOT NULL,
-    country_code TEXT NOT NULL,
-    flag TEXT NOT NULL,
-    indicator TEXT NOT NULL,
-    value REAL NOT NULL,
-    unit TEXT NOT NULL,
-    previous_value REAL,
-    change REAL,
-    period TEXT NOT NULL,
-    trend TEXT NOT NULL,
-    impact TEXT NOT NULL,
+    id SERIAL PRIMARY KEY, country TEXT NOT NULL, country_code TEXT NOT NULL, flag TEXT NOT NULL,
+    indicator TEXT NOT NULL, value REAL NOT NULL, unit TEXT NOT NULL, previous_value REAL,
+    change REAL, period TEXT NOT NULL, trend TEXT NOT NULL, impact TEXT NOT NULL,
     last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS economic_events (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    country TEXT NOT NULL,
-    flag TEXT NOT NULL,
-    indicator TEXT NOT NULL,
-    scheduled_at TIMESTAMPTZ NOT NULL,
-    forecast REAL,
-    previous REAL,
-    actual REAL,
-    unit TEXT NOT NULL,
-    impact TEXT NOT NULL,
-    released BOOLEAN NOT NULL DEFAULT false
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, country TEXT NOT NULL, flag TEXT NOT NULL,
+    indicator TEXT NOT NULL, scheduled_at TIMESTAMPTZ NOT NULL, forecast REAL, previous REAL,
+    actual REAL, unit TEXT NOT NULL, impact TEXT NOT NULL, released BOOLEAN NOT NULL DEFAULT false
   )`,
   `CREATE TABLE IF NOT EXISTS geopolitical_events (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    region TEXT NOT NULL,
-    countries TEXT[] NOT NULL,
-    type TEXT NOT NULL,
-    severity TEXT NOT NULL,
-    market_impact TEXT NOT NULL,
-    market_conclusion TEXT NOT NULL DEFAULT '',
-    affected_markets TEXT[] NOT NULL DEFAULT '{}',
-    affected_assets TEXT[] NOT NULL,
-    sources TEXT[] NOT NULL DEFAULT '{}',
-    start_date TEXT NOT NULL,
-    status TEXT NOT NULL,
-    casualties_reported BOOLEAN NOT NULL DEFAULT false,
-    economic_loss TEXT,
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL, region TEXT NOT NULL,
+    countries TEXT[] NOT NULL, type TEXT NOT NULL, severity TEXT NOT NULL, market_impact TEXT NOT NULL,
+    market_conclusion TEXT NOT NULL DEFAULT '', affected_markets TEXT[] NOT NULL DEFAULT '{}',
+    affected_assets TEXT[] NOT NULL, sources TEXT[] NOT NULL DEFAULT '{}', start_date TEXT NOT NULL,
+    status TEXT NOT NULL, casualties_reported BOOLEAN NOT NULL DEFAULT false, economic_loss TEXT,
     last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS news_items (
-    id SERIAL PRIMARY KEY,
-    headline TEXT NOT NULL,
-    summary TEXT NOT NULL,
-    source TEXT NOT NULL,
-    category TEXT NOT NULL,
-    impact TEXT NOT NULL,
-    sentiment TEXT NOT NULL,
-    region TEXT,
-    affected_assets TEXT[] NOT NULL,
-    published_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    market_conclusion TEXT NOT NULL,
-    is_breaking BOOLEAN NOT NULL DEFAULT false
+    id SERIAL PRIMARY KEY, headline TEXT NOT NULL, summary TEXT NOT NULL, source TEXT NOT NULL,
+    category TEXT NOT NULL, impact TEXT NOT NULL, sentiment TEXT NOT NULL, region TEXT,
+    affected_assets TEXT[] NOT NULL, published_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    market_conclusion TEXT NOT NULL, is_breaking BOOLEAN NOT NULL DEFAULT false
   )`,
   `CREATE TABLE IF NOT EXISTS social_posts (
-    id SERIAL PRIMARY KEY,
-    influencer TEXT NOT NULL,
-    handle TEXT NOT NULL,
-    platform TEXT NOT NULL,
-    content TEXT NOT NULL,
-    source TEXT NOT NULL,
-    source_url TEXT,
-    category TEXT NOT NULL,
-    market_impact TEXT NOT NULL,
-    affected_assets TEXT[] NOT NULL,
-    trading_conclusion TEXT NOT NULL,
-    sentiment TEXT NOT NULL,
-    usd_impact TEXT,
-    is_breaking BOOLEAN NOT NULL DEFAULT false,
+    id SERIAL PRIMARY KEY, influencer TEXT NOT NULL, handle TEXT NOT NULL, platform TEXT NOT NULL,
+    content TEXT NOT NULL, source TEXT NOT NULL, source_url TEXT, category TEXT NOT NULL,
+    market_impact TEXT NOT NULL, affected_assets TEXT[] NOT NULL, trading_conclusion TEXT NOT NULL,
+    sentiment TEXT NOT NULL, usd_impact TEXT, is_breaking BOOLEAN NOT NULL DEFAULT false,
     published_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS ipo_listings (
-    id SERIAL PRIMARY KEY,
-    company_name TEXT NOT NULL,
-    symbol TEXT,
-    market TEXT NOT NULL DEFAULT 'india',
-    exchange TEXT NOT NULL DEFAULT 'NSE',
-    issue_size TEXT,
-    price_range TEXT,
-    open_date TEXT,
-    close_date TEXT,
-    listing_date TEXT,
-    lot_size INTEGER,
-    ipo_type TEXT NOT NULL DEFAULT 'mainboard',
-    status TEXT NOT NULL DEFAULT 'upcoming',
-    gmp REAL,
-    subscription_qib REAL,
-    subscription_hni REAL,
-    subscription_retail REAL,
-    subscription_total REAL,
-    industry TEXT,
-    revenue TEXT,
-    profit TEXT,
-    company_description TEXT,
-    pros_text TEXT,
-    cons_text TEXT,
-    recommendation_listing TEXT,
-    recommendation_long_term TEXT,
-    total_score INTEGER,
-    listing_price REAL,
-    listing_gain_percent REAL,
-    current_price REAL,
-    source_url TEXT,
-    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, company_name TEXT NOT NULL, symbol TEXT, market TEXT NOT NULL DEFAULT 'india',
+    exchange TEXT NOT NULL DEFAULT 'NSE', issue_size TEXT, price_range TEXT, open_date TEXT,
+    close_date TEXT, listing_date TEXT, lot_size INTEGER, ipo_type TEXT NOT NULL DEFAULT 'mainboard',
+    status TEXT NOT NULL DEFAULT 'upcoming', gmp REAL, subscription_qib REAL, subscription_hni REAL,
+    subscription_retail REAL, subscription_total REAL, industry TEXT, revenue TEXT, profit TEXT,
+    company_description TEXT, pros_text TEXT, cons_text TEXT, recommendation_listing TEXT,
+    recommendation_long_term TEXT, total_score INTEGER, listing_price REAL, listing_gain_percent REAL,
+    current_price REAL, source_url TEXT, last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS usd_signals (
-    id SERIAL PRIMARY KEY,
-    direction TEXT NOT NULL,
-    confidence INTEGER NOT NULL,
-    summary TEXT NOT NULL,
-    factors TEXT[] NOT NULL,
-    dxy_value REAL,
-    gold_price REAL,
-    oil_price REAL,
-    vix_value REAL,
-    fed_signal TEXT,
-    geopolitical_risk TEXT,
-    next_update TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, direction TEXT NOT NULL, confidence INTEGER NOT NULL, summary TEXT NOT NULL,
+    factors TEXT[] NOT NULL, dxy_value REAL, gold_price REAL, oil_price REAL, vix_value REAL,
+    fed_signal TEXT, geopolitical_risk TEXT, next_update TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS forex_calendar (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    currency TEXT NOT NULL,
-    impact TEXT NOT NULL,
-    event_date TIMESTAMPTZ NOT NULL,
-    actual TEXT,
-    forecast TEXT,
-    previous TEXT,
-    affected_pairs TEXT[],
-    conclusion TEXT,
-    direction_signal TEXT,
-    source_url TEXT,
-    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, currency TEXT NOT NULL, impact TEXT NOT NULL,
+    event_date TIMESTAMPTZ NOT NULL, actual TEXT, forecast TEXT, previous TEXT, affected_pairs TEXT[],
+    conclusion TEXT, direction_signal TEXT, source_url TEXT, last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS nifty_analysis (
-    id SERIAL PRIMARY KEY,
-    analysis_type TEXT NOT NULL,
-    direction TEXT NOT NULL,
-    confidence INTEGER NOT NULL,
-    nifty_price REAL,
-    nifty_change REAL,
-    summary TEXT NOT NULL,
-    outlook TEXT NOT NULL,
-    support_levels TEXT[] NOT NULL DEFAULT '{}',
-    resistance_levels TEXT[] NOT NULL DEFAULT '{}',
-    key_factors TEXT[] NOT NULL DEFAULT '{}',
-    demand_zones TEXT[] NOT NULL DEFAULT '{}',
-    supply_zones TEXT[] NOT NULL DEFAULT '{}',
-    candle_pattern TEXT,
-    trend_strength TEXT,
-    call_put_recommendation TEXT,
-    target_price REAL,
-    stop_loss REAL,
-    timeframe TEXT,
-    next_analysis_at TIMESTAMPTZ,
-    valid_until TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, analysis_type TEXT NOT NULL, direction TEXT NOT NULL, confidence INTEGER NOT NULL,
+    nifty_price REAL, nifty_change REAL, summary TEXT NOT NULL, outlook TEXT NOT NULL,
+    support_levels TEXT[] NOT NULL DEFAULT '{}', resistance_levels TEXT[] NOT NULL DEFAULT '{}',
+    key_factors TEXT[] NOT NULL DEFAULT '{}', demand_zones TEXT[] NOT NULL DEFAULT '{}',
+    supply_zones TEXT[] NOT NULL DEFAULT '{}', candle_pattern TEXT, trend_strength TEXT,
+    call_put_recommendation TEXT, target_price REAL, stop_loss REAL, timeframe TEXT,
+    next_analysis_at TIMESTAMPTZ, valid_until TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS bitcoin_analysis (
-    id SERIAL PRIMARY KEY,
-    analysis_type TEXT NOT NULL,
-    direction TEXT NOT NULL,
-    confidence INTEGER NOT NULL,
-    btc_price REAL,
-    btc_change REAL,
-    summary TEXT NOT NULL,
-    outlook TEXT NOT NULL,
-    support_levels TEXT[] NOT NULL DEFAULT '{}',
-    resistance_levels TEXT[] NOT NULL DEFAULT '{}',
-    key_factors TEXT[] NOT NULL DEFAULT '{}',
-    demand_zones TEXT[] NOT NULL DEFAULT '{}',
-    supply_zones TEXT[] NOT NULL DEFAULT '{}',
-    candle_pattern TEXT,
-    trend_strength TEXT,
-    trade_recommendation TEXT,
-    target_price REAL,
-    stop_loss REAL,
-    timeframe TEXT,
-    next_analysis_at TIMESTAMPTZ,
-    valid_until TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, analysis_type TEXT NOT NULL, direction TEXT NOT NULL, confidence INTEGER NOT NULL,
+    btc_price REAL, btc_change REAL, summary TEXT NOT NULL, outlook TEXT NOT NULL,
+    support_levels TEXT[] NOT NULL DEFAULT '{}', resistance_levels TEXT[] NOT NULL DEFAULT '{}',
+    key_factors TEXT[] NOT NULL DEFAULT '{}', demand_zones TEXT[] NOT NULL DEFAULT '{}',
+    supply_zones TEXT[] NOT NULL DEFAULT '{}', candle_pattern TEXT, trend_strength TEXT,
+    trade_recommendation TEXT, target_price REAL, stop_loss REAL, timeframe TEXT,
+    next_analysis_at TIMESTAMPTZ, valid_until TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS watchlist (
-    id SERIAL PRIMARY KEY,
-    symbol TEXT NOT NULL,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    notes TEXT,
-    added_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, symbol TEXT NOT NULL, name TEXT NOT NULL, type TEXT NOT NULL,
+    notes TEXT, added_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS bot_trades (
-    id SERIAL PRIMARY KEY,
-    symbol TEXT NOT NULL,
-    symbol_label TEXT NOT NULL,
-    direction TEXT NOT NULL,
-    entry_price REAL NOT NULL,
-    target_price REAL NOT NULL,
-    stop_loss REAL NOT NULL,
-    current_price REAL,
-    pnl REAL,
-    pnl_percent REAL,
-    status TEXT NOT NULL DEFAULT 'open',
-    trade_type TEXT NOT NULL DEFAULT 'SWING',
-    confidence INTEGER NOT NULL,
-    reasoning TEXT NOT NULL,
-    lot_size REAL NOT NULL DEFAULT 1,
-    risk_percent REAL NOT NULL DEFAULT 1,
-    closed_at TIMESTAMPTZ,
-    close_reason TEXT,
+    id SERIAL PRIMARY KEY, user_id INTEGER, symbol TEXT NOT NULL, symbol_label TEXT NOT NULL,
+    direction TEXT NOT NULL, entry_price REAL NOT NULL, target_price REAL NOT NULL,
+    stop_loss REAL NOT NULL, current_price REAL, pnl REAL, pnl_percent REAL,
+    status TEXT NOT NULL DEFAULT 'open', trade_type TEXT NOT NULL DEFAULT 'SWING',
+    confidence INTEGER NOT NULL, reasoning TEXT NOT NULL, lot_size REAL NOT NULL DEFAULT 1,
+    risk_percent REAL NOT NULL DEFAULT 1, closed_at TIMESTAMPTZ, close_reason TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS bot_settings (
-    id SERIAL PRIMARY KEY,
-    is_running BOOLEAN NOT NULL DEFAULT true,
-    risk_percent REAL NOT NULL DEFAULT 1,
-    max_open_trades INTEGER NOT NULL DEFAULT 10000,
+    id SERIAL PRIMARY KEY, user_id INTEGER, is_running BOOLEAN NOT NULL DEFAULT true,
+    risk_percent REAL NOT NULL DEFAULT 1, max_open_trades INTEGER NOT NULL DEFAULT 10000,
     enabled_assets TEXT[] NOT NULL DEFAULT ARRAY['BTCUSD','XAUUSD','XAGUSD','EURUSD','NIFTY50'],
-    enable_scalp BOOLEAN NOT NULL DEFAULT true,
-    enable_intraday BOOLEAN NOT NULL DEFAULT true,
-    enable_swing BOOLEAN NOT NULL DEFAULT true,
-    virtual_balance REAL NOT NULL DEFAULT 10000,
+    enable_scalp BOOLEAN NOT NULL DEFAULT true, enable_intraday BOOLEAN NOT NULL DEFAULT true,
+    enable_swing BOOLEAN NOT NULL DEFAULT true, virtual_balance REAL NOT NULL DEFAULT 10000,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS push_subscriptions (
-    id SERIAL PRIMARY KEY,
-    endpoint TEXT NOT NULL,
-    p256dh_key TEXT NOT NULL,
-    auth_key TEXT NOT NULL,
-    symbol TEXT NOT NULL,
-    symbol_label TEXT NOT NULL,
-    browser_fingerprint TEXT NOT NULL,
-    last_notified_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id SERIAL PRIMARY KEY, endpoint TEXT NOT NULL, p256dh_key TEXT NOT NULL, auth_key TEXT NOT NULL,
+    symbol TEXT NOT NULL, symbol_label TEXT NOT NULL, browser_fingerprint TEXT NOT NULL,
+    last_notified_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS broker_connections (
-    id SERIAL PRIMARY KEY,
-    broker TEXT NOT NULL,
-    label TEXT NOT NULL,
-    api_key TEXT NOT NULL,
-    api_secret TEXT,
-    access_token TEXT,
-    account_id TEXT,
-    environment TEXT NOT NULL DEFAULT 'paper',
-    is_active BOOLEAN NOT NULL DEFAULT true,
+    id SERIAL PRIMARY KEY, user_id INTEGER, broker TEXT NOT NULL, label TEXT NOT NULL,
+    api_key TEXT NOT NULL, api_secret TEXT, access_token TEXT, account_id TEXT,
+    environment TEXT NOT NULL DEFAULT 'paper', is_active BOOLEAN NOT NULL DEFAULT true,
     connected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY, username TEXT NOT NULL, email TEXT NOT NULL,
+    password_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS user_sessions (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, token TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), expires_at TIMESTAMPTZ NOT NULL
   )`
+];
+var ALTER_COLUMNS = [
+  `ALTER TABLE bot_trades ADD COLUMN IF NOT EXISTS user_id INTEGER`,
+  `ALTER TABLE bot_settings ADD COLUMN IF NOT EXISTS user_id INTEGER`,
+  `ALTER TABLE broker_connections ADD COLUMN IF NOT EXISTS user_id INTEGER`
 ];
 async function runStartupMigrations() {
   let succeeded = 0;
   let failed = 0;
-  for (const sql2 of MIGRATIONS) {
-    const tableName = sql2.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] ?? "unknown";
+  for (const sql2 of CREATE_TABLES) {
+    const tableName = sql2.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] ?? "?";
     try {
       await db.execute(sql2);
       succeeded++;
@@ -80456,15 +80411,21 @@ async function runStartupMigrations() {
       logger.warn(`[migrations] ${tableName}: ${err?.message?.split("\n")[0]}`);
     }
   }
+  for (const sql2 of ALTER_COLUMNS) {
+    try {
+      await db.execute(sql2);
+    } catch {
+    }
+  }
   if (failed === 0) {
     logger.info(`[migrations] All ${succeeded} tables ensured on active DB`);
   } else {
-    logger.warn(`[migrations] ${succeeded} tables OK, ${failed} failed \u2014 check DB connectivity`);
+    logger.warn(`[migrations] ${succeeded} OK, ${failed} failed`);
   }
 }
 
 // src/app.ts
-var app = (0, import_express21.default)();
+var app = (0, import_express22.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -80485,8 +80446,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express21.default.json());
-app.use(import_express21.default.urlencoded({ extended: true }));
+app.use(import_express22.default.json());
+app.use(import_express22.default.urlencoded({ extended: true }));
 app.get("/", (_req, res) => res.json({ status: "ok", service: "GlobalPulse API" }));
 app.use("/api", routes_default);
 async function bootstrapDatabase() {

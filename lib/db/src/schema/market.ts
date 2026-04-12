@@ -286,6 +286,7 @@ export type Watchlist = typeof watchlistTable.$inferSelect;
 
 export const botTradesTable = pgTable("bot_trades", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   symbol: text("symbol").notNull(),
   symbolLabel: text("symbol_label").notNull(),
   direction: text("direction").notNull(),
@@ -312,6 +313,7 @@ export type BotTrade = typeof botTradesTable.$inferSelect;
 
 export const botSettingsTable = pgTable("bot_settings", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   isRunning: boolean("is_running").notNull().default(true),
   riskPercent: real("risk_percent").notNull().default(1),
   maxOpenTrades: integer("max_open_trades").notNull().default(5),
@@ -342,3 +344,43 @@ export const pushSubscriptionsTable = pgTable("push_subscriptions", {
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptionsTable).omit({ id: true, createdAt: true });
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect;
+
+export const brokerConnectionsTable = pgTable("broker_connections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  broker: text("broker").notNull(),
+  label: text("label").notNull(),
+  apiKey: text("api_key").notNull(),
+  apiSecret: text("api_secret"),
+  accessToken: text("access_token"),
+  accountId: text("account_id"),
+  environment: text("environment").notNull().default("paper"),
+  isActive: boolean("is_active").notNull().default(true),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertBrokerConnectionSchema = createInsertSchema(brokerConnectionsTable).omit({ id: true, connectedAt: true });
+export type InsertBrokerConnection = z.infer<typeof insertBrokerConnectionSchema>;
+export type BrokerConnection = typeof brokerConnectionsTable.$inferSelect;
+
+export const usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof usersTable.$inferSelect;
+
+export const userSessionsTable = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  token: text("token").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+export type UserSession = typeof userSessionsTable.$inferSelect;

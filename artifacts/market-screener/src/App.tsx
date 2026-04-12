@@ -3,8 +3,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { PremiumProvider } from "@/contexts/PremiumContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { PremiumModal } from "@/components/PremiumModal";
 import { NotificationModal } from "@/components/NotificationModal";
+import { AuthModal } from "@/components/AuthModal";
 import { Sidebar } from "@/components/Sidebar";
 import { BreakingTicker } from "@/components/BreakingTicker";
 import { Dashboard } from "@/pages/Dashboard";
@@ -20,6 +22,7 @@ import { NiftyAnalysis } from "@/pages/NiftyAnalysis";
 import { BitcoinAnalysis } from "@/pages/BitcoinAnalysis";
 import { Terminal } from "@/pages/Terminal";
 import { AutoPilotBot } from "@/pages/AutoPilotBot";
+import { ConnectBroker } from "@/pages/ConnectBroker";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -61,12 +64,14 @@ function AppLayout() {
             <Route path="/watchlist" component={Watchlist} />
             <Route path="/terminal" component={Terminal} />
             <Route path="/bot" component={AutoPilotBot} />
+            <Route path="/brokers" component={ConnectBroker} />
             <Route component={NotFound} />
           </Switch>
         </main>
       </div>
       <PremiumModal />
       <NotificationModal />
+      <AuthModal />
     </div>
   );
 }
@@ -74,14 +79,16 @@ function AppLayout() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <PremiumProvider>
-        <NotificationProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppLayout />
-            <Toaster />
-          </WouterRouter>
-        </NotificationProvider>
-      </PremiumProvider>
+      <AuthProvider>
+        <PremiumProvider>
+          <NotificationProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <AppLayout />
+              <Toaster />
+            </WouterRouter>
+          </NotificationProvider>
+        </PremiumProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

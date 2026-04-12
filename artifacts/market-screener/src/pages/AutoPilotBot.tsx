@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { usePremium } from "@/contexts/PremiumContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Bot,
   TrendingUp,
@@ -33,8 +34,16 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("gp_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function apiFetch(path: string, opts?: RequestInit) {
-  const r = await fetch(`${API_BASE}${path}`, opts);
+  const r = await fetch(`${API_BASE}${path}`, {
+    ...opts,
+    headers: { ...getAuthHeaders(), ...(opts?.headers ?? {}) },
+  });
   if (!r.ok) throw new Error(`API ${path} failed`);
   return r.json();
 }
@@ -263,9 +272,48 @@ function ProUpgradeScreen() {
   );
 }
 
+function AuthGateScreen() {
+  const { setShowAuthModal } = useAuth();
+  return (
+    <div className="flex-1 flex items-center justify-center p-8 bg-[#F0F3FA]">
+      <div className="max-w-sm w-full bg-white rounded-3xl border border-[#E0E3EB] shadow-xl p-10 flex flex-col items-center text-center">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#2962FF] to-[#7C3AED] flex items-center justify-center mb-6 shadow-lg">
+          <Bot className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-[20px] font-bold text-[#131722] mb-2">Sign in to use AutoPilot Bot</h2>
+        <p className="text-[13px] text-[#9598A1] leading-relaxed mb-6">
+          Your bot settings, trade history, and virtual balance are saved to your personal account.
+          Create a free account to get started.
+        </p>
+        <ul className="text-left space-y-2 mb-8 w-full">
+          {[
+            "Persistent virtual balance — never resets",
+            "Your bot settings saved across sessions",
+            "Personal trade history & P&L tracking",
+            "Bot runs automatically with your preferences",
+          ].map(f => (
+            <li key={f} className="flex items-center gap-2.5 text-[12px] text-[#131722]">
+              <CheckCircle className="w-4 h-4 text-[#26A69A] shrink-0" />
+              {f}
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() => setShowAuthModal(true)}
+          className="w-full bg-gradient-to-r from-[#2962FF] to-[#7C3AED] hover:opacity-90 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-[13px] transition-all shadow-md"
+        >
+          Sign In or Register Free
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AutoPilotBot() {
   const { isPremium } = usePremium();
+  const { user } = useAuth();
   if (!isPremium) return <ProUpgradeScreen />;
+  if (!user) return <AuthGateScreen />;
   return <AutoPilotBotInner />;
 }
 
