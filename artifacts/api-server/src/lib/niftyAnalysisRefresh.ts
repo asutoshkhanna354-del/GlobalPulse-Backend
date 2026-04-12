@@ -322,7 +322,7 @@ ${dayMoveInfo ? `- ${dayMoveInfo}` : ""}
 }
 
 async function analyzeNiftyComprehensive(snapshot: NiftySnapshot): Promise<any> {
-  if (!openai) return fallbackNiftyAnalysis(snapshot, "comprehensive");
+  if (!openai) throw new Error("No Nifty AI client");
 
   const sessionCtx = formatSessionContext(snapshot);
 
@@ -419,13 +419,13 @@ Return ONLY valid JSON:
       keyFactors: Array.isArray(parsed.keyFactors) ? parsed.keyFactors.map(String) : [],
     };
   } catch (err) {
-    logger.warn({ err: String(err) }, "AI Nifty comprehensive failed, using fallback");
-    return fallbackNiftyAnalysis(snapshot, "comprehensive");
+    logger.warn({ err: String(err) }, "AI Nifty comprehensive failed — will skip DB insert");
+    throw err;
   }
 }
 
 async function analyzeNiftyCandle30m(snapshot: NiftySnapshot): Promise<any> {
-  if (!openai) return fallbackNiftyAnalysis(snapshot, "candle_30m");
+  if (!openai) throw new Error("No Nifty AI client");
 
   const nextSlot = getNextSlotIST();
   const nextSlotIST = toIST(nextSlot);
@@ -508,8 +508,8 @@ Return ONLY valid JSON:
       keyFactors: Array.isArray(parsed.keyFactors) ? parsed.keyFactors.map(String) : [],
     };
   } catch (err) {
-    logger.warn({ err: String(err) }, "AI Nifty 30m candle failed, using fallback");
-    return fallbackNiftyAnalysis(snapshot, "candle_30m");
+    logger.warn({ err: String(err) }, "AI Nifty 30m candle failed — will skip DB insert");
+    throw err;
   }
 }
 
@@ -610,9 +610,23 @@ function fallbackNiftyAnalysis(snapshot: NiftySnapshot & { realChangePercent?: n
 
 export async function refreshNiftyComprehensive(): Promise<{ direction: string; confidence: number }> {
   logger.info("Starting Nifty 50 comprehensive analysis refresh");
+  if (!openai) {
+    logger.warn("Nifty comprehensive: no AI client — skipping DB insert, keeping last signal");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(niftyAnalysisTable).where(eq(niftyAnalysisTable.analysisType, "comprehensive")).orderBy(desc(niftyAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
   const snapshot = await gatherNiftySnapshot();
   logger.info({ sessionStatus: snapshot.sessionStatus.status, dayOpen: snapshot.dayOpen, dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow, dayClose: snapshot.dayClose, prevDayClose: snapshot.prevDayClose }, "Nifty session data gathered");
-  const analysis = await analyzeNiftyComprehensive(snapshot);
+  let analysis;
+  try {
+    analysis = await analyzeNiftyComprehensive(snapshot);
+  } catch (err) {
+    logger.warn("Nifty comprehensive: AI failed — keeping last DB signal, skipping insert");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(niftyAnalysisTable).where(eq(niftyAnalysisTable.analysisType, "comprehensive")).orderBy(desc(niftyAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
 
   const nextUpdate = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -632,9 +646,23 @@ export async function refreshNiftyComprehensive(): Promise<{ direction: string; 
 
 export async function refreshNiftyCandle30m(): Promise<{ direction: string; confidence: number }> {
   logger.info("Starting Nifty 50 30-min candle analysis refresh");
+  if (!openai) {
+    logger.warn("Nifty 30m: no AI client — skipping DB insert, keeping last signal");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(niftyAnalysisTable).where(eq(niftyAnalysisTable.analysisType, "candle_30m")).orderBy(desc(niftyAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
   const snapshot = await gatherNiftySnapshot();
   logger.info({ sessionStatus: snapshot.sessionStatus.status, dayOpen: snapshot.dayOpen, dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow, todayBars5mCount: snapshot.todayBars5m.length }, "Nifty session data for 30m analysis");
-  const analysis = await analyzeNiftyCandle30m(snapshot);
+  let analysis;
+  try {
+    analysis = await analyzeNiftyCandle30m(snapshot);
+  } catch (err) {
+    logger.warn("Nifty 30m: AI failed — keeping last DB signal, skipping insert");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(niftyAnalysisTable).where(eq(niftyAnalysisTable.analysisType, "candle_30m")).orderBy(desc(niftyAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
 
   const nextSlot = getNextSlotIST();
 

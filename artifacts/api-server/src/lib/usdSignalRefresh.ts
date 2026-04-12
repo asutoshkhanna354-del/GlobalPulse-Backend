@@ -199,12 +199,23 @@ export async function refreshUsdSignal(): Promise<{ direction: string; confidenc
   const snapshot = await gatherMarketSnapshot();
 
   let analysis: AiUsdAnalysis;
+  let isAI = false;
   try {
     analysis = await analyzeWithAI(snapshot);
+    isAI = true;
     logger.info({ direction: analysis.direction, confidence: analysis.confidence, source: "AI" }, "AI USD analysis complete");
   } catch (err) {
-    logger.warn({ err: String(err) }, "AI USD analysis failed, using fallback algorithm");
+    logger.warn({ err: String(err) }, "AI USD analysis failed — keeping last DB signal, skipping insert");
+    const [last] = await db.select().from(usdSignalsTable).orderBy((await import("drizzle-orm")).desc(usdSignalsTable.createdAt)).limit(1);
+    if (last) {
+      return { direction: last.direction, confidence: last.confidence };
+    }
     analysis = fallbackAnalysis(snapshot);
+  }
+
+  if (!isAI) {
+    logger.info({ direction: analysis.direction, confidence: analysis.confidence }, "USD signal using fallback (AI unavailable), not writing to DB");
+    return { direction: analysis.direction, confidence: analysis.confidence };
   }
 
   const nextUpdate = new Date(Date.now() + 4 * 60 * 60 * 1000);
