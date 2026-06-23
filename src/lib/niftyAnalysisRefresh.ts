@@ -364,7 +364,7 @@ Today's session is COMPLETE. You MUST:
 3. Whether Nifty will FALL or RISE — give specific price targets
 4. Key support and resistance levels (at least 3 each)
 5. Demand and supply zones based on intraday candle clusters
-6. Specific Call/Put recommendation for index options
+6. Specific Call/Put recommendation for index options WITH EXACT PREMIUMS. You MUST specify: Entry Premium, Exit Premium, and Stop Loss Premium (e.g. "BUY 24100 PE at entry premium ₹120, exit premium target ₹180, SL premium ₹90"). Also detail expected option price decay/theta impact.
 7. Risk assessment and stop-loss levels
 `}
 
@@ -380,7 +380,7 @@ Return ONLY valid JSON:
   "supplyZones": ["24400-24500 (today's supply/distribution zone)", "24600-24650 (previous session high)"],
   "candlePattern": "Today's daily candle pattern (e.g., Bullish Engulfing day candle, Bearish Doji, Inside Bar, etc.)",
   "trendStrength": "STRONG" or "MODERATE" or "WEAK",
-  "callPutRecommendation": "Specific recommendation with entry, target, SL based on today's key levels",
+  "callPutRecommendation": "EXACT Call/Put recommendation with ENTRY PREMIUM, EXIT PREMIUM, and SL PREMIUM marked, plus notes on theta decay impact. (e.g., BUY 24100 PE at entry premium 120, exit premium 180, SL premium 90)",
   "targetPrice": 24350.0,
   "stopLoss": 24050.0,
   "keyFactors": ["Today's gap up/down from prev close", "First candle direction", "Day range vs avg", "factor 4", "factor 5"]
@@ -468,7 +468,7 @@ Return ONLY valid JSON:
   "supplyZones": ["zone1 with price range and context (e.g. today's afternoon high zone)", "zone2"],
   "candlePattern": "Current 30m candle pattern AND today's overall daily candle shape so far",
   "trendStrength": "STRONG" or "MODERATE" or "WEAK",
-  "callPutRecommendation": "Specific CE/PE recommendation with entry, target, stop-loss. Reference today's open and key intraday levels.",
+  "callPutRecommendation": "EXACT CE/PE recommendation with ENTRY PREMIUM, EXIT PREMIUM, and SL PREMIUM marked, plus notes on theta decay. E.g., 'BUY NIFTY 24100 PE at entry premium ₹120, target premium ₹180, SL premium ₹90.'",
   "targetPrice": 24250.0,
   "stopLoss": 24150.0,
   "keyFactors": ["factor1 (e.g. trading above/below today's open)", "factor2", "factor3"]
@@ -617,6 +617,16 @@ export async function refreshNiftyComprehensive(): Promise<{ direction: string; 
     return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
   }
   const snapshot = await gatherNiftySnapshot();
+
+  const istDate = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const isWeekend = istDate.getUTCDay() === 0 || istDate.getUTCDay() === 6;
+  if (isWeekend || snapshot.sessionStatus.status !== "LIVE") {
+    logger.info("Skipping Nifty comprehensive analysis (Outside Market Hours / Weekend)");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(niftyAnalysisTable).where(eq(niftyAnalysisTable.analysisType, "comprehensive")).orderBy(desc(niftyAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
+
   logger.info({ sessionStatus: snapshot.sessionStatus.status, dayOpen: snapshot.dayOpen, dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow, dayClose: snapshot.dayClose, prevDayClose: snapshot.prevDayClose }, "Nifty session data gathered");
   let analysis;
   try {
@@ -653,6 +663,16 @@ export async function refreshNiftyCandle30m(): Promise<{ direction: string; conf
     return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
   }
   const snapshot = await gatherNiftySnapshot();
+
+  const istDate = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const isWeekend = istDate.getUTCDay() === 0 || istDate.getUTCDay() === 6;
+  if (isWeekend || snapshot.sessionStatus.status !== "LIVE") {
+    logger.info("Skipping Nifty 30m analysis (Outside Market Hours / Weekend)");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(niftyAnalysisTable).where(eq(niftyAnalysisTable.analysisType, "candle_30m")).orderBy(desc(niftyAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
+
   logger.info({ sessionStatus: snapshot.sessionStatus.status, dayOpen: snapshot.dayOpen, dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow, todayBars5mCount: snapshot.todayBars5m.length }, "Nifty session data for 30m analysis");
   let analysis;
   try {
