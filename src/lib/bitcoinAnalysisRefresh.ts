@@ -183,14 +183,14 @@ Return ONLY valid JSON:
       keyFactors: Array.isArray(parsed.keyFactors) ? parsed.keyFactors.map(String) : [],
     };
   } catch (err) {
-    logger.warn({ err: String(err) }, "AI BTC comprehensive failed, using fallback");
-    return fallbackBtcAnalysis(snapshot, "comprehensive");
+    logger.warn({ err: String(err) }, "AI BTC comprehensive failed — will skip DB insert");
+    throw err;
   }
 }
 
 async function analyzeBtcCandle(snapshot: BtcSnapshot): Promise<any> {
   const openai = getOpenAiBtc();
-  if (!openai) return fallbackBtcAnalysis(snapshot, "candle_4h");
+  if (!openai) throw new Error("No BTC AI client");
 
   const prompt = `You are a professional crypto trader specializing in Bitcoin. Analyze the 4-hour and 15-minute candle data for DEMAND-SUPPLY based trading.
 
@@ -256,8 +256,8 @@ Return ONLY valid JSON:
       keyFactors: Array.isArray(parsed.keyFactors) ? parsed.keyFactors.map(String) : [],
     };
   } catch (err) {
-    logger.warn({ err: String(err) }, "AI BTC 4h candle failed, using fallback");
-    return fallbackBtcAnalysis(snapshot, "candle_4h");
+    logger.warn({ err: String(err) }, "AI BTC 4h candle failed — will skip DB insert");
+    throw err;
   }
 }
 
@@ -301,8 +301,22 @@ function fallbackBtcAnalysis(snapshot: BtcSnapshot, type: string): any {
 
 export async function refreshBtcComprehensive(): Promise<{ direction: string; confidence: number }> {
   logger.info("Starting Bitcoin comprehensive analysis refresh");
+  if (!getOpenAiBtc()) {
+    logger.warn("BTC comprehensive: no AI client — skipping DB insert, keeping last signal");
+    const { desc } = await import("drizzle-orm");
+    const [last] = await db.select().from(bitcoinAnalysisTable).where((await import("drizzle-orm")).eq(bitcoinAnalysisTable.analysisType, "comprehensive")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
   const snapshot = await gatherBtcSnapshot();
-  const analysis = await analyzeBtcComprehensive(snapshot);
+  let analysis;
+  try {
+    analysis = await analyzeBtcComprehensive(snapshot);
+  } catch (err) {
+    logger.warn("BTC comprehensive: AI failed — keeping last DB signal, skipping insert");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "comprehensive")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
 
   const nextUpdate = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -322,8 +336,22 @@ export async function refreshBtcComprehensive(): Promise<{ direction: string; co
 
 export async function refreshBtcCandle4h(): Promise<{ direction: string; confidence: number }> {
   logger.info("Starting Bitcoin 4h candle analysis refresh");
+  if (!getOpenAiBtc()) {
+    logger.warn("BTC 4h candle: no AI client — skipping DB insert, keeping last signal");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "candle_4h")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
   const snapshot = await gatherBtcSnapshot();
-  const analysis = await analyzeBtcCandle(snapshot);
+  let analysis;
+  try {
+    analysis = await analyzeBtcCandle(snapshot);
+  } catch (err) {
+    logger.warn("BTC 4h candle: AI failed — keeping last DB signal, skipping insert");
+    const { desc, eq } = await import("drizzle-orm");
+    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "candle_4h")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
+    return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
+  }
 
   const nextUpdate = new Date(Date.now() + 4 * 60 * 60 * 1000);
 

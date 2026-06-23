@@ -111,6 +111,8 @@ function normaliseFinnhubSymbol(raw: string): string {
 
 let finnhubWS: WebSocket | null = null;
 let finnhubReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let finnhubRetryCount = 0;
+const FINNHUB_MAX_DELAY = 5 * 60 * 1000; // 5 min max backoff
 
 function connectFinnhub() {
   const key = process.env["FINNHUB_API_KEY"];
@@ -125,6 +127,7 @@ function connectFinnhub() {
   finnhubWS = ws;
 
   ws.on("open", () => {
+    finnhubRetryCount = 0;
     console.info("[priceStream] Finnhub WS connected");
     for (const sym of FINNHUB_SYMBOLS) {
       ws.send(JSON.stringify({ type: "subscribe", symbol: sym }));
@@ -146,9 +149,11 @@ function connectFinnhub() {
   });
 
   ws.on("close", (code) => {
-    console.warn(`[priceStream] Finnhub WS closed (${code}), reconnecting in 5s…`);
     finnhubWS = null;
-    finnhubReconnectTimer = setTimeout(connectFinnhub, 5000);
+    finnhubRetryCount++;
+    const delay = Math.min(5000 * Math.pow(2, finnhubRetryCount - 1), FINNHUB_MAX_DELAY);
+    console.warn(`[priceStream] Finnhub WS closed (${code}), reconnecting in ${Math.round(delay/1000)}s… (attempt ${finnhubRetryCount})`);
+    finnhubReconnectTimer = setTimeout(connectFinnhub, delay);
   });
 
   ws.on("error", (err) => {
@@ -162,6 +167,8 @@ function connectFinnhub() {
 let twelveWS: WebSocket | null = null;
 let twelveReconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let twelvePingInterval: ReturnType<typeof setInterval> | null = null;
+let twelveRetryCount = 0;
+const TWELVE_MAX_DELAY = 5 * 60 * 1000; // 5 min max backoff
 
 function connectTwelveData() {
   const key = process.env["TWELVE_DATA_API_KEY"];
@@ -177,6 +184,7 @@ function connectTwelveData() {
   twelveWS = ws;
 
   ws.on("open", () => {
+    twelveRetryCount = 0;
     console.info("[priceStream] Twelve Data WS connected");
     const symbols = [...TWELVEDATA_SYMBOLS].join(",");
     ws.send(JSON.stringify({ action: "subscribe", params: { symbols } }));
@@ -206,10 +214,12 @@ function connectTwelveData() {
   });
 
   ws.on("close", (code) => {
-    console.warn(`[priceStream] Twelve Data WS closed (${code}), reconnecting in 5s…`);
     twelveWS = null;
     if (twelvePingInterval) clearInterval(twelvePingInterval);
-    twelveReconnectTimer = setTimeout(connectTwelveData, 5000);
+    twelveRetryCount++;
+    const delay = Math.min(5000 * Math.pow(2, twelveRetryCount - 1), TWELVE_MAX_DELAY);
+    console.warn(`[priceStream] Twelve Data WS closed (${code}), reconnecting in ${Math.round(delay/1000)}s… (attempt ${twelveRetryCount})`);
+    twelveReconnectTimer = setTimeout(connectTwelveData, delay);
   });
 
   ws.on("error", (err) => {

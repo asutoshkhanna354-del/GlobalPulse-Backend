@@ -1,15 +1,19 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { brokerConnectionsTable, botTradesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { placeOrder, verifyBrokerConnection } from "../lib/brokerEngine";
+import { requireAuth, optionalAuth } from "../lib/authMiddleware";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
-router.get("/broker/connections", async (_req, res) => {
+router.get("/broker/connections", requireAuth, async (req, res) => {
   try {
-    const rows = await db.select().from(brokerConnectionsTable).orderBy(brokerConnectionsTable.connectedAt);
+    const userId = req.userId!;
+    const rows = await db.select().from(brokerConnectionsTable)
+      .where(eq(brokerConnectionsTable.userId, userId))
+      .orderBy(brokerConnectionsTable.connectedAt);
     const safe = rows.map(r => ({
       id: r.id,
       broker: r.broker,
@@ -26,12 +30,14 @@ router.get("/broker/connections", async (_req, res) => {
   }
 });
 
-router.post("/broker/connect", async (req, res) => {
+router.post("/broker/connect", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId!;
     const { broker, label, apiKey, apiSecret, accessToken, accountId, environment } = req.body;
     if (!broker || !apiKey) return res.status(400).json({ error: "broker and apiKey are required" });
 
     const [conn] = await db.insert(brokerConnectionsTable).values({
+      userId,
       broker,
       label: label || broker,
       apiKey,
@@ -59,47 +65,49 @@ router.post("/broker/connect", async (req, res) => {
   }
 });
 
-router.delete("/broker/connections/:id", async (req, res) => {
+router.delete("/broker/connections/:id", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId!;
     const id = parseInt(req.params.id);
-    await db.delete(brokerConnectionsTable).where(eq(brokerConnectionsTable.id, id));
+    await db.delete(brokerConnectionsTable)
+      .where(and(eq(brokerConnectionsTable.id, id), eq(brokerConnectionsTable.userId, userId)));
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to remove connection" });
   }
 });
 
-router.get("/broker/connections/order-list", async (_req, res) => {
+router.get("/broker/connections/order-list", requireAuth, async (req, res) => {
   try {
+    const userId = req.userId!;
     const rows = await db.select({
       id: brokerConnectionsTable.id,
       broker: brokerConnectionsTable.broker,
       label: brokerConnectionsTable.label,
       environment: brokerConnectionsTable.environment,
-    }).from(brokerConnectionsTable).where(eq(brokerConnectionsTable.isActive, true));
+    }).from(brokerConnectionsTable)
+      .where(and(eq(brokerConnectionsTable.isActive, true), eq(brokerConnectionsTable.userId, userId)));
     res.json({ connections: rows });
   } catch {
     res.json({ connections: [] });
   }
 });
 
-router.post("/broker/order", async (req, res) => {
+router.post("/broker/order", optionalAuth, async (req, res) => {
   try {
+    const userId = req.userId ?? null;
     const { brokerId, symbol, symbolLabel, direction, quantity, price, orderType, tradeType, stopLossPercent, targetPercent } = req.body;
 
     const slPct = parseFloat(stopLossPercent ?? 2);
     const tpPct = parseFloat(targetPercent ?? 4);
     const qty = parseFloat(quantity ?? 1);
 
-    const sl = direction === "BUY"
-      ? price * (1 - slPct / 100)
-      : price * (1 + slPct / 100);
-    const tp = direction === "BUY"
-      ? price * (1 + tpPct / 100)
-      : price * (1 - tpPct / 100);
+    const sl = direction === "BUY" ? price * (1 - slPct / 100) : price * (1 + slPct / 100);
+    const tp = direction === "BUY" ? price * (1 + tpPct / 100) : price * (1 - tpPct / 100);
 
     if (!brokerId || brokerId === "paper") {
       const [trade] = await db.insert(botTradesTable).values({
+        userId,
         symbol,
         symbolLabel: symbolLabel || symbol,
         direction,
