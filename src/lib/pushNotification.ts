@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import { db, pushSubscriptionsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { logger } from "./logger.js";
 
 const VAPID_PUBLIC_KEY = process.env["VAPID_PUBLIC_KEY"];
@@ -92,6 +92,59 @@ export async function sendSignalNotification(
   const now = new Date();
 
   for (const sub of subs) {
+    const ok = await sendPushNotification(sub.endpoint, sub.p256dhKey, sub.authKey, payload);
+    if (ok) {
+      sent++;
+      await db
+        .update(pushSubscriptionsTable)
+        .set({ lastNotifiedAt: now })
+        .where(eq(pushSubscriptionsTable.id, sub.id));
+    }
+  }
+
+  return sent;
+}
+
+export async function sendNiftyAnalysisNotification(
+  analysisType: string,
+  direction: string,
+  recommendation: string | null
+): Promise<number> {
+  const subs = await db
+    .select()
+    .from(pushSubscriptionsTable)
+    .where(inArray(pushSubscriptionsTable.symbol, ["NIFTY50", "^NSEI"]));
+
+  if (subs.length === 0) return 0;
+
+  const title = analysisType === "comprehensive" 
+    ? `Nifty 50 Daily Outlook: ${direction}`
+    : `Nifty 30m Update: ${direction}`;
+
+  const body = recommendation && recommendation.length > 0 
+    ? recommendation 
+    : `New AI Analysis available for Nifty 50. Tap to view targets and SL.`;
+
+  const payload: PushPayload = {
+    title,
+    body,
+    symbol: "^NSEI",
+    url: "/nifty-analysis",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+  };
+
+  let sent = 0;
+  const now = new Date();
+  
+  const uniqueEndpoints = new Map();
+  for (const sub of subs) {
+    if (!uniqueEndpoints.has(sub.endpoint)) {
+      uniqueEndpoints.set(sub.endpoint, sub);
+    }
+  }
+
+  for (const sub of uniqueEndpoints.values()) {
     const ok = await sendPushNotification(sub.endpoint, sub.p256dhKey, sub.authKey, payload);
     if (ok) {
       sent++;

@@ -4,6 +4,7 @@ import { logger } from "./logger";
 import { fetchOHLC } from "./indicator.js";
 
 import { openaiNifty as openai } from "./openaiClient.js";
+import { sendNiftyAnalysisNotification } from "./pushNotification.js";
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
@@ -650,6 +651,8 @@ export async function refreshNiftyComprehensive(): Promise<{ direction: string; 
     createdAt: new Date(),
   });
 
+  sendNiftyAnalysisNotification("comprehensive", analysis.direction, analysis.callPutRecommendation).catch(e => logger.error({ err: String(e) }, "Failed to send Nifty comprehensive push notification"));
+
   logger.info({ direction: analysis.direction, confidence: analysis.confidence }, "Nifty comprehensive analysis complete");
   return { direction: analysis.direction, confidence: analysis.confidence };
 }
@@ -695,6 +698,8 @@ export async function refreshNiftyCandle30m(): Promise<{ direction: string; conf
     validUntil: new Date(nextSlot.getTime() + 30 * 60 * 1000),
     createdAt: new Date(),
   });
+
+  sendNiftyAnalysisNotification("candle_30m", analysis.direction, analysis.callPutRecommendation).catch(e => logger.error({ err: String(e) }, "Failed to send Nifty 30m push notification"));
 
   logger.info({ direction: analysis.direction, confidence: analysis.confidence }, "Nifty 30m candle analysis complete");
   return { direction: analysis.direction, confidence: analysis.confidence };
