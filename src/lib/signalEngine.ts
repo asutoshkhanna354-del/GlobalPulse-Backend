@@ -35,6 +35,23 @@ let recentSignals: Signal[] = [];
 
 export async function generateNiftySignal(currentPrice: number, vix: number, rsi: number): Promise<Signal | null> {
   try {
+    const now = new Date();
+    const istMs = now.getTime() + 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(istMs);
+    const day = istDate.getUTCDay();
+    const hours = istDate.getUTCHours();
+    const minutes = istDate.getUTCMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    
+    // Market hours: 9:15 AM to 3:30 PM IST
+    const isWeekend = day === 0 || day === 6;
+    const isWithinHours = totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30);
+    
+    if (isWeekend || !isWithinHours) {
+      logger.info("Signal generation skipped: Outside NSE Market Hours (9:15 AM to 3:30 PM IST)");
+      return null;
+    }
+
     const isBullish = rsi < 40 && vix < 18;
     const isBearish = rsi > 60 || vix > 20;
 
