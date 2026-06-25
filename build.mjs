@@ -70,7 +70,6 @@ async function buildAll() {
       "@parcel/watcher",
       "@sentry/profiling-node",
       "@tree-sitter/*",
-      "@workspace/*",
       "aws-sdk",
       "classic-level",
       "dd-trace",
