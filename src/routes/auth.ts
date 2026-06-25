@@ -99,6 +99,10 @@ router.post("/auth/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
+    if (!user.emailVerified) {
+      return res.status(403).json({ error: "Email not verified. Please verify your email first." });
+    }
+
     const token = generateToken();
     await db.insert(userSessionsTable).values({
       userId: user.id,
