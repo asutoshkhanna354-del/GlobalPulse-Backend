@@ -107,6 +107,9 @@ function buildOtpEmailHtml(otp: string): string {
 </html>`;
 }
 
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "noreply@globalpulse.app";
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "GlobalPulse";
+
 async function sendBrevoEmail(to: string, otp: string): Promise<boolean> {
   if (!BREVO_API_KEY) {
     logger.error("[otp] BREVO_API_KEY not set");
@@ -122,7 +125,7 @@ async function sendBrevoEmail(to: string, otp: string): Promise<boolean> {
         "api-key": BREVO_API_KEY,
       },
       body: JSON.stringify({
-        sender: { name: "GlobalPulse", email: "noreply@globalpulse.app" },
+        sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
         to: [{ email: to }],
         subject: `${otp} — Your GlobalPulse Verification Code`,
         htmlContent: buildOtpEmailHtml(otp),
@@ -131,7 +134,7 @@ async function sendBrevoEmail(to: string, otp: string): Promise<boolean> {
 
     if (!res.ok) {
       const errBody = await res.text();
-      logger.error(`[otp] Brevo send failed: ${res.status} ${errBody}`);
+      logger.error(`[otp] Brevo send failed: ${res.status} ${errBody}. Ensure ${BREVO_SENDER_EMAIL} is a verified sender in your Brevo account!`);
       return false;
     }
 
