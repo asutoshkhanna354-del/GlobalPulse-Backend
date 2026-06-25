@@ -113,7 +113,7 @@ const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "GlobalPulse";
 async function sendBrevoEmail(to: string, otp: string): Promise<boolean> {
   if (!BREVO_API_KEY) {
     logger.error("[otp] BREVO_API_KEY not set");
-    return false;
+    throw new Error("BREVO_API_KEY environment variable is missing.");
   }
 
   try {
@@ -135,14 +135,14 @@ async function sendBrevoEmail(to: string, otp: string): Promise<boolean> {
     if (!res.ok) {
       const errBody = await res.text();
       logger.error(`[otp] Brevo send failed: ${res.status} ${errBody}. Ensure ${BREVO_SENDER_EMAIL} is a verified sender in your Brevo account!`);
-      return false;
+      throw new Error(`Brevo API Error (${res.status}): ${errBody}. (Sender was ${BREVO_SENDER_EMAIL})`);
     }
 
     logger.info(`[otp] OTP sent to ${to}`);
     return true;
-  } catch (err) {
+  } catch (err: any) {
     logger.error({ err }, "[otp] Brevo request error");
-    return false;
+    throw new Error(err.message || "Failed to contact Brevo API.");
   }
 }
 
@@ -164,15 +164,12 @@ router.post("/auth/send-otp", async (req, res) => {
     });
 
     // Send via Brevo
-    const sent = await sendBrevoEmail(email.toLowerCase(), code);
-    if (!sent) {
-      return res.status(500).json({ error: "Failed to send verification email" });
-    }
+    await sendBrevoEmail(email.toLowerCase(), code);
 
     res.json({ success: true, message: "OTP sent to your email" });
-  } catch (err) {
+  } catch (err: any) {
     logger.error({ err }, "[otp] Send OTP failed");
-    res.status(500).json({ error: "Failed to send OTP" });
+    res.status(500).json({ error: err.message || "Failed to send OTP" });
   }
 });
 
