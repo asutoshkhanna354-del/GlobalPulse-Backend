@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
+import Cerebras from '@cerebras/cerebras_cloud_sdk';
 
 function makeClient(envVar: string, label: string): OpenAI | null {
   const apiKey = process.env[envVar];
@@ -12,39 +13,51 @@ function makeClient(envVar: string, label: string): OpenAI | null {
 
 // ── Dedicated clients per domain ────────────────────────────────────────────
 // ── Dedicated clients per domain ────────────────────────────────────────────
-// Nifty analysis keys (fallback support)
-export const niftyKeys = [
-  process.env.GROQ_API_KEY_NIFTY,
-  process.env.GROQ_API_KEY_NIFTY_2,
-  process.env.GROQ_API_KEY_NIFTY_3,
-  process.env.GROQ_API_KEY_NIFTY_4,
-].filter(Boolean) as string[];
+// Nifty API Mode State
+export let niftyApiMode: "cerebras" | "gemini" = "cerebras";
 
-const niftyClients = niftyKeys.map(k => new OpenAI({ apiKey: k, baseURL: "https://api.groq.com/openai/v1" }));
+export function setNiftyApiMode(mode: "cerebras" | "gemini") {
+  niftyApiMode = mode;
+  console.log(`[nifty] API Mode switched to ${mode}`);
+}
+
+export function getNiftyApiMode() {
+  return niftyApiMode;
+}
+
+const cerebrasNiftyKey = process.env.CEREBRAS_API_KEY;
+const cerebrasClient = cerebrasNiftyKey ? new Cerebras({ apiKey: cerebrasNiftyKey }) : null;
 
 const geminiNiftyKey = process.env.GEMINI_API_KEY_NIFTY;
 const geminiClient = geminiNiftyKey ? new GoogleGenAI({ apiKey: geminiNiftyKey }) : null;
 
-export const openaiNifty = (niftyClients.length > 0 || geminiClient) ? {
+export const openaiNifty = (cerebrasClient || geminiClient) ? {
   chat: {
     completions: {
       create: async (params: any) => {
         let lastErr: any;
-        for (let i = 0; i < niftyClients.length; i++) {
+        
+        // 1. Try Cerebras if mode is cerebras
+        if (niftyApiMode === "cerebras" && cerebrasClient) {
           try {
-            return await niftyClients[i].chat.completions.create(params);
+            // User requested zai-glm-4.7 for nifty comprehension and 30m
+            const cerebrasParams = { ...params, model: "zai-glm-4.7" };
+            return await cerebrasClient.chat.completions.create(cerebrasParams as any);
           } catch (err: any) {
             lastErr = err;
             if (err?.status === 429) {
-              console.warn(`[groq] Nifty API Key ${i + 1} Limit Reached, falling back to next key if available...`);
-              continue;
+              console.warn(`[cerebras] Limit Reached, falling back to Gemini instantly...`);
+              setNiftyApiMode("gemini");
+              // Fall through to the gemini block below
+            } else {
+              throw err;
             }
-            throw err;
           }
         }
         
-        if (geminiClient) {
-          console.warn(`[gemini] Falling back to Gemini API for Nifty Analysis...`);
+        // 2. Try Gemini if mode is gemini (or if fell back from cerebras)
+        if (niftyApiMode === "gemini" && geminiClient) {
+          console.warn(`[gemini] Using Gemini API for Nifty Analysis...`);
           try {
             const sysMsg = params.messages?.find((m: any) => m.role === "system")?.content || "";
             const userMsg = params.messages?.find((m: any) => m.role === "user")?.content || "";
@@ -75,7 +88,7 @@ export const openaiNifty = (niftyClients.length > 0 || geminiClient) ? {
           }
         }
 
-        throw lastErr;
+        throw lastErr || new Error("No Nifty API configured");
       }
     }
   }
@@ -83,7 +96,7 @@ export const openaiNifty = (niftyClients.length > 0 || geminiClient) ? {
 
 // Key 4 → USD signal + AI Signals (~55K tokens/day)
 export const openaiUsd     = makeClient("GROQ_API_KEY_USD", "USD signal");
-export const openaiSignals = makeClient("GROQ_API_KEY_USD", "AI Signals") ?? makeClient("GROQ_API_KEY_NIFTY", "AI Signals fallback");
+export const openaiSignals = makeClient("GROQ_API_KEY_USD", "AI Signals");
 
 // Keys 2 + 3 → BTC round-robin, alternating every call (~66K each/day)
 const btcClientA = makeClient("GROQ_API_KEY_BTC",  "BTC primary");
