@@ -110,7 +110,7 @@ router.post("/auth/login", async (req, res) => {
     }
 
     if (!user.emailVerified) {
-      return res.status(403).json({ error: "Email not verified. Please verify your email first." });
+      return res.status(403).json({ error: "Email not verified. Please verify your email first.", requireOtp: true, email: user.email });
     }
 
     const token = generateToken();
