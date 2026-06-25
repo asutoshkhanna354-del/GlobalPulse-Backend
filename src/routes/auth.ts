@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable, userSessionsTable } from "@workspace/db";
-import { eq, or } from "drizzle-orm";
+import { usersTable, userSessionsTable, subscriptionsTable } from "@workspace/db";
+import { eq, or, and, desc } from "drizzle-orm";
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import { requireAuth } from "../lib/authMiddleware";
 import { logger } from "../lib/logger";
@@ -75,7 +75,7 @@ router.post("/auth/register", async (req, res) => {
     await ensureUserBotSettings(user.id).catch(() => {});
 
     logger.info(`[auth] New user registered: ${username} (id=${user.id})`);
-    res.json({ success: true, token, user: { id: user.id, username: user.username, email: user.email } });
+    res.json({ success: true, token, user: { id: user.id, username: user.username, email: user.email }, requireOtp: true });
   } catch (err) {
     logger.error({ err }, "[auth] Register failed");
     res.status(500).json({ error: "Registration failed" });
@@ -108,16 +108,53 @@ router.post("/auth/login", async (req, res) => {
 
     await ensureUserBotSettings(user.id).catch(() => {});
 
+    // Get subscription status
+    const [sub] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(and(eq(subscriptionsTable.userId, user.id), eq(subscriptionsTable.status, "active")))
+      .orderBy(desc(subscriptionsTable.createdAt))
+      .limit(1);
+
+    // Check if subscription is expired
+    let subscription = null;
+    if (sub) {
+      if (sub.endDate && new Date() > sub.endDate) {
+        await db.update(subscriptionsTable).set({ status: "expired" }).where(eq(subscriptionsTable.id, sub.id));
+      } else {
+        subscription = { planName: sub.planName, billingCycle: sub.billingCycle, status: sub.status, endDate: sub.endDate };
+      }
+    }
+
     logger.info(`[auth] User logged in: ${user.username} (id=${user.id})`);
-    res.json({ success: true, token, user: { id: user.id, username: user.username, email: user.email } });
+    res.json({ success: true, token, user: { id: user.id, username: user.username, email: user.email }, subscription });
   } catch (err) {
     logger.error({ err }, "[auth] Login failed");
     res.status(500).json({ error: "Login failed" });
   }
 });
 
-router.get("/auth/me", requireAuth, (req, res) => {
-  res.json({ user: req.authUser });
+router.get("/auth/me", requireAuth, async (req, res) => {
+  const userId = req.authUser!.id;
+
+  // Get subscription
+  const [sub] = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(and(eq(subscriptionsTable.userId, userId), eq(subscriptionsTable.status, "active")))
+    .orderBy(desc(subscriptionsTable.createdAt))
+    .limit(1);
+
+  let subscription = null;
+  if (sub) {
+    if (sub.endDate && new Date() > sub.endDate) {
+      await db.update(subscriptionsTable).set({ status: "expired" }).where(eq(subscriptionsTable.id, sub.id));
+    } else {
+      subscription = { planName: sub.planName, billingCycle: sub.billingCycle, status: sub.status, endDate: sub.endDate };
+    }
+  }
+
+  res.json({ user: req.authUser, subscription });
 });
 
 router.post("/auth/logout", requireAuth, async (req, res) => {

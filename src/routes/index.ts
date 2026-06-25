@@ -21,11 +21,14 @@ import brokerRouter from "./broker";
 import authRouter from "./auth";
 import signalsRouter from "./signals.js";
 import systemRouter from "./system.js";
+import otpRouter from "./otp";
+import subscriptionRouter from "./subscription";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+router.use(otpRouter);
 router.use(marketDataRouter);
 router.use(economicRouter);
 router.use(geopoliticalRouter);
@@ -46,5 +49,7 @@ router.use(botRouter);
 router.use(brokerRouter);
 router.use("/signals", signalsRouter);
 router.use("/system", systemRouter);
+router.use(subscriptionRouter);
 
 export default router;
+
