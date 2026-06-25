@@ -368,10 +368,11 @@ export const usersTable = pgTable("users", {
   username: text("username").notNull(),
   email: text("email").notNull(),
   passwordHash: text("password_hash").notNull(),
+  emailVerified: boolean("email_verified").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
+export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true, emailVerified: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof usersTable.$inferSelect;
 
@@ -384,3 +385,48 @@ export const userSessionsTable = pgTable("user_sessions", {
 });
 
 export type UserSession = typeof userSessionsTable.$inferSelect;
+
+// ── OTP Verifications ─────────────────────────────────────────────────────
+export const otpVerificationsTable = pgTable("otp_verifications", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  verified: boolean("verified").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type OtpVerification = typeof otpVerificationsTable.$inferSelect;
+
+// ── Subscriptions ─────────────────────────────────────────────────────────
+export const subscriptionsTable = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  planName: text("plan_name").notNull(), // 'free', 'standard', 'pro'
+  billingCycle: text("billing_cycle"), // 'monthly', 'yearly', null for free
+  status: text("status").notNull().default("active"), // 'active', 'expired', 'cancelled'
+  amount: integer("amount"), // in paise
+  currency: text("currency").default("INR"),
+  razorpayOrderId: text("razorpay_order_id"),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  startDate: timestamp("start_date", { withTimezone: true }).notNull().defaultNow(),
+  endDate: timestamp("end_date", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Subscription = typeof subscriptionsTable.$inferSelect;
+
+// ── Payments ──────────────────────────────────────────────────────────────
+export const paymentsTable = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  razorpayOrderId: text("razorpay_order_id").notNull(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  razorpaySignature: text("razorpay_signature"),
+  amount: integer("amount").notNull(), // in paise
+  currency: text("currency").notNull().default("INR"),
+  status: text("status").notNull().default("created"), // 'created', 'captured', 'failed'
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Payment = typeof paymentsTable.$inferSelect;
