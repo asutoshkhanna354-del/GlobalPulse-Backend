@@ -50,12 +50,22 @@ router.post("/auth/register", async (req, res) => {
     }
 
     const existing = await db
-      .select({ id: usersTable.id })
+      .select({ id: usersTable.id, emailVerified: usersTable.emailVerified })
       .from(usersTable)
       .where(or(eq(usersTable.email, email.toLowerCase()), eq(usersTable.username, username)))
       .limit(1);
 
     if (existing.length > 0) {
+      if (!existing[0].emailVerified) {
+        // Update unverified user instead of failing
+        await db.update(usersTable).set({
+          passwordHash: hashPassword(password),
+          username: username,
+          email: email.toLowerCase()
+        }).where(eq(usersTable.id, existing[0].id));
+
+        return res.json({ success: true, user: { id: existing[0].id, username, email: email.toLowerCase() }, requireOtp: true });
+      }
       return res.status(409).json({ error: "Email or username already in use" });
     }
 
