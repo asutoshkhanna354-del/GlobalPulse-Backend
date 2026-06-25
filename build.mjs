@@ -71,6 +71,8 @@ async function buildAll() {
       "@sentry/profiling-node",
       "@tree-sitter/*",
       "aws-sdk",
+      "drizzle-orm",
+      "drizzle-zod",
       "classic-level",
       "dd-trace",
       "ffi-napi",
