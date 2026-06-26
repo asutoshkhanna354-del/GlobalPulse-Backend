@@ -9,6 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { logger } from "./logger";
 import { getOpenAiBtc } from "./openaiClient.js";
 import { fetchOHLC } from "./indicator.js";
+import { NotificationEngine } from "../services/core/NotificationEngine.js";
 
 const ASSETS = [
   { symbol: "BTCUSD", label: "Bitcoin", category: "crypto" },
@@ -112,11 +113,26 @@ async function markUserTradesClosed(userId: number) {
           `UPDATE bot_settings SET virtual_balance = virtual_balance + ${parseFloat(pnl.toFixed(2))}, updated_at = NOW() WHERE user_id = ${userId}`
         );
         logger.info(`[bot] user=${userId} Trade closed: ${trade.direction} ${trade.symbol} → ${status} P&L: $${pnl.toFixed(2)}`);
+        
+        await NotificationEngine.notifyUser(
+          userId, 
+          `Trade Closed: ${trade.symbol}`, 
+          `${trade.direction} trade on ${trade.symbol} closed (${status}). P&L: $${pnl.toFixed(2)}`,
+          "TRADE_EXECUTION"
+        );
       }
     }
   } catch (err) {
     logger.warn(`[bot] markUserTradesClosed(${userId}): ${err}`);
   }
+}
+
+async function getCerebrasAlgoClient() {
+  const apiKey = process.env['CEREBRAS_API_KEY_ALGO'] || process.env['CEREBRAS_API_KEY_ALGO_FALLBACK'];
+  if (!apiKey) return null;
+  const mod = await import('@cerebras/cerebras_cloud_sdk');
+  const Cerebras = mod.default || mod.Cerebras || mod;
+  return new Cerebras({ apiKey });
 }
 
 async function generateBotSignalForAsset(
@@ -125,9 +141,13 @@ async function generateBotSignalForAsset(
   settings: typeof botSettingsTable.$inferSelect
 ): Promise<{ direction: "BUY" | "SELL" | "NEUTRAL"; confidence: number; reasoning: string; tradeType: string; targetPct: number; slPct: number } | null> {
 
-  const ai = getOpenAiBtc();
-  if (!ai) return generateRuleBasedSignal(symbol, label);
+  const cerebras = await getCerebrasAlgoClient();
+  if (!cerebras) {
+    logger.warn(`[bot] CEREBRAS_API_KEY_ALGO missing for ${symbol}, using fallback`);
+    return generateRuleBasedSignal(symbol, label);
+  }
 
+  const model = settings.botModel || "gpt-oss-120b";
   const price = await getLivePrice(symbol);
   const news = await db.select().from(newsItemsTable).limit(5);
   const newsText = news.map(n => `${n.headline}: ${n.summary}`).join("; ").slice(0, 600);
@@ -168,12 +188,20 @@ Respond ONLY with this JSON (no markdown):
 }`;
 
   try {
-    const resp = await ai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+    const params: any = {
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 300,
-      temperature: 0.3,
-    });
+      model: model,
+      max_completion_tokens: 300,
+      temperature: 0.2,
+      top_p: 1,
+      stream: false,
+    };
+    
+    if (model === "gpt-oss-120b") {
+      params.reasoning_effort = "medium";
+    }
+
+    const resp = await cerebras.chat.completions.create(params);
     const raw = resp.choices[0]?.message?.content?.trim() ?? "";
     const cleaned = raw.replace(/```json|```/g, "").trim();
     const json = JSON.parse(cleaned);
@@ -187,7 +215,7 @@ Respond ONLY with this JSON (no markdown):
       slPct: Math.max(0.2, Math.min(3, Number(json.slPct) || 0.8)),
     };
   } catch (e) {
-    logger.warn(`[bot] AI parse failed for ${symbol}: ${e}`);
+    logger.warn(`[bot] Cerebras parse failed for ${symbol}: ${e}`);
     return generateRuleBasedSignal(symbol, label);
   }
 }
@@ -260,6 +288,13 @@ async function runBotCycleForUser(userId: number) {
       });
 
       logger.info(`[bot] user=${userId} New trade: ${signal.direction} ${sym} @ ${price}`);
+      
+      await NotificationEngine.notifyUser(
+        userId, 
+        `New Trade Opened: ${sym}`, 
+        `Bot executed a ${signal.direction} on ${sym} at $${price.toFixed(4)}. Target: $${targetPrice.toFixed(4)}, SL: $${stopLoss.toFixed(4)}`,
+        "TRADE_EXECUTION"
+      );
     }
   } catch (err) {
     logger.error(`[bot] runBotCycleForUser(${userId}): ${err}`);

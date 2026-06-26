@@ -77,6 +77,28 @@ router.delete("/broker/connections/:id", requireAuth, async (req, res) => {
   }
 });
 
+router.patch("/broker/connections/:id/toggle", requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId!;
+    const id = parseInt(req.params.id);
+    
+    const [conn] = await db.select().from(brokerConnectionsTable)
+      .where(and(eq(brokerConnectionsTable.id, id), eq(brokerConnectionsTable.userId, userId))).limit(1);
+      
+    if (!conn) return res.status(404).json({ error: "Connection not found" });
+    
+    const [updated] = await db.update(brokerConnectionsTable)
+      .set({ isActive: !conn.isActive })
+      .where(eq(brokerConnectionsTable.id, id))
+      .returning();
+      
+    res.json({ success: true, isActive: updated.isActive });
+  } catch (err) {
+    logger.error({ err }, "Failed to toggle connection");
+    res.status(500).json({ error: "Failed to toggle connection" });
+  }
+});
+
 router.get("/broker/connections/order-list", requireAuth, async (req, res) => {
   try {
     const userId = req.userId!;

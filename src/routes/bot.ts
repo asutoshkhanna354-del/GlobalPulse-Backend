@@ -71,6 +71,7 @@ router.get("/bot/settings", requireAuth, async (req, res) => {
       isRunning: true, riskPercent: 1, maxOpenTrades: 10000,
       enabledAssets: ["BTCUSD", "XAUUSD", "XAGUSD", "EURUSD", "NIFTY50"],
       enableScalp: true, enableIntraday: true, enableSwing: true, virtualBalance: 10000,
+      botModel: "gpt-oss-120b"
     });
   } catch (err) {
     logger.error(`[bot/settings] ${err}`);

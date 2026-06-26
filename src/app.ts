@@ -4,7 +4,8 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { seedDatabase } from "./lib/seed";
-import { startBotEngine } from "./lib/botEngine";
+import { startBotEngine } from "./lib/botEngine.js";
+import { startIndEngine } from "./lib/indEngine.js";
 import { runStartupMigrations } from "./lib/startupMigrations";
 
 const app: Express = express();
@@ -45,6 +46,7 @@ async function bootstrapDatabase() {
   // Now seed and start bot on whichever DB is active
   await seedDatabase().catch((err) => logger.warn({ err }, "Seed skipped (tables may be empty)"));
   await startBotEngine().catch((err) => logger.error({ err }, "Failed to start bot engine"));
+  await startIndEngine().catch((err) => logger.error({ err }, "Failed to start IND engine"));
 }
 
 bootstrapDatabase().catch((err) => logger.error({ err }, "Bootstrap failed"));
