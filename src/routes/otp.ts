@@ -4,6 +4,7 @@ import { otpVerificationsTable, usersTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { randomInt } from "crypto";
 import { logger } from "../lib/logger";
+import { buildOtpEmailHtml } from "../lib/otpTemplate";
 
 const router = Router();
 
@@ -17,84 +18,6 @@ function otpExpiry(): Date {
   const d = new Date();
   d.setMinutes(d.getMinutes() + 10); // 10 min expiry
   return d;
-}
-
-function buildOtpEmailHtml(otp: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GlobalPulse Verification</title>
-</head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;min-height:100vh;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="100%" max-width="480" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;border:1px solid #1f2937;border-radius:16px;max-width:480px;margin:0 auto;">
-          
-          <!-- Header Accent -->
-          <tr>
-            <td style="height:4px;background-color:#06b6d4;border-top-left-radius:16px;border-top-right-radius:16px;"></td>
-          </tr>
-
-          <!-- Header -->
-          <tr>
-            <td align="center" style="padding:40px 40px 0;">
-              <div style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">GlobalPulse</div>
-              <div style="font-size:12px;color:#9ca3af;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">Financial Intelligence</div>
-            </td>
-          </tr>
-
-          <!-- Body Text -->
-          <tr>
-            <td align="center" style="padding:32px 40px 8px;">
-              <h1 style="margin:0;font-size:22px;font-weight:600;color:#ffffff;">Verify your email</h1>
-              <p style="margin:12px 0 0;font-size:15px;color:#9ca3af;line-height:1.6;">Enter the verification code below to confirm your identity and access your trading dashboard.</p>
-            </td>
-          </tr>
-
-          <!-- OTP Box -->
-          <tr>
-            <td align="center" style="padding:32px 40px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td align="center" style="background-color:#111827;border:1px solid #374151;border-radius:12px;padding:24px;">
-                    <div style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#06b6d4;font-family:monospace;">${otp}</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Expiry -->
-          <tr>
-            <td align="center" style="padding:0 40px 16px;">
-              <p style="margin:0;font-size:13px;color:#6b7280;">This code expires in <strong style="color:#06b6d4;">10 minutes</strong>.</p>
-            </td>
-          </tr>
-
-          <!-- Divider -->
-          <tr>
-            <td style="padding:16px 40px;">
-              <div style="height:1px;background-color:#1f2937;width:100%;"></div>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="padding:16px 40px 32px;">
-              <p style="margin:0;font-size:12px;color:#4b5563;line-height:1.5;">If you didn't request this code, you can safely ignore this email.</p>
-              <p style="margin:16px 0 0;font-size:11px;color:#374151;">&copy; ${new Date().getFullYear()} GlobalPulse. All rights reserved.</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
 }
 
 function buildOtpTextContent(otp: string): string {
