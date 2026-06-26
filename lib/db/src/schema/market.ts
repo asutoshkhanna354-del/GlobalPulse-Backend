@@ -322,6 +322,7 @@ export const botSettingsTable = pgTable("bot_settings", {
   enableIntraday: boolean("enable_intraday").notNull().default(true),
   enableSwing: boolean("enable_swing").notNull().default(true),
   virtualBalance: real("virtual_balance").notNull().default(10000),
+  botModel: text("bot_model").notNull().default("gpt-oss-120b"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -430,3 +431,16 @@ export const paymentsTable = pgTable("payments", {
 });
 
 export type Payment = typeof paymentsTable.$inferSelect;
+
+// ── Notifications ─────────────────────────────────────────────────────────
+export const notificationsTable = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull().default("SYSTEM"), // 'TRADE_EXECUTION', 'DAILY_PNL', 'SYSTEM'
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Notification = typeof notificationsTable.$inferSelect;
