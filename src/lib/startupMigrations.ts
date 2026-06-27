@@ -118,6 +118,30 @@ const CREATE_TABLES = [
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, token TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), expires_at TIMESTAMPTZ NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS otp_verifications (
+    id SERIAL PRIMARY KEY, email TEXT NOT NULL, otp TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL, verified BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, plan_name TEXT NOT NULL,
+    billing_cycle TEXT, status TEXT NOT NULL DEFAULT 'active', amount INTEGER,
+    currency TEXT DEFAULT 'INR', razorpay_order_id TEXT, razorpay_payment_id TEXT,
+    start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(), end_date TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, razorpay_order_id TEXT NOT NULL,
+    razorpay_payment_id TEXT, razorpay_signature TEXT, amount INTEGER NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'INR', status TEXT NOT NULL DEFAULT 'created',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL,
+    message TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'SYSTEM',
+    is_read BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`
 ];
 
 const ALTER_COLUMNS = [
