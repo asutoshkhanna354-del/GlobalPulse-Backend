@@ -10,7 +10,7 @@ router.get("/nifty-api-mode", (req, res) => {
 
 router.post("/nifty-api-mode", (req, res) => {
   const { mode } = req.body;
-  if (mode === "cerebras" || mode === "gemini") {
+  if (mode === "gpt-oss" || mode === "glm" || mode === "gemini") {
     setNiftyApiMode(mode);
     res.json({ success: true, mode });
   } else {

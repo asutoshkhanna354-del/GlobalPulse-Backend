@@ -13,15 +13,15 @@ function makeClient(envVar: string, label: string): OpenAI | null {
 
 // ── Dedicated clients per domain ────────────────────────────────────────────
 // ── Dedicated clients per domain ────────────────────────────────────────────
-// Nifty API Mode State
-export let niftyApiMode: "cerebras" | "gemini" = "cerebras";
+export type NiftyApiMode = "gpt-oss" | "glm" | "gemini";
+export let niftyApiMode: NiftyApiMode = "gpt-oss";
 
-export function setNiftyApiMode(mode: "cerebras" | "gemini") {
+export function setNiftyApiMode(mode: NiftyApiMode) {
   niftyApiMode = mode;
   console.log(`[nifty] API Mode switched to ${mode}`);
 }
 
-export function getNiftyApiMode() {
+export function getNiftyApiMode(): NiftyApiMode {
   return niftyApiMode;
 }
 
@@ -36,22 +36,21 @@ export const openaiNifty = (cerebrasClient || geminiClient) ? {
     completions: {
       create: async (params: any) => {
         let lastErr: any;
-        
-        // 1. Try Cerebras if mode is cerebras
-        if (niftyApiMode === "cerebras" && cerebrasClient) {
+        // 1. Try Cerebras for gpt-oss or glm
+        if ((niftyApiMode === "gpt-oss" || niftyApiMode === "glm") && cerebrasClient) {
           try {
-            // User requested zai-glm-4.7 for nifty comprehension and 30m
-            const cerebrasParams = { ...params, model: "zai-glm-4.7" };
-            return await cerebrasClient.chat.completions.create(cerebrasParams as any);
+            const modelName = niftyApiMode === "gpt-oss" ? "gpt-oss-120b" : "zai-glm-4.7";
+            const cerebrasParams = { ...params, model: modelName };
+            const res = await cerebrasClient.chat.completions.create(cerebrasParams as any);
+            if (res && res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content) {
+              return res;
+            }
+            throw new Error(`Cerebras (${modelName}) returned empty content or invalid format`);
           } catch (err: any) {
             lastErr = err;
-            if (err?.status === 429) {
-              console.warn(`[cerebras] Limit Reached, falling back to Gemini instantly...`);
-              setNiftyApiMode("gemini");
-              // Fall through to the gemini block below
-            } else {
-              throw err;
-            }
+            console.warn(`[cerebras] Failed: ${err.message}. Falling back to Gemini...`);
+            setNiftyApiMode("gemini");
+            // Fall through to the gemini block below
           }
         }
         
@@ -63,19 +62,12 @@ export const openaiNifty = (cerebrasClient || geminiClient) ? {
             const userMsg = params.messages?.find((m: any) => m.role === "user")?.content || "";
             const combinedPrompt = `${sysMsg}\n\n${userMsg}`;
             
-            const response = await geminiClient.interactions.create({
-              model: "gemini-3.5-flash",
-              input: combinedPrompt
+            const response = await geminiClient.models.generateContent({
+              model: "gemini-3.5-pro", 
+              contents: combinedPrompt
             });
             
-            let text = "";
-            response.steps?.forEach((step: any) => {
-               if (step.modelOutput?.content) {
-                  step.modelOutput.content.forEach((c: any) => {
-                     if (c.text?.text) text += c.text.text;
-                  });
-               }
-            });
+            const text = response.text || "";
 
             return {
               choices: [{
