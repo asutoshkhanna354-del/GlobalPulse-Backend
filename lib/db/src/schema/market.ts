@@ -6,6 +6,7 @@ import {
   real,
   integer,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -233,10 +234,34 @@ export const niftyAnalysisTable = pgTable("nifty_analysis", {
   targetPrice: real("target_price"),
   stopLoss: real("stop_loss"),
   timeframe: text("timeframe"),
+  structuredData: jsonb("structured_data"),
   nextAnalysisAt: timestamp("next_analysis_at", { withTimezone: true }),
   validUntil: timestamp("valid_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const niftySniperTable = pgTable("nifty_sniper", {
+  id: serial("id").primaryKey(),
+  signalType: text("signal_type").notNull(),
+  entry: real("entry").notNull(),
+  strike: text("strike").notNull(),
+  currentPremium: real("current_premium").notNull(),
+  target1: real("target1").notNull(),
+  target2: real("target2").notNull(),
+  target3: real("target3").notNull(),
+  target4: real("target4"),
+  stopLoss: real("stop_loss").notNull(),
+  riskReward: text("risk_reward").notNull(),
+  expectedHoldingTime: text("expected_holding_time").notNull(),
+  confirmationScore: integer("confirmation_score").notNull(),
+  reasoning: text("reasoning").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertNiftySniperSchema = createInsertSchema(niftySniperTable).omit({ id: true });
+export type InsertNiftySniper = z.infer<typeof insertNiftySniperSchema>;
+export type NiftySniper = typeof niftySniperTable.$inferSelect;
 
 export const insertNiftyAnalysisSchema = createInsertSchema(niftyAnalysisTable).omit({ id: true });
 export type InsertNiftyAnalysis = z.infer<typeof insertNiftyAnalysisSchema>;
@@ -444,3 +469,67 @@ export const notificationsTable = pgTable("notifications", {
 });
 
 export type Notification = typeof notificationsTable.$inferSelect;
+
+// ── V4 Trade History & Analytics ──────────────────────────────────────────
+
+export const tradeHistoryTable = pgTable("trade_history", {
+  id: serial("id").primaryKey(),
+  tradeType: text("trade_type").notNull(),
+  entry: real("entry").notNull(),
+  strike: text("strike"),
+  premium: real("premium"),
+  stoploss: real("stoploss").notNull(),
+  target1: real("target1"),
+  target2: real("target2"),
+  target3: real("target3"),
+  riskReward: text("risk_reward").notNull(),
+  tradeGrade: text("trade_grade").notNull(),
+  confidence: integer("confidence").notNull(),
+  reliabilityScore: integer("reliability_score").notNull(),
+  status: text("status").notNull().default("active"),
+  pnl: real("pnl"),
+  exitPrice: real("exit_price"),
+  holdingTime: integer("holding_time_minutes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const backtestTable = pgTable("backtests", {
+  id: serial("id").primaryKey(),
+  strategyName: text("strategy_name").notNull(),
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  marketCondition: text("market_condition").notNull(),
+  tradeType: text("trade_type").notNull(),
+  entry: real("entry").notNull(),
+  exit: real("exit").notNull(),
+  strike: text("strike"),
+  stoploss: real("stoploss").notNull(),
+  targets: jsonb("targets"),
+  pnl: real("pnl").notNull(),
+  holdingTime: integer("holding_time_minutes").notNull(),
+  result: text("result").notNull(), // Target Hit, Stoploss Hit
+  confidence: integer("confidence").notNull(),
+  tradeGrade: text("trade_grade").notNull(),
+  reliability: integer("reliability").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const performanceTable = pgTable("performance_metrics", {
+  id: serial("id").primaryKey(),
+  timeframe: text("timeframe").notNull(), // 1 Month, 3 Months, Lifetime
+  winRate: real("win_rate").notNull(),
+  lossRate: real("loss_rate").notNull(),
+  accuracy: real("accuracy").notNull(),
+  averageRR: text("average_rr").notNull(),
+  profitFactor: real("profit_factor").notNull(),
+  expectancy: real("expectancy").notNull(),
+  averageProfit: real("average_profit").notNull(),
+  averageLoss: real("average_loss").notNull(),
+  maxDrawdown: real("max_drawdown").notNull(),
+  sharpeRatio: real("sharpe_ratio").notNull(),
+  sortinoRatio: real("sortino_ratio").notNull(),
+  recoveryFactor: real("recovery_factor").notNull(),
+  consecutiveWins: integer("consecutive_wins").notNull(),
+  consecutiveLosses: integer("consecutive_losses").notNull(),
+  calculatedAt: timestamp("calculated_at", { withTimezone: true }).notNull().defaultNow(),
+});
