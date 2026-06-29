@@ -36,24 +36,24 @@ function getNiftySessionStatus(now: Date): {
 } {
   const { hours, minutes } = getISTComponents(now);
   const totalMinutes = hours * 60 + minutes;
-  const openMinutes = 9 * 60 + 15;
-  const closeMinutes = 15 * 60 + 30;
+  const openMinutes = 9 * 60 + 20;
+  const closeMinutes = 15 * 60 + 45;
 
   if (totalMinutes < openMinutes) {
     return {
       status: "PRE_MARKET",
-      label: "Pre-Market (session opens at 9:15 AM IST)",
-      sessionOpenTime: "9:15 AM IST",
-      sessionCloseTime: "3:30 PM IST",
+      label: "Pre-Market (session opens at 9:20 AM IST)",
+      sessionOpenTime: "9:20 AM IST",
+      sessionCloseTime: "3:45 PM IST",
       minutesElapsed: 0,
       minutesRemaining: openMinutes - totalMinutes,
     };
   } else if (totalMinutes >= closeMinutes) {
     return {
       status: "POST_CLOSE",
-      label: "Market Closed (session closed at 3:30 PM IST)",
-      sessionOpenTime: "9:15 AM IST",
-      sessionCloseTime: "3:30 PM IST",
+      label: "Market Closed (session closed at 3:45 PM IST)",
+      sessionOpenTime: "9:20 AM IST",
+      sessionCloseTime: "3:45 PM IST",
       minutesElapsed: closeMinutes - openMinutes,
       minutesRemaining: 0,
     };
@@ -63,8 +63,8 @@ function getNiftySessionStatus(now: Date): {
     return {
       status: "LIVE",
       label: `Live Trading (${Math.floor(elapsed / 60)}h ${elapsed % 60}m elapsed, ${Math.floor(remaining / 60)}h ${remaining % 60}m remaining)`,
-      sessionOpenTime: "9:15 AM IST",
-      sessionCloseTime: "3:30 PM IST",
+      sessionOpenTime: "9:20 AM IST",
+      sessionCloseTime: "3:45 PM IST",
       minutesElapsed: elapsed,
       minutesRemaining: remaining,
     };

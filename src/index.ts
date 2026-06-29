@@ -54,6 +54,12 @@ httpServer.listen(port, (err?: Error) => {
     refreshBtcCandle4h().then(r => logger.info(r, "BTC 4h candle initial refresh done")).catch(() => {});
   }, 15000);
 
+  // Initial refresh for Nifty if market is open
+  refreshNiftyComprehensive().then(r => logger.info(r, "Nifty comprehensive initial refresh done")).catch(() => {});
+  setTimeout(() => {
+    refreshNiftyCandle30m().then(r => logger.info(r, "Nifty 30m candle initial refresh done")).catch(() => {});
+  }, 20000);
+
   // Exact Indian Market Scheduler for Nifty (Checks every minute)
   setInterval(() => {
     const now = Date.now();
@@ -67,11 +73,12 @@ httpServer.listen(port, (err?: Error) => {
     const totalMinutes = hours * 60 + minutes;
 
     // Trigger exactly at these minute marks (+1 minute for API data availability)
-    // 9:16 (556) - Market Open
-    // 9:46, 10:16, 10:46... 15:16, 15:31 (Market Close)
+    // 9:21 (561) - Market Open first analysis
+    // Comprehensive: every 60 min (9:21, 10:21, 11:21, 12:21, 13:21, 14:21, 15:21)
+    // 30m Candle: every 30 min (9:21, 9:51, 10:21, 10:51, ... 15:21)
     
-    const target30m = [586, 616, 646, 676, 706, 736, 766, 796, 826, 856, 886, 916, 931];
-    const targetComp = [556, 616, 676, 736, 796, 856, 916, 931];
+    const target30m = [561, 591, 621, 651, 681, 711, 741, 771, 801, 831, 861, 891, 921];
+    const targetComp = [561, 621, 681, 741, 801, 861, 921];
 
     if (target30m.includes(totalMinutes)) {
       logger.info(`[NIFTY SCHEDULE] Triggering 30m candle at exact market time: ${hours}:${minutes} IST`);

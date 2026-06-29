@@ -44,6 +44,7 @@ router.get("/market-data/summary", async (_req, res): Promise<void> => {
   const goldAsset = (assets as any[]).find((a: any) => a.symbol === "XAUUSD");
   const oilAsset = (assets as any[]).find((a: any) => a.symbol === "USOIL");
   const dxyAsset = (assets as any[]).find((a: any) => a.symbol === "DXY");
+  const btcAsset = (assets as any[]).find((a: any) => ["BTCUSD", "BINANCE:BTCUSDT", "BTCUSDT"].includes(a.symbol));
 
   const gainers = (assets as any[]).filter((a: any) => a.changePercent > 0).length;
   const losers = (assets as any[]).filter((a: any) => a.changePercent < 0).length;
@@ -66,6 +67,7 @@ router.get("/market-data/summary", async (_req, res): Promise<void> => {
     dollarIndex: dxyAsset?.price ?? 104.2,
     goldPrice: goldAsset?.price ?? 2340.5,
     oilPrice: oilAsset?.price ?? 82.3,
+    btcPrice: btcAsset?.price ?? 96847,
     updatedAt: new Date().toISOString(),
   };
 
