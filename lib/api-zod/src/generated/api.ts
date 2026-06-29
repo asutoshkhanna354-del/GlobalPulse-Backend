@@ -63,6 +63,7 @@ export const GetMarketSummaryResponse = zod.object({
   dollarIndex: zod.number(),
   goldPrice: zod.number(),
   oilPrice: zod.number(),
+  btcPrice: zod.number().optional(),
   updatedAt: zod.string(),
 });
 
