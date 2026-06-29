@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { getNiftyApiMode, setNiftyApiMode } from "../lib/openaiClient.js";
-import { refreshNiftyComprehensive, refreshNiftyCandle30m } from "../lib/niftyAnalysisRefresh.js";
+import { refreshNiftyComprehensive } from "../lib/niftyAnalysisRefresh.js";
 
 const router: IRouter = Router();
 
@@ -19,12 +19,12 @@ router.post("/nifty-api-mode", (req, res) => {
 });
 
 router.post("/nifty-refresh", async (req, res) => {
-  try {
-    const comp = await refreshNiftyComprehensive();
-    const candle = await refreshNiftyCandle30m();
-    res.json({ success: true, comp, candle });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+  const { type } = req.body;
+  if (type === "comprehensive") {
+    const data = await refreshNiftyComprehensive();
+    res.json({ message: "Nifty comprehensive manual refresh started.", data });
+  } else {
+    res.status(400).json({ error: "Invalid type. Must be comprehensive." });
   }
 });
 

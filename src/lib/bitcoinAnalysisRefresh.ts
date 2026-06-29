@@ -71,7 +71,7 @@ async function gatherBtcSnapshot(): Promise<BtcSnapshot> {
   try { bars15m = await fetchOHLC("BTC-USD", "2d", "15m"); } catch {}
 
   return {
-    price: btc?.price ?? null,
+    price: btc?.price ?? (bars15m.length ? bars15m[bars15m.length - 1].close : null),
     change: btc?.change ?? 0,
     changePercent: btc?.changePercent ?? 0,
     ethPrice: eth?.price ?? null,

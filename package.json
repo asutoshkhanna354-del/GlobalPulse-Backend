@@ -10,12 +10,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@workspace/api-zod": "file:./lib/api-zod",
-    "@workspace/db": "file:./lib/db",
     "@cerebras/cerebras_cloud_sdk": "^1.64.1",
     "@google/genai": "^2.10.0",
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.1",
+    "@workspace/api-zod": "file:./lib/api-zod",
+    "@workspace/db": "file:./lib/db",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
     "drizzle-orm": "^0.45.2",
@@ -24,6 +24,7 @@
     "openai": "^4.0.0",
     "pino": "^9",
     "pino-http": "^10",
+    "upstox-js-sdk": "^2.29.0",
     "web-push": "^3.6.7",
     "ws": "^8.20.0"
   },

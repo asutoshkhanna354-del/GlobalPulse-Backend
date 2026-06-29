@@ -8,7 +8,7 @@ import { refreshSocialIfStale } from "./lib/socialRefresh.js";
 import { refreshIpoData } from "./lib/ipoRefresh.js";
 import { refreshUsdSignal } from "./lib/usdSignalRefresh.js";
 import { refreshForexCalendar } from "./lib/forexCalendarRefresh.js";
-import { refreshNiftyComprehensive, refreshNiftyCandle30m } from "./lib/niftyAnalysisRefresh.js";
+import { refreshNiftyComprehensive } from "./lib/niftyAnalysisRefresh.js";
 import { refreshBtcComprehensive, refreshBtcCandle4h } from "./lib/bitcoinAnalysisRefresh.js";
 import { checkAndSendSignalNotifications } from "./lib/signalNotifier.js";
 
@@ -75,15 +75,7 @@ httpServer.listen(port, (err?: Error) => {
     // Trigger exactly at these minute marks (+1 minute for API data availability)
     // 9:21 (561) - Market Open first analysis
     // Comprehensive: every 60 min (9:21, 10:21, 11:21, 12:21, 13:21, 14:21, 15:21)
-    // 30m Candle: every 30 min (9:21, 9:51, 10:21, 10:51, ... 15:21)
-    
-    const target30m = [561, 591, 621, 651, 681, 711, 741, 771, 801, 831, 861, 891, 921];
     const targetComp = [561, 621, 681, 741, 801, 861, 921];
-
-    if (target30m.includes(totalMinutes)) {
-      logger.info(`[NIFTY SCHEDULE] Triggering 30m candle at exact market time: ${hours}:${minutes} IST`);
-      refreshNiftyCandle30m().catch(() => {});
-    }
 
     if (targetComp.includes(totalMinutes)) {
       logger.info(`[NIFTY SCHEDULE] Triggering comprehensive analysis at exact market time: ${hours}:${minutes} IST`);
