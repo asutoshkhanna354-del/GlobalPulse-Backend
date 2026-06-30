@@ -8,11 +8,8 @@ const router = Router();
 
 router.get("/vapid-public-key", (_req, res) => {
   const key = getVapidPublicKey();
-  if (!key) {
-    res.status(503).json({ error: "Push notifications not configured" });
-    return;
-  }
-  res.json({ publicKey: key });
+  // Return empty key gracefully instead of 503 so the frontend doesn't break
+  res.json({ publicKey: key || "" });
 });
 
 router.post("/subscribe", async (req, res) => {
