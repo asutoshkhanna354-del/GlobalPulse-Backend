@@ -102,6 +102,7 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
+      "fyers-api-v3",
     ],
     sourcemap: "linked",
     plugins: [

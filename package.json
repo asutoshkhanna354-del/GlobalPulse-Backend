@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.45.2",
     "express": "^5.0.0",
     "fast-xml-parser": "^5.5.10",
+    "fyers-api-v3": "^1.9.0",
     "openai": "^4.0.0",
     "pino": "^9",
     "pino-http": "^10",
