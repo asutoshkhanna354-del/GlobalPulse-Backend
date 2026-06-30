@@ -56,9 +56,6 @@ httpServer.listen(port, (err?: Error) => {
 
   // Initial refresh for Nifty if market is open
   refreshNiftyComprehensive().then(r => logger.info(r, "Nifty comprehensive initial refresh done")).catch(() => {});
-  setTimeout(() => {
-    refreshNiftyCandle30m().then(r => logger.info(r, "Nifty 30m candle initial refresh done")).catch(() => {});
-  }, 20000);
 
   // Exact Indian Market Scheduler for Nifty (Checks every minute)
   setInterval(() => {
