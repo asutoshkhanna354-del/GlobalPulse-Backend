@@ -47,12 +47,26 @@ export async function ensureUserBotSettings(userId: number): Promise<void> {
 
 const QUOTE_URL_BASE = process.env.SELF_API_URL ?? "http://localhost:8080/api";
 
+import { ProviderFactory } from "./nifty/providers/ProviderFactory.js";
+
 async function getLivePrice(symbol: string): Promise<number | null> {
+  // 1. Try ProviderFactory (Fyers/Upstox) for absolute precision on supported assets
+  try {
+    const provider = ProviderFactory.getProvider();
+    const providerPrice = await provider.getSpotPrice(symbol);
+    if (providerPrice) return providerPrice;
+  } catch (err) {
+    logger.warn(`[bot] Provider getSpotPrice failed for ${symbol}: ${err}`);
+  }
+
+  // 2. Fallback to Local DB Cache
   try {
     const assets = await db.select().from(marketAssetsTable)
       .where(eq(marketAssetsTable.symbol, symbol)).limit(1);
     if (assets[0]?.price) return assets[0].price;
   } catch {}
+
+  // 3. Fallback to generic quote API (Yahoo Finance)
   try {
     const r = await fetch(`${QUOTE_URL_BASE}/indicator/quote/${encodeURIComponent(symbol)}`);
     if (r.ok) {
@@ -60,6 +74,7 @@ async function getLivePrice(symbol: string): Promise<number | null> {
       if (d?.price) return d.price;
     }
   } catch {}
+
   return null;
 }
 
