@@ -57,6 +57,22 @@ async function checkExpiry(userId: number) {
 router.get("/subscription/status", requireAuth, async (req, res) => {
   try {
     const userId = req.authUser!.id;
+    const email = req.authUser!.email.toLowerCase();
+
+    const founderEmails = ["divyashekhar1922@gmail.com", "divyashhekhar1922@gmail.com", "shanjha25@gmail.com"];
+    if (founderEmails.includes(email)) {
+      return res.json({
+        subscription: {
+          id: -1,
+          planName: "pro",
+          billingCycle: "yearly",
+          status: "active",
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // Lifetime (100 years)
+        },
+      });
+    }
+
     const sub = await checkExpiry(userId);
 
     if (!sub) {

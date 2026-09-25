@@ -192,7 +192,7 @@ async function analyzeBtcCandle(snapshot: BtcSnapshot): Promise<any> {
   const openai = getOpenAiBtc();
   if (!openai) throw new Error("No BTC AI client");
 
-  const prompt = `You are a professional crypto trader specializing in Bitcoin. Analyze the 4-hour and 15-minute candle data for DEMAND-SUPPLY based trading.
+  const prompt = `You are a professional crypto trader specializing in Bitcoin. Analyze the 12-hour and 1-hour candle data for DEMAND-SUPPLY based trading.
 
 CURRENT TIME (IST): ${toIST(new Date())}
 
@@ -204,14 +204,14 @@ ${formatBarsForAI(snapshot.bars1h, "1-HOUR CANDLES", 15)}
 
 ${formatBarsForAI(snapshot.bars15m, "15-MIN CANDLES (recent)", 20)}
 
-TASK: Provide a periodic analysis for the next 4-hour candle. Include demand/supply zones and a specific Long/Short recommendation.
+TASK: Provide a periodic analysis for the next 12-hour window. Include demand/supply zones and a specific Long/Short recommendation.
 
 Return ONLY valid JSON:
 {
   "direction": "BULLISH" or "BEARISH" or "NEUTRAL",
   "confidence": 55-98,
   "summary": "2-3 sentence analysis of current price action and prediction",
-  "outlook": "What to expect in the next 4-8 hours. Specific price action prediction.",
+  "outlook": "What to expect in the next 12-24 hours. Specific price action prediction.",
   "demandZones": ["zone1", "zone2"],
   "supplyZones": ["zone1", "zone2"],
   "candlePattern": "Current candle pattern",
@@ -228,21 +228,21 @@ Return ONLY valid JSON:
       max_completion_tokens: 1536,
       response_format: { type: "json_object" as const },
       messages: [
-        { role: "system", content: "You are a professional Bitcoin trader. Provide demand-supply analysis for the next 4-hour candle. Be specific with price levels. Return only valid JSON." },
+        { role: "system", content: "You are a professional Bitcoin trader. Provide demand-supply analysis for the next 12-hour window. Be specific with price levels. Return only valid JSON." },
         { role: "user", content: prompt },
       ],
     });
 
     const text = response.choices[0]?.message?.content?.trim() || "";
-    logger.info({ responseLength: text.length, preview: text.slice(0, 300) }, "AI BTC 4h candle raw response");
+    logger.info({ responseLength: text.length, preview: text.slice(0, 300) }, "AI BTC 12h candle raw response");
     const jsonText = (() => { const s = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim(); const m = s.match(/\{[\s\S]*\}/); return (m ? m[0] : s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ""); })();
     const parsed = JSON.parse(jsonText);
 
     return {
-      analysisType: "candle_4h",
+      analysisType: "candle_12h",
       direction: parsed.direction || "NEUTRAL",
       confidence: Math.max(30, Math.min(98, Number(parsed.confidence) || 50)),
-      summary: parsed.summary || "4h candle analysis in progress...",
+      summary: parsed.summary || "12h candle analysis in progress...",
       outlook: parsed.outlook || "",
       supportLevels: [],
       resistanceLevels: [],
@@ -334,12 +334,12 @@ export async function refreshBtcComprehensive(): Promise<{ direction: string; co
   return { direction: analysis.direction, confidence: analysis.confidence };
 }
 
-export async function refreshBtcCandle4h(): Promise<{ direction: string; confidence: number }> {
-  logger.info("Starting Bitcoin 4h candle analysis refresh");
+export async function refreshBtcCandle12h(): Promise<{ direction: string; confidence: number }> {
+  logger.info("Starting Bitcoin 12h candle analysis refresh");
   if (!getOpenAiBtc()) {
-    logger.warn("BTC 4h candle: no AI client — skipping DB insert, keeping last signal");
+    logger.warn("BTC 12h candle: no AI client — skipping DB insert, keeping last signal");
     const { desc, eq } = await import("drizzle-orm");
-    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "candle_4h")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
+    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "candle_12h")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
     return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
   }
   const snapshot = await gatherBtcSnapshot();
@@ -347,24 +347,25 @@ export async function refreshBtcCandle4h(): Promise<{ direction: string; confide
   try {
     analysis = await analyzeBtcCandle(snapshot);
   } catch (err) {
-    logger.warn("BTC 4h candle: AI failed — keeping last DB signal, skipping insert");
+    logger.warn("BTC 12h candle: AI failed — keeping last DB signal, skipping insert");
     const { desc, eq } = await import("drizzle-orm");
-    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "candle_4h")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
+    const [last] = await db.select().from(bitcoinAnalysisTable).where(eq(bitcoinAnalysisTable.analysisType, "candle_12h")).orderBy(desc(bitcoinAnalysisTable.createdAt)).limit(1);
     return { direction: last?.direction ?? "NEUTRAL", confidence: last?.confidence ?? 50 };
   }
 
-  const nextUpdate = new Date(Date.now() + 4 * 60 * 60 * 1000);
+  const nextUpdate = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
   await db.insert(bitcoinAnalysisTable).values({
     ...analysis,
+    analysisType: "candle_12h",
     btcPrice: snapshot.price,
     btcChange: snapshot.changePercent,
-    timeframe: "4h",
+    timeframe: "12h",
     nextAnalysisAt: nextUpdate,
-    validUntil: new Date(nextUpdate.getTime() + 4 * 60 * 60 * 1000),
+    validUntil: new Date(nextUpdate.getTime() + 12 * 60 * 60 * 1000),
     createdAt: new Date(),
   });
 
-  logger.info({ direction: analysis.direction, confidence: analysis.confidence }, "BTC 4h candle analysis complete");
+  logger.info({ direction: analysis.direction, confidence: analysis.confidence }, "BTC 12h candle analysis complete");
   return { direction: analysis.direction, confidence: analysis.confidence };
 }

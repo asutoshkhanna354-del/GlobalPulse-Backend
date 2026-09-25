@@ -126,9 +126,11 @@ router.post("/auth/login", async (req, res) => {
       .orderBy(desc(subscriptionsTable.createdAt))
       .limit(1);
 
-    // Check if subscription is expired
+    const founderEmails = ["divyashekhar1922@gmail.com", "divyashhekhar1922@gmail.com", "shanjha25@gmail.com"];
     let subscription = null;
-    if (sub) {
+    if (founderEmails.includes(user.email.toLowerCase())) {
+      subscription = { planName: "pro", billingCycle: "yearly", status: "active", endDate: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) };
+    } else if (sub) {
       if (sub.endDate && new Date() > sub.endDate) {
         await db.update(subscriptionsTable).set({ status: "expired" }).where(eq(subscriptionsTable.id, sub.id));
       } else {
@@ -155,8 +157,11 @@ router.get("/auth/me", requireAuth, async (req, res) => {
     .orderBy(desc(subscriptionsTable.createdAt))
     .limit(1);
 
+  const founderEmails = ["divyashekhar1922@gmail.com", "divyashhekhar1922@gmail.com", "shanjha25@gmail.com"];
   let subscription = null;
-  if (sub) {
+  if (founderEmails.includes(req.authUser!.email.toLowerCase())) {
+    subscription = { planName: "pro", billingCycle: "yearly", status: "active", endDate: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) };
+  } else if (sub) {
     if (sub.endDate && new Date() > sub.endDate) {
       await db.update(subscriptionsTable).set({ status: "expired" }).where(eq(subscriptionsTable.id, sub.id));
     } else {

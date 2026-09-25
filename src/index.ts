@@ -9,7 +9,7 @@ import { refreshIpoData } from "./lib/ipoRefresh.js";
 import { refreshUsdSignal } from "./lib/usdSignalRefresh.js";
 import { refreshForexCalendar } from "./lib/forexCalendarRefresh.js";
 import { refreshNiftyComprehensive } from "./lib/niftyAnalysisRefresh.js";
-import { refreshBtcComprehensive, refreshBtcCandle4h } from "./lib/bitcoinAnalysisRefresh.js";
+import { refreshBtcComprehensive, refreshBtcCandle12h } from "./lib/bitcoinAnalysisRefresh.js";
 import { checkAndSendSignalNotifications } from "./lib/signalNotifier.js";
 
 const rawPort = process.env["PORT"];
@@ -51,7 +51,7 @@ httpServer.listen(port, (err?: Error) => {
 
   refreshBtcComprehensive().then(r => logger.info(r, "BTC comprehensive initial refresh done")).catch(() => {});
   setTimeout(() => {
-    refreshBtcCandle4h().then(r => logger.info(r, "BTC 4h candle initial refresh done")).catch(() => {});
+    refreshBtcCandle12h().then(r => logger.info(r, "BTC 12h candle initial refresh done")).catch(() => {});
   }, 15000);
 
   // Initial refresh for Nifty if market is open
@@ -86,7 +86,8 @@ httpServer.listen(port, (err?: Error) => {
   setInterval(() => refreshIpoData().catch(() => {}), 60 * 60 * 1000);
   setInterval(() => refreshUsdSignal().catch(() => {}), 60 * 60 * 1000);
   setInterval(() => refreshForexCalendar().catch(() => {}), 60 * 60 * 1000);
-  setInterval(() => refreshBtcCandle4h().catch(() => {}), 4 * 60 * 60 * 1000);
+  setInterval(() => refreshBtcCandle12h().catch(() => {}), 12 * 60 * 60 * 1000);
+  setInterval(() => refreshBtcComprehensive().catch(() => {}), 24 * 60 * 60 * 1000);
 
   setInterval(() => checkAndSendSignalNotifications().catch(() => {}), 2 * 60 * 1000);
 });
