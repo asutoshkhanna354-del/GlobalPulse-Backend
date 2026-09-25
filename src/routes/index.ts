@@ -23,6 +23,7 @@ import signalsRouter from "./signals.js";
 import systemRouter from "./system.js";
 import otpRouter from "./otp";
 import subscriptionRouter from "./subscription";
+import alphaSignalsRouter from "./alpha-signals";
 
 const router: IRouter = Router();
 
@@ -50,6 +51,7 @@ router.use(brokerRouter);
 router.use("/signals", signalsRouter);
 router.use("/system", systemRouter);
 router.use(subscriptionRouter);
+router.use(alphaSignalsRouter);
 
 export default router;
 
