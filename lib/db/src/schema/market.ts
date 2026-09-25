@@ -533,3 +533,13 @@ export const performanceTable = pgTable("performance_metrics", {
   consecutiveLosses: integer("consecutive_losses").notNull(),
   calculatedAt: timestamp("calculated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ── Alpha Signal Requests ────────────────────────────────────────────────
+export const alphaSignalRequestsTable = pgTable("alpha_signal_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'approved', 'rejected'
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type AlphaSignalRequest = typeof alphaSignalRequestsTable.$inferSelect;
