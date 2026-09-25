@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { getNiftyApiMode, setNiftyApiMode } from "../lib/openaiClient.js";
+import { getNiftyApiMode, setNiftyApiMode, getBtcApiMode, testBtcModels } from "../lib/openaiClient.js";
 import { refreshNiftyComprehensive } from "../lib/niftyAnalysisRefresh.js";
 
 const router: IRouter = Router();
@@ -30,6 +30,15 @@ router.post("/nifty-refresh", async (req, res) => {
 
 router.get("/test-nifty-apis", async (req, res): Promise<void> => {
   res.json({ results: [] });
+});
+
+router.get("/btc-api-mode", (req, res) => {
+  res.json({ mode: getBtcApiMode() });
+});
+
+router.post("/test-btc-apis", async (req, res) => {
+  const result = await testBtcModels();
+  res.json(result);
 });
 
 export default router;

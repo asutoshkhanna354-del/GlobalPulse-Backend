@@ -94,13 +94,68 @@ export const openaiSignals = makeClient("GROQ_API_KEY_USD", "AI Signals");
 const btcClientA = makeClient("GROQ_API_KEY_BTC",  "BTC primary");
 const btcClientB = makeClient("GROQ_API_KEY_BTC2", "BTC secondary");
 
+export type BtcApiMode = "round-robin" | "clientA" | "clientB" | "nifty" | "usd";
+export let btcApiMode: BtcApiMode = "round-robin";
+
+export function setBtcApiMode(mode: BtcApiMode) {
+  btcApiMode = mode;
+  console.log(`[btc] API Mode switched to ${mode}`);
+}
+
+export function getBtcApiMode(): BtcApiMode {
+  return btcApiMode;
+}
+
 let _btcCounter = 0;
 export function getOpenAiBtc(): OpenAI | null {
+  if (btcApiMode === "clientA") return btcClientA;
+  if (btcApiMode === "clientB") return btcClientB;
+  if (btcApiMode === "nifty") return openaiNifty as any;
+  if (btcApiMode === "usd") return openaiUsd;
+
   if (btcClientA && btcClientB) {
     _btcCounter++;
     return _btcCounter % 2 === 0 ? btcClientA : btcClientB;
   }
-  return btcClientA ?? btcClientB ?? openaiNifty ?? openaiUsd ?? null;
+  return btcClientA ?? btcClientB ?? (openaiNifty as any) ?? openaiUsd ?? null;
+}
+
+export async function testBtcModels(): Promise<{ results: Record<string, string>, active: string }> {
+  const clients = [
+    { id: "clientA", client: btcClientA, model: "llama-3.3-70b-versatile" },
+    { id: "clientB", client: btcClientB, model: "llama-3.3-70b-versatile" },
+    { id: "usd", client: openaiUsd, model: "llama-3.3-70b-versatile" },
+    { id: "nifty", client: openaiNifty as any, model: "N/A" }
+  ];
+
+  const results: Record<string, string> = {};
+  let workingId = "";
+
+  for (const c of clients) {
+    if (!c.client) {
+      results[c.id] = "Skipped (not configured)";
+      continue;
+    }
+    try {
+      await c.client.chat.completions.create({
+        model: c.model,
+        messages: [{ role: "user", content: "Test ping" }],
+        max_tokens: 5
+      });
+      results[c.id] = "OK";
+      if (!workingId) workingId = c.id;
+    } catch (err: any) {
+      results[c.id] = `Failed: ${err.message}`;
+    }
+  }
+
+  if (workingId) {
+    setBtcApiMode(workingId as BtcApiMode);
+  } else {
+    setBtcApiMode("round-robin");
+  }
+
+  return { results, active: getBtcApiMode() };
 }
 
 // ── Legacy export (fallback for any unported call) ───────────────────────────
