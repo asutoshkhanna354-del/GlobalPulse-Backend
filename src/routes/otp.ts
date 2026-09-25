@@ -137,4 +137,49 @@ router.post("/auth/verify-otp", async (req, res) => {
   }
 });
 
+// ── Send Invite Email ────────────────────────────────────────────────────────
+router.post("/auth/invite", async (req, res) => {
+  try {
+    const { email, type } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+    const htmlContent = `
+      <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
+        <h2 style="color: #2962FF;">Thank you for your interest!</h2>
+        <p>Hello,</p>
+        <p>Your interest in <strong>${type}</strong> has been successfully received.</p>
+        <p>This exclusive feature is currently under professional development. Our team is working hard to bring you the best possible experience. You will be notified via email as soon as you are chosen to test our ${type}.</p>
+        <br/>
+        <p>Best Regards,<br/><strong>GlobalPulse Team</strong></p>
+      </div>
+    `;
+    const textContent = `Thank you for your interest!\n\nYour interest in ${type} has been successfully received. This exclusive feature is currently under professional development. Our team is working hard to bring you the best possible experience. You will be notified via email as soon as you are chosen to test our ${type}.\n\nBest Regards,\nGlobalPulse Team`;
+
+    const resBrevo = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": process.env.BREVO_API_KEY || "",
+      },
+      body: JSON.stringify({
+        sender: { name: process.env.BREVO_SENDER_NAME || "GlobalPulse", email: process.env.BREVO_SENDER_EMAIL || "noreply@globalpulse.app" },
+        to: [{ email: email.toLowerCase() }],
+        subject: `Thank you for your interest in ${type}`,
+        htmlContent,
+        textContent,
+      }),
+    });
+
+    if (!resBrevo.ok) {
+        throw new Error("Failed to send invite email");
+    }
+    res.json({ success: true, message: "Interest registered and email sent" });
+  } catch (err: any) {
+    logger.error({ err }, "[invite] Send invite failed");
+    res.status(500).json({ error: err.message || "Failed to process invite" });
+  }
+});
+
 export default router;
