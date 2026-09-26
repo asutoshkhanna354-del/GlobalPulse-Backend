@@ -137,7 +137,7 @@ Return ONLY valid JSON (no markdown):
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: "llama3-70b-8192",
     max_completion_tokens: 1024,
     response_format: { type: "json_object" as const },
     messages: [

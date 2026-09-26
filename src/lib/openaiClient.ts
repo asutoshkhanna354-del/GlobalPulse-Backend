@@ -63,7 +63,7 @@ export const openaiNifty = (cerebrasClient || geminiClient) ? {
             const combinedPrompt = `${sysMsg}\n\n${userMsg}`;
             
             const response = await geminiClient.models.generateContent({
-              model: "gemini-3.5-pro", 
+              model: "gemini-1.5-pro", 
               contents: combinedPrompt
             });
             
@@ -122,9 +122,9 @@ export function getOpenAiBtc(): OpenAI | null {
 
 export async function testBtcModels(): Promise<{ results: Record<string, string>, active: string }> {
   const clients = [
-    { id: "clientA", client: btcClientA, model: "llama-3.3-70b-versatile" },
-    { id: "clientB", client: btcClientB, model: "llama-3.3-70b-versatile" },
-    { id: "usd", client: openaiUsd, model: "llama-3.3-70b-versatile" },
+    { id: "clientA", client: btcClientA, model: "llama3-70b-8192" },
+    { id: "clientB", client: btcClientB, model: "llama3-70b-8192" },
+    { id: "usd", client: openaiUsd, model: "llama3-70b-8192" },
     { id: "nifty", client: openaiNifty as any, model: "N/A" }
   ];
 

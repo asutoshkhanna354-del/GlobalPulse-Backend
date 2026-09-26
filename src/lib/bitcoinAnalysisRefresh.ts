@@ -152,7 +152,7 @@ Return ONLY valid JSON:
 
   try {
     const response = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "llama3-70b-8192",
       max_completion_tokens: 2048,
       response_format: { type: "json_object" as const },
       messages: [
@@ -224,7 +224,7 @@ Return ONLY valid JSON:
 
   try {
     const response = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "llama3-70b-8192",
       max_completion_tokens: 1536,
       response_format: { type: "json_object" as const },
       messages: [
