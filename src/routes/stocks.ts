@@ -176,7 +176,7 @@ router.get("/stocks/movers", async (req, res): Promise<void> => {
 });
 
 router.get("/stocks/chart/:symbol", async (req, res): Promise<void> => {
-  const { symbol } = req.params;
+  const rawSymbol = req.params.symbol;
   const range = (req.query.range as string) ?? "1mo";
 
   const intervalMap: Record<string, string> = {
@@ -190,50 +190,77 @@ router.get("/stocks/chart/:symbol", async (req, res): Promise<void> => {
 
   const interval = intervalMap[range] ?? "1d";
 
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${range}`;
-    const response = await fetch(url, { headers: HEADERS });
+  // Resolve matching symbol
+  const match = INDIAN_STOCKS.find(s => s.symbol === rawSymbol || s.yahooSymbol === rawSymbol) ||
+                US_STOCKS.find(s => s.symbol === rawSymbol || s.yahooSymbol === rawSymbol);
 
-    if (!response.ok) {
-      res.status(502).json({ error: "Failed to fetch chart data" });
-      return;
+  const symbolsToTry: string[] = [];
+  if (match) {
+    symbolsToTry.push(match.yahooSymbol);
+    if (match.symbol !== match.yahooSymbol) symbolsToTry.push(match.symbol);
+  } else {
+    symbolsToTry.push(rawSymbol);
+    if (!rawSymbol.includes(".") && !rawSymbol.includes("-") && !rawSymbol.startsWith("^")) {
+      symbolsToTry.push(`${rawSymbol}.NS`);
     }
-
-    const data = await response.json() as any;
-    const result = data?.chart?.result?.[0];
-
-    if (!result) {
-      res.status(404).json({ error: "No chart data found" });
-      return;
-    }
-
-    const timestamps: number[] = result.timestamp ?? [];
-    const quotes = result.indicators?.quote?.[0] ?? {};
-    const closes: number[] = quotes.close ?? [];
-    const opens: number[] = quotes.open ?? [];
-    const highs: number[] = quotes.high ?? [];
-    const lows: number[] = quotes.low ?? [];
-    const volumes: number[] = quotes.volume ?? [];
-
-    const points = timestamps.map((ts, i) => ({
-      timestamp: new Date(ts * 1000).toISOString(),
-      open: opens[i] ?? null,
-      high: highs[i] ?? null,
-      low: lows[i] ?? null,
-      close: closes[i] ?? 0,
-      volume: volumes[i] ?? null,
-    })).filter(p => p.close !== null && p.close !== 0);
-
-    res.json({
-      symbol,
-      range,
-      currency: result.meta?.currency ?? "USD",
-      points,
-      source: "Yahoo Finance",
-    });
-  } catch (err) {
-    res.status(502).json({ error: "Failed to fetch chart data", details: String(err) });
   }
+
+  let lastErr = "";
+  for (const sym of symbolsToTry) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}`;
+      const response = await fetch(url, { headers: HEADERS });
+
+      if (!response.ok) {
+        lastErr = `HTTP ${response.status}`;
+        continue;
+      }
+
+      const data = await response.json() as any;
+      const result = data?.chart?.result?.[0];
+
+      if (!result || !result.timestamp?.length) {
+        lastErr = "No timestamps in chart result";
+        continue;
+      }
+
+      const timestamps: number[] = result.timestamp ?? [];
+      const quotes = result.indicators?.quote?.[0] ?? {};
+      const closes: number[] = quotes.close ?? [];
+      const opens: number[] = quotes.open ?? [];
+      const highs: number[] = quotes.high ?? [];
+      const lows: number[] = quotes.low ?? [];
+      const volumes: number[] = quotes.volume ?? [];
+
+      const points = timestamps.map((ts, i) => ({
+        timestamp: new Date(ts * 1000).toISOString(),
+        open: opens[i] ?? null,
+        high: highs[i] ?? null,
+        low: lows[i] ?? null,
+        close: closes[i] ?? 0,
+        volume: volumes[i] ?? null,
+      })).filter(p => p.close !== null && p.close !== 0);
+
+      if (points.length === 0) {
+        lastErr = "No valid price points";
+        continue;
+      }
+
+      res.json({
+        symbol: rawSymbol,
+        yahooSymbol: sym,
+        range,
+        currency: result.meta?.currency ?? (sym.endsWith(".NS") ? "INR" : "USD"),
+        points,
+        source: "Yahoo Finance",
+      });
+      return;
+    } catch (err: any) {
+      lastErr = err.message || String(err);
+    }
+  }
+
+  res.status(404).json({ error: "No chart data found", details: lastErr });
 });
 
 export default router;

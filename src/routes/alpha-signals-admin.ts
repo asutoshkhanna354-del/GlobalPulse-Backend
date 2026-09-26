@@ -6,15 +6,10 @@ import { requireAuth } from "../lib/authMiddleware";
 import { NotificationEngine } from "../services/core/NotificationEngine";
 
 const router = Router();
-const founderEmails = ["divyashekhar1922@gmail.com", "divyashhekhar1922@gmail.com", "shanjha25@gmail.com"];
 
+// GET /api/alpha-signals/admin/requests
 router.get("/alpha-signals/admin/requests", requireAuth, async (req, res) => {
   try {
-    const email = req.authUser!.email.toLowerCase();
-    if (!founderEmails.includes(email)) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
     const requests = await db
       .select({
         id: alphaSignalRequestsTable.id,
@@ -34,13 +29,9 @@ router.get("/alpha-signals/admin/requests", requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/alpha-signals/admin/update
 router.post("/alpha-signals/admin/update", requireAuth, async (req, res) => {
   try {
-    const email = req.authUser!.email.toLowerCase();
-    if (!founderEmails.includes(email)) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
     const { requestId, status } = req.body;
     if (!["approved", "rejected", "pending"].includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
