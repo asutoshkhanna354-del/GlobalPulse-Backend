@@ -11,15 +11,15 @@ const router = Router();
 const RZP_KEY = process.env.RZP_KEY || "";
 const RZP_SECRET = process.env.RZP_SECRET || "";
 
-// Plan pricing in paise (INR)
+// Plan pricing in cents (USD)
 const PLAN_PRICING: Record<string, Record<string, { amount: number; label: string }>> = {
   plus: {
-    monthly: { amount: 99900, label: "Plus Monthly" },   // ₹999
-    yearly:  { amount: 999900, label: "Plus Yearly" },    // ₹9,999
+    monthly: { amount: 3900, label: "Plus Monthly" },     // $39
+    yearly:  { amount: 39900, label: "Plus Yearly" },     // $399
   },
   pro: {
-    monthly: { amount: 199900, label: "Pro Monthly" },        // ₹1,999
-    yearly:  { amount: 1999900, label: "Pro Yearly" },        // ₹19,999
+    monthly: { amount: 7900, label: "Pro Monthly" },      // $79
+    yearly:  { amount: 79900, label: "Pro Yearly" },      // $799
   },
 };
 
@@ -152,7 +152,7 @@ router.post("/subscription/create-order", requireAuth, async (req, res) => {
       },
       body: JSON.stringify({
         amount: pricing.amount,
-        currency: "INR",
+        currency: "USD",
         receipt: `gp_${userId}_${Date.now()}`,
         notes: {
           userId: userId.toString(),
@@ -175,7 +175,7 @@ router.post("/subscription/create-order", requireAuth, async (req, res) => {
       userId,
       razorpayOrderId: order.id,
       amount: pricing.amount,
-      currency: "INR",
+      currency: "USD",
       status: "created",
     });
 
