@@ -11,15 +11,15 @@ const router = Router();
 const RZP_KEY = process.env.RZP_KEY || "";
 const RZP_SECRET = process.env.RZP_SECRET || "";
 
-// Plan pricing in cents (USD)
-const PLAN_PRICING: Record<string, Record<string, { amount: number; label: string }>> = {
+// Plan pricing in cents (USD) and paise (INR)
+const PLAN_PRICING: Record<string, Record<string, { USD: number; INR: number; label: string }>> = {
   plus: {
-    monthly: { amount: 3900, label: "Plus Monthly" },     // $39
-    yearly:  { amount: 39900, label: "Plus Yearly" },     // $399
+    monthly: { USD: 3900, INR: 399900, label: "Plus Monthly" },     // $39 or ₹3,999
+    yearly:  { USD: 39900, INR: 3999900, label: "Plus Yearly" },    // $399 or ₹39,999
   },
   pro: {
-    monthly: { amount: 7900, label: "Pro Monthly" },      // $79
-    yearly:  { amount: 79900, label: "Pro Yearly" },      // $799
+    monthly: { USD: 7900, INR: 799900, label: "Pro Monthly" },      // $79 or ₹7,999
+    yearly:  { USD: 79900, INR: 7999900, label: "Pro Yearly" },     // $799 or ₹79,999
   },
 };
 
@@ -127,7 +127,7 @@ router.post("/subscription/activate-free", requireAuth, async (req, res) => {
 router.post("/subscription/create-order", requireAuth, async (req, res) => {
   try {
     const userId = req.authUser!.id;
-    const { planName, billingCycle } = req.body;
+    const { planName, billingCycle, currency = "USD" } = req.body;
 
     if (!planName || !billingCycle) {
       return res.status(400).json({ error: "planName and billingCycle are required" });
@@ -137,6 +137,8 @@ router.post("/subscription/create-order", requireAuth, async (req, res) => {
     if (!pricing) {
       return res.status(400).json({ error: "Invalid plan or billing cycle" });
     }
+
+    const amount = currency === "INR" ? pricing.INR : pricing.USD;
 
     if (!RZP_KEY || !RZP_SECRET) {
       return res.status(500).json({ error: "Payment gateway not configured" });
@@ -151,8 +153,8 @@ router.post("/subscription/create-order", requireAuth, async (req, res) => {
         Authorization: `Basic ${auth}`,
       },
       body: JSON.stringify({
-        amount: pricing.amount,
-        currency: "USD",
+        amount,
+        currency,
         receipt: `gp_${userId}_${Date.now()}`,
         notes: {
           userId: userId.toString(),
@@ -174,8 +176,8 @@ router.post("/subscription/create-order", requireAuth, async (req, res) => {
     await db.insert(paymentsTable).values({
       userId,
       razorpayOrderId: order.id,
-      amount: pricing.amount,
-      currency: "USD",
+      amount,
+      currency,
       status: "created",
     });
 
@@ -200,7 +202,7 @@ router.post("/subscription/create-order", requireAuth, async (req, res) => {
 router.post("/subscription/verify-payment", requireAuth, async (req, res) => {
   try {
     const userId = req.authUser!.id;
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planName, billingCycle } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planName, billingCycle, currency = "USD" } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ error: "Missing payment details" });
@@ -234,6 +236,7 @@ router.post("/subscription/verify-payment", requireAuth, async (req, res) => {
 
     // Get pricing for amount
     const pricing = PLAN_PRICING[planName]?.[billingCycle];
+    const amount = pricing ? (currency === "INR" ? pricing.INR : pricing.USD) : 0;
 
     // Create new subscription
     const [sub] = await db.insert(subscriptionsTable).values({
@@ -241,7 +244,8 @@ router.post("/subscription/verify-payment", requireAuth, async (req, res) => {
       planName,
       billingCycle,
       status: "active",
-      amount: pricing?.amount ?? 0,
+      amount,
+      currency,
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       startDate: new Date(),

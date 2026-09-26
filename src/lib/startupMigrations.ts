@@ -141,6 +141,10 @@ const CREATE_TABLES = [
     message TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'SYSTEM',
     is_read BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS alpha_signal_requests (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`
 ];
 
