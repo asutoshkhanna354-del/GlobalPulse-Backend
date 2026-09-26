@@ -13,7 +13,7 @@ if (!PRIMARY_URL && !BACKUP_URL) {
 
 // ── Pool instances ────────────────────────────────────────────────────────────
 const primaryPool: pg.Pool | null = PRIMARY_URL
-  ? new Pool({ connectionString: PRIMARY_URL, connectionTimeoutMillis: 8_000, idleTimeoutMillis: 30_000, max: 5 })
+  ? new Pool({ connectionString: PRIMARY_URL, connectionTimeoutMillis: 30_000, idleTimeoutMillis: 30_000, max: 5 })
   : null;
 
 const backupPool: pg.Pool | null = BACKUP_URL
