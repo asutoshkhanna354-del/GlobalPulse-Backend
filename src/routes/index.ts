@@ -24,6 +24,8 @@ import systemRouter from "./system.js";
 import otpRouter from "./otp";
 import subscriptionRouter from "./subscription";
 import alphaSignalsRouter from "./alpha-signals";
+import alphaSignalsAdminRouter from "./alpha-signals-admin";
+import checkoutRouter from "./checkout";
 
 const router: IRouter = Router();
 
@@ -52,6 +54,8 @@ router.use("/signals", signalsRouter);
 router.use("/system", systemRouter);
 router.use(subscriptionRouter);
 router.use(alphaSignalsRouter);
+router.use(alphaSignalsAdminRouter);
+router.use(checkoutRouter);
 
 export default router;
 
