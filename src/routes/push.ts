@@ -115,8 +115,8 @@ router.get("/subscriptions", async (req, res) => {
 
     res.json(subs);
   } catch (err) {
-    logger.error({ err }, "Error fetching push subscriptions");
-    res.status(500).json({ error: "Internal server error" });
+    logger.warn({ err }, "Error fetching push subscriptions, returning empty list");
+    res.json([]);
   }
 });
 

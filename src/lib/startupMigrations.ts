@@ -112,7 +112,7 @@ const CREATE_TABLES = [
   )`,
   `CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY, username TEXT NOT NULL, email TEXT NOT NULL,
-    password_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    password_hash TEXT NOT NULL, email_verified BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE TABLE IF NOT EXISTS user_sessions (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, token TEXT NOT NULL,
@@ -152,6 +152,14 @@ const ALTER_COLUMNS = [
   `ALTER TABLE bot_trades ADD COLUMN IF NOT EXISTS user_id INTEGER`,
   `ALTER TABLE bot_settings ADD COLUMN IF NOT EXISTS user_id INTEGER`,
   `ALTER TABLE broker_connections ADD COLUMN IF NOT EXISTS user_id INTEGER`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT`,
+  `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS browser_fingerprint TEXT`,
+  `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS symbol TEXT`,
+  `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS symbol_label TEXT`,
+  `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS p256dh_key TEXT`,
+  `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS auth_key TEXT`,
+  `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS endpoint TEXT`,
 ];
 
 export async function runStartupMigrations(): Promise<void> {
